@@ -5,7 +5,11 @@ import {
   Grid,
   Button,
   CircularProgress,
+  Typography,
+  Tooltip,
 } from "@mui/material";
+import SaveIcon from "@mui/icons-material/Save";
+import FolderIcon from "@mui/icons-material/Folder";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { getReceiptById, updateReceipt } from "../../services/ReceiptsApi";
@@ -131,202 +135,303 @@ export default function UpdateReceipt() {
 
   return (
     <>
-      <div
-        style={{
-          marginBottom: "50px",
-          textAlign: "left",
-          padding: "20px",
-          marginTop: "20px",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "32px",
-            fontWeight: "bold",
-            fontFamily: "B nazanin",
-            textAlign: "right",
-            marginRight: "20px",
-          }}
-        >
-          ویرایش رسیدات
-        </h1>
-      </div>
       <Box
-        dir="rtl"
         sx={{
-          textAlign: "right",
-          fontFamily: "B Nazanin", // Make sure to use the correct font name
-          padding: "8px 16px", // Adjust padding as needed
-          marginBottom: "16px", // Adjust margin as needed
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          position: "relative",
+          padding: { xs: 1, sm: 2 },
         }}
       >
-        <PageBreadcrumbs />
-      </Box>
-      <Box
-        component="form"
-        noValidate
-        autoComplete="off"
-        sx={{ p: 4 }}
-        onSubmit={handleSubmit}
-      >
-        <Grid container spacing={4}>
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="serialNumber"
-              type="number"
-              label="نمبر مسلسل"
-              variant="outlined"
-              value={formData.serialNumber}
-              onChange={handleInputChange}
-              InputProps={{
-                sx: { height: 80 },
-              }}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="archiveNumber"
-              type="number"
-              label="نمبر آرشیف"
-              variant="outlined"
-              value={formData.archiveNumber}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 80 } }}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <Autocomplete
-              fullWidth
-              options={departments}
-              value={formData.department}
-              onChange={handleDepartmentChange}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="شعبه"
-                  variant="outlined"
-                  InputProps={{
-                    ...params.InputProps,
-                    sx: { height: 80 },
-                  }}
-                  required
-                />
-              )}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="letterNumber"
-              type="number"
-              label="نمبر مکتوب"
-              variant="outlined"
-              value={formData.letterNumber}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 80 } }}
-              required
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="letterDate"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              label="تاریخ مکتوب"
-              variant="outlined"
-              value={formData.letterDate}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 80 } }}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="sender"
-              label="مرسل"
-              variant="outlined"
-              value={formData.sender}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 80 } }}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="recipient"
-              label="مرسل الیه"
-              variant="outlined"
-              value={formData.recipient}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 80 } }}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="subjectType"
-              label="نوعیت موضوع"
-              variant="outlined"
-              value={formData.subjectType}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 80 } }}
-              required
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="file"
-              type="file"
-              InputLabelProps={{ shrink: true }}
-              label="فایل"
-              variant="outlined"
-              onChange={handleFileChange}
-              InputProps={{ sx: { height: 80 } }}
-            />
-            {currentFile && (
-              <div style={{ marginTop: "10px" }}>
-                Current file:{" "}
-                {currentFile instanceof File
-                  ? currentFile.name
-                  : currentFile.fileName}
-              </div>
-            )}
-          </Grid>
-          <Grid item xs={12} sm={6} md={3} sx={{ my: 2 }}>
-            <TextField
-              fullWidth
-              name="remarks"
-              multiline
-              rows={4}
-              label="ملاحضات"
-              variant="outlined"
-              value={formData.remarks}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 80 } }}
-            />
-          </Grid>
-        </Grid>
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          style={{ marginLeft: "20px", marginBottom: "20px" }}
-          disabled={isSubmitting}
+        <Box
+          component="form"
+          noValidate
+          autoComplete="on"
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 4,
+            p: { xs: 2, sm: 3, md: 4 },
+            bgcolor: "#fff",
+            borderRadius: 3,
+            boxShadow: 3,
+            width: { xs: "100%", sm: "90%", md: "80%", lg: "70%" },
+            position: "relative",
+            marginTop: { xs: "70px", sm: "80px", md: "90px", lg: "100px" },
+          }}
+          onSubmit={handleSubmit}
         >
-          {isSubmitting ? <CircularProgress size={24} /> : "ذخیره کردن"}
-        </Button>
+          {/* Title */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: { xs: -40, sm: -50, md: -80 },
+              right: 20,
+              fontFamily: "B nazanin",
+              fontWeight: "bold",
+              fontSize: { xs: 20, sm: 22, md: 24 },
+            }}
+          >
+            ویرایش رسیدات
+          </Box>
+
+          {/* Breadcrumbs */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: { xs: -20, sm: -25, md: -30 },
+              right: 20,
+            }}
+          >
+            <PageBreadcrumbs />
+          </Box>
+          {/* Left Side - Upload Photo */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: "25%" },
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              p: 2,
+              border: "1px dashed #ccc",
+              borderRadius: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                borderRadius: "50%",
+                border: "2px solid #ddd",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                bgcolor: "#f9f9f9",
+                cursor: "pointer",
+                position: "relative",
+              }}
+              component="label"
+              htmlFor="upload-photo"
+            >
+              {/* Hidden file input */}
+              <input
+                name="file"
+                type="file"
+                hidden
+                id="upload-photo"
+                onChange={handleFileChange}
+              />
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                <FolderIcon sx={{ fontSize: 50, color: "#888" }} />
+                <Typography variant="caption" sx={{ mt: 1, color: "#666" }}>
+                  Upload File
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* 🔹 فایل نوم د ellipsis سره */}
+            {currentFile && (
+              <Tooltip
+                title={
+                  currentFile instanceof File
+                    ? currentFile.name
+                    : currentFile.fileName
+                }
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 1,
+                    maxWidth: "200px", // تر دې زیات ځای نه نیسي
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  فایل موجود:{" "}
+                  {currentFile instanceof File
+                    ? currentFile.name
+                    : currentFile.fileName}
+                </Typography>
+              </Tooltip>
+            )}
+
+            <Typography variant="body2" color="textSecondary" align="center">
+              Allowed *.jpeg, *.jpg, *.png, *.pdf
+              <br />
+              max size of 3 Mb
+            </Typography>
+          </Box>
+
+          {/* Right Side - Form Fields */}
+          <Grid container spacing={2} sx={{ flex: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="serialNumber"
+                type="number"
+                label="نمبر مسلسل"
+                variant="outlined"
+                value={formData.serialNumber}
+                onChange={handleInputChange}
+                InputProps={{
+                  sx: { height: 60 },
+                }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="archiveNumber"
+                type="number"
+                label="نمبر آرشیف"
+                variant="outlined"
+                value={formData.archiveNumber}
+                onChange={handleInputChange}
+                InputProps={{ sx: { height: 60 } }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Autocomplete
+                fullWidth
+                options={departments}
+                value={formData.department}
+                onChange={handleDepartmentChange}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="شعبه"
+                    variant="outlined"
+                    InputProps={{
+                      ...params.InputProps,
+                      sx: { height: 60 },
+                    }}
+                    required
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="letterNumber"
+                type="number"
+                label="نمبر مکتوب"
+                variant="outlined"
+                value={formData.letterNumber}
+                onChange={handleInputChange}
+                InputProps={{ sx: { height: 60 } }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="letterDate"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                label="تاریخ مکتوب"
+                variant="outlined"
+                value={formData.letterDate}
+                onChange={handleInputChange}
+                InputProps={{ sx: { height: 60 } }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="sender"
+                label="مرسل"
+                variant="outlined"
+                value={formData.sender}
+                onChange={handleInputChange}
+                InputProps={{ sx: { height: 60 } }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="recipient"
+                label="مرسل الیه"
+                variant="outlined"
+                value={formData.recipient}
+                onChange={handleInputChange}
+                InputProps={{ sx: { height: 60 } }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="subjectType"
+                label="نوعیت موضوع"
+                variant="outlined"
+                value={formData.subjectType}
+                onChange={handleInputChange}
+                InputProps={{ sx: { height: 60 } }}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                name="remarks"
+                rows={4}
+                label="ملاحضات"
+                variant="outlined"
+                value={formData.remarks}
+                onChange={handleInputChange}
+                InputProps={{ sx: { height: 60 } }}
+              />
+            </Grid>
+
+            {/* Save Button */}
+            <Grid item xs={12} sx={{ textAlign: "right", mt: 2 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  backgroundColor: "black",
+                  color: "white",
+                  borderRadius: "10px",
+                  "&:hover": {
+                    backgroundColor: "#1d252e",
+                  },
+                }}
+                endIcon={<SaveIcon />}
+                style={{ marginLeft: "20px", marginBottom: "20px" }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <CircularProgress size={24} /> : "ویرایش کردن"}
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
       </Box>
     </>
   );

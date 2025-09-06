@@ -64,6 +64,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/receipts/**").permitAll()
                 .requestMatchers("/api/receipts/download/**").permitAll() 
                 .requestMatchers("/api/files/**").permitAll()
+                .requestMatchers("/api/received-issued-books/**").permitAll()
+                .requestMatchers("/api/received-issued-books/download/**").permitAll() 
+
+
+
 
 
                 .anyRequest().authenticated()

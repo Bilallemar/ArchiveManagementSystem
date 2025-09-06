@@ -1,5 +1,7 @@
 package com.MCIT.ArchiveManagementSystem.models;
 
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.Receipts;
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.ReceivedIssuedBook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
@@ -20,11 +22,15 @@ public class FileEntity {
     private String filePath;
     private String fileType;
 
- @ManyToOne
-@JoinColumn(name = "receipt_id")
-@JsonIgnore
-private Receipts receipt;
- // د receipt سره ارتباط
+    @ManyToOne
+    @JoinColumn(name = "receipt_id")
+    @JsonIgnore
+    private Receipts receipt;
+
+    @ManyToOne
+    @JoinColumn(name = "received_issued_book_id")
+    @JsonIgnore
+    private ReceivedIssuedBook receivedIssuedBook;
 
     // --- Getters and Setters ---
 
@@ -66,5 +72,13 @@ private Receipts receipt;
 
     public void setReceipt(Receipts receipt) {
         this.receipt = receipt;
+    }
+
+    public ReceivedIssuedBook getReceivedIssuedBook() {
+        return receivedIssuedBook;
+    }
+
+    public void setReceivedIssuedBook(ReceivedIssuedBook receivedIssuedBook) {
+        this.receivedIssuedBook = receivedIssuedBook;
     }
 }

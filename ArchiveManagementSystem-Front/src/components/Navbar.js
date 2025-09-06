@@ -14,7 +14,6 @@ import {
   MenuItem,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import AdbIcon from "@mui/icons-material/Adb";
 import { RxCross2 } from "react-icons/rx";
 
 const Navbar = () => {
@@ -69,7 +68,13 @@ const Navbar = () => {
   });
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#ffffff" }}>
+    <AppBar
+      position="static"
+      sx={{
+        backgroundColor: "#ffffff",
+        boxShadow: "none",
+      }}
+    >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           {/* Desktop Logo */}
@@ -167,8 +172,12 @@ const Navbar = () => {
             }}
           >
             {token && (
-              <Button component={Link} to="/book" sx={getButtonStyles("/book")}>
-                کتاب وارده وصادره
+              <Button
+                component={Link}
+                to="/report"
+                sx={getButtonStyles("/report")}
+              >
+                ګزارش راپورسال تمام
               </Button>
             )}
             {token && (
@@ -180,13 +189,14 @@ const Navbar = () => {
                 رپور سال تمام
               </Button>
             )}
+
             {token && (
               <Button
                 component={Link}
-                to="/report"
-                sx={getButtonStyles("/report")}
+                to="/received-issued-books"
+                sx={getButtonStyles("/received-issued-books")}
               >
-                ګزارش راپورسال تمام
+                کتاب وارده وصادره
               </Button>
             )}
             {token && (
@@ -274,7 +284,7 @@ const Navbar = () => {
                 to="/signup"
                 sx={{
                   my: 2,
-                  color: "white",
+                  color: "black",
                   display: { xs: "none", md: "flex" },
                 }}
               >

@@ -10,7 +10,16 @@ const PageBreadcrumbs = () => {
 
   return (
     <div style={{ marginBottom: "16px" }}>
-      <Breadcrumbs aria-label="breadcrumb">
+      <Breadcrumbs
+        aria-label="breadcrumb"
+        separator="•"
+        sx={{
+          "& .MuiBreadcrumbs-separator": {
+            fontSize: "12px", // د بولټ اندازه
+            color: "#919AEB", // د رنګ بدلول
+          },
+        }}
+      >
         {pathnames.map((value, index) => {
           const to = `/${pathnames.slice(0, index + 1).join("/")}`;
           const isLast = index === pathnames.length - 1;

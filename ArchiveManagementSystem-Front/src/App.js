@@ -24,6 +24,7 @@ import ResetPassword from "./components/Auth/ResetPassword";
 import ReceiptsList from "./components/Receipts/ReceiptsList";
 import AddReceipt from "./components/Receipts/AddReceipt";
 import UpdateReceipt from "./components/Receipts/UpdateReceipt";
+import ReceivedIssuedBookList from "./components/ReceivedIssuedBook/ReceivedIssuedBookList";
 // import Footer from "./components/Footer/Footer";
 
 const App = () => {
@@ -50,7 +51,14 @@ const App = () => {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
+        <Route
+          path="/received-issued-books"
+          element={
+            <ProtectedRoute>
+              <ReceivedIssuedBookList />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/receipts/:id"
           element={

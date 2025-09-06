@@ -1,8 +1,8 @@
 import api from "./api";
 
-export const getReceipts = (keyword = "") => {
+export const getReceipts = (keyword = "", field = "serialNumber") => {
   return api.get("/receipts/search", {
-    params: { keyword },
+    params: { keyword, field },
   });
 };
 export const getReceiptById = (id) => api.get(`/receipts/${id}`);

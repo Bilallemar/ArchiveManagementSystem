@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 
 console.log("API URL:", process.env.REACT_APP_API_URL);
 
@@ -37,12 +38,9 @@ api.interceptors.request.use(
     if (csrfToken) {
       config.headers["X-XSRF-TOKEN"] = csrfToken;
     }
-    console.log("X-XSRF-TOKEN " + csrfToken);
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor to handle token refresh
@@ -51,7 +49,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and we haven't already tried to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -64,14 +61,23 @@ api.interceptors.response.use(
         );
 
         const newToken = refreshResponse.data.accessToken;
-        localStorage.setItem("JWT_TOKEN", newToken);
+        if (newToken) {
+          localStorage.setItem("JWT_TOKEN", newToken);
 
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return api(originalRequest);
+          // Show success toast
+          toast.success("Session refreshed");
+
+          // Update the header and retry original request
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        }
       } catch (refreshError) {
         console.error("Token refresh failed", refreshError);
-        // Redirect to login if refresh fails
+
+        // Show error toast
+        toast.error("Session expired, please login again");
+
+        localStorage.clear();
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }
@@ -80,4 +86,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 export default api;
