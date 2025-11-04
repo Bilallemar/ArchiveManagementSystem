@@ -21,10 +21,15 @@ import NotFound from "./components/NotFound";
 import ContactPage from "./components/contactPage/ContactPage";
 import AboutPage from "./components/aboutPage/AboutPage";
 import ResetPassword from "./components/Auth/ResetPassword";
-import ReceiptsList from "./components/Receipts/ReceiptsList";
-import AddReceipt from "./components/Receipts/AddReceipt";
-import UpdateReceipt from "./components/Receipts/UpdateReceipt";
-import ReceivedIssuedBookList from "./components/ReceivedIssuedBook/ReceivedIssuedBookList";
+import ReceiptsList from "./components/StorageManagement/Receipts/ReceiptsList";
+import AddReceipt from "./components/StorageManagement/Receipts/AddReceipt";
+import UpdateReceipt from "./components/StorageManagement/Receipts/UpdateReceipt";
+import ReceivedIssuedBookList from "./components/StorageManagement/ReceivedIssuedBook/ReceivedIssuedBookList";
+import AddReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/AddReceivedIssuedBook";
+import UpdateReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/UpdateReceivedIssuedBook";
+import AnnualReportList from "./components/StorageManagement/AnnualReport/AnnualReportList";
+import AddAnnualReport from "./components/StorageManagement/AnnualReport/AddAnnualReport";
+import UpdateAnnualReport from "./components/StorageManagement/AnnualReport/UpdateAnnualReport";
 // import Footer from "./components/Footer/Footer";
 
 const App = () => {
@@ -52,10 +57,50 @@ const App = () => {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route
+          path="/annual-reports"
+          element={
+            <ProtectedRoute>
+              <AnnualReportList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annual-reports/add-annual-report"
+          element={
+            <ProtectedRoute>
+              <AddAnnualReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annual-reports/:id"
+          element={
+            <ProtectedRoute>
+              <UpdateAnnualReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/received-issued-books"
           element={
             <ProtectedRoute>
               <ReceivedIssuedBookList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/received-issued-books/add-received-issued-book"
+          element={
+            <ProtectedRoute>
+              <AddReceivedIssuedBook />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/received-issued-books/:id"
+          element={
+            <ProtectedRoute>
+              <UpdateReceivedIssuedBook />
             </ProtectedRoute>
           }
         />
@@ -75,7 +120,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/receipts"
           element={
@@ -84,7 +128,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route path="/access-denied" element={<AccessDenied />} />
         <Route
           path="/admin/*"

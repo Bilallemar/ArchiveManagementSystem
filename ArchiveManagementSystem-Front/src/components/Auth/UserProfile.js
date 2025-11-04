@@ -107,10 +107,10 @@ const UserProfile = () => {
     }
   };
 
-  //verify the 2fa
+  // Verify the 2FA code
   const verify2FA = async () => {
     if (!code || code.trim().length === 0)
-      return toast.error("Please Enter The Code To Verify");
+      return toast.error("لطفاً د تایید لپاره کوډ داخل کړئ");
 
     settwofaCodeLoader(true);
 
@@ -118,18 +118,35 @@ const UserProfile = () => {
       const formData = new URLSearchParams();
       formData.append("code", code);
 
-      await api.post(`/auth/verify-2fa`, formData, {
+      const response = await api.post(`/auth/verify-2fa`, formData, {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
       });
-      toast.success("2FA verified successful");
 
+      // که سرور نوی توکن راولي، ذخیره یې کړه
+      if (response.data?.token) {
+        localStorage.setItem("token", response.data.token);
+        // که setToken function لرې، نو دلته یې هم وغواړه
+        // setToken(response.data.token);
+      }
+
+      toast.success("✅ دوه‌مرحلې تایید بریالی شو");
       setIs2faEnabled(true);
       setStep(1);
     } catch (error) {
-      console.error("Error verifying 2FA", error);
-      toast.error("Invalid 2FA Code");
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message;
+
+      if (status === 400 || status === 422) {
+        toast.error("❌ داخل شوی کوډ ناسم دی");
+      } else if (status === 401) {
+        toast.error("دوه‌مرحلې تصدیق کوډ نامعتبر دی");
+      } else {
+        toast.error("⚠️ د دوه‌مرحلې تایید په بهیر کې ستونزه رامنځته شوه");
+      }
+
+      console.error("Error verifying 2FA:", error);
     } finally {
       settwofaCodeLoader(false);
     }
@@ -402,7 +419,7 @@ const UserProfile = () => {
                         />
                         <Buttons
                           disabled={loading}
-                          className="bg-customRed font-semibold flex justify-center text-white w-full py-2 hover:text-slate-400 transition-colors duration-100 rounded-sm my-3"
+                          className="bg-blackColor font-semibold flex justify-center text-white w-full py-2 hover:text-slate-400 transition-colors duration-100 rounded-sm my-3"
                           type="submit"
                         >
                           {loading ? <span>Loading...</span> : "Update"}
@@ -500,21 +517,21 @@ const UserProfile = () => {
             <div className="flex-1 flex flex-col shadow-lg shadow-gray-300 gap-2 px-4 py-6">
               <div className="space-y-1">
                 <h1 className="text-slate-800 flex items-center gap-1 text-2xl font-bold">
-                  <span>Authentication (MFA)</span>
+                  <span>تصدیق کول (MFA)</span>
                   <span
                     className={` ${
                       is2faEnabled ? "bg-green-800" : "bg-customRed"
                     } px-2 text-center py-1 text-xs mt-2 rounded-sm text-white`}
                   >
-                    {is2faEnabled ? "Activated" : "Deactivated"}
+                    {is2faEnabled ? "فعال" : "غیر فعال شوی"}
                   </span>
                 </h1>{" "}
                 <h3 className="text-slate-800 text-xl font-semibold">
-                  Multi Factor Authentication
+                  څو فکتوره تصدیق.
                 </h3>{" "}
                 <p className="text-slate-800 text-sm ">
-                  Two Factor Authentication Add a additional layer of security
-                  to your account
+                  دوه‌ مرحلې تصدیق ستا حساب ته د امنیت یو اضافي پوړ یا طبقه
+                  زیاتوي.
                 </p>
               </div>
 
@@ -523,7 +540,7 @@ const UserProfile = () => {
                   disabled={disabledLoader}
                   onClickhandler={is2faEnabled ? disable2FA : enable2FA}
                   className={` ${
-                    is2faEnabled ? "bg-customRed" : "bg-btnColor"
+                    is2faEnabled ? "bg-customRed" : "bg-blackColor"
                   } px-5 py-1 hover:text-slate-300 rounded-sm text-white mt-2`}
                 >
                   {disabledLoader ? (
@@ -531,8 +548,8 @@ const UserProfile = () => {
                   ) : (
                     <>
                       {is2faEnabled
-                        ? "Disabled Two Factor Authentication"
-                        : "Enable Two Factor Authentication"}
+                        ? "دوه‌مرحلې تصدیق غیر فعال کړئ"
+                        : "دوه مرحلي تصدیق فعال کړئ"}
                     </>
                   )}
                 </Buttons>
@@ -546,7 +563,7 @@ const UserProfile = () => {
                       id="panel1-header"
                     >
                       <h3 className="font-bold text-lg  text-slate-700 uppercase">
-                        QR Code To Scan
+                        کیو آر د سکن لپاره
                       </h3>
                     </AccordionSummary>
                     <AccordionDetails>
@@ -555,7 +572,7 @@ const UserProfile = () => {
                         <div className="flex items-center  gap-2  mt-4">
                           <input
                             type="text"
-                            placeholder="Enter 2FA code"
+                            placeholder="دوه مرحلې کوډ داخل کړئ"
                             value={code}
                             required
                             className="mt-4 border px-2 py-1 border-slate-800 rounded-md"

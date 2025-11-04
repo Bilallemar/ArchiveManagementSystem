@@ -8,6 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.AttendanceBook;
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.EmpoymentOffice;
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.RegistrationBook;
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.ResolutionsAndMemorandumsOfTheHighCouncil;
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.ArchiveReceivedIssuedBook;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.Receipts;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.ReceivedIssuedBook;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
@@ -18,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -55,6 +62,7 @@ public class FileService {
         }
     }
 
+
     public void deleteFile(String filename) {
         try {
             Files.deleteIfExists(this.root.resolve(filename));
@@ -62,11 +70,16 @@ public class FileService {
             throw new RuntimeException("Could not delete file: " + e.getMessage());
         }
     }
+// Generic method to handle file saving for different owner types and for multiple files
+public <T> List<String> savefiles(MultipartFile[] files, T owner) {
+    if (files == null || files.length == 0) {
+        throw new IllegalArgumentException("No files provided.");
+    }
 
-    public String savefile(MultipartFile file, Receipts receipts) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File is empty or null.");
-        }
+    List<String> savedPaths = new ArrayList<>();
+
+    for (MultipartFile file : files) {
+        if (file.isEmpty()) continue;
 
         try {
             FileEntity fileEntity = new FileEntity();
@@ -84,48 +97,52 @@ public class FileService {
             }
 
             fileEntity.setFilePath(filePath);
-            fileEntity.setFileName(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
-            fileEntity.setFileType(filePath.substring(filePath.lastIndexOf(".") + 1));
-            fileEntity.setReceipt(receipts);
-            // fileEntity.setReceivedIssuedBook(book);
-            fileRepository.save(fileEntity);
+            fileEntity.setFileName(file.getOriginalFilename());
+            fileEntity.setFileType(file.getContentType());
 
-            return filePath;
+            if (owner instanceof Receipts) {
+                fileEntity.setReceipt((Receipts) owner);
+            } else if (owner instanceof ReceivedIssuedBook) {
+                fileEntity.setReceivedIssuedBook((ReceivedIssuedBook) owner);
+            } else if (owner instanceof AttendanceBook) {
+                fileEntity.setAttendanceBook((AttendanceBook) owner);
+            } else if (owner instanceof EmpoymentOffice) {
+                fileEntity.setEmpoymentOffice((EmpoymentOffice) owner);
+            
+            }  else if (owner instanceof ArchiveReceivedIssuedBook) {
+                fileEntity.setArchiveReceivedIssuedBook((ArchiveReceivedIssuedBook) owner);
+            } else if (owner instanceof RegistrationBook) {
+                fileEntity.setRegistrationBook((RegistrationBook) owner);
+            }   else if (owner instanceof ResolutionsAndMemorandumsOfTheHighCouncil) {
+                fileEntity.setResolutionsAndMemorandumsOfTheHighCouncil((ResolutionsAndMemorandumsOfTheHighCouncil) owner);
+            }
+
+            
+            else {
+                throw new RuntimeException("Unsupported owner type");
+            }
+
+            fileRepository.save(fileEntity);
+            savedPaths.add(filePath);
+
         } catch (IOException e) {
-        throw new RuntimeException("File upload failed: " + e.getMessage(), e);
+            throw new RuntimeException("File upload failed: " + e.getMessage(), e);
+        }
     }
+
+    return savedPaths;
 }
-public String savefile(MultipartFile file, ReceivedIssuedBook receivedIssuedBook) {
+
+// For single file upload, we can reuse the multiple files method
+public <T> String savefile(MultipartFile file, T owner) {
     if (file == null || file.isEmpty()) {
         throw new IllegalArgumentException("File is empty or null.");
     }
-
-    try {
-        FileEntity fileEntity = new FileEntity();
-        String uniqueFileName = UUID.randomUUID().toString();
-
-        File directory = new File(fileuploadDirectory);
-        if (!directory.exists() && !directory.mkdirs()) {
-            throw new IOException("Failed to create directory for file uploads.");
-        }
-
-        String filePath = Paths.get(fileuploadDirectory, uniqueFileName + "_" + file.getOriginalFilename())
-                .toString();
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, Paths.get(filePath), StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        fileEntity.setFilePath(filePath);
-        fileEntity.setFileName(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
-        fileEntity.setFileType(filePath.substring(filePath.lastIndexOf(".") + 1));
-        fileEntity.setReceivedIssuedBook(receivedIssuedBook);  // دلته د ReceivedIssuedBook سره تړاو
-        fileRepository.save(fileEntity);
-
-        return filePath;
-    } catch (IOException e) {
-        throw new RuntimeException("File upload failed: " + e.getMessage(), e);
-    }
+    List<String> paths = savefiles(new MultipartFile[]{file}, owner);
+    return paths.isEmpty() ? null : paths.get(0);
 }
+
+
 
 public Resource loadFileAsResource(String fileName) {
     try {

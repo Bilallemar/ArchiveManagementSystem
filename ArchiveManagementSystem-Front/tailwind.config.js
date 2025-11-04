@@ -38,7 +38,7 @@ module.exports = {
       },
 
       backgroundColor: {
-        customRed: "#c9f6da",
+        customRed: "#9fa4a8",
         testimonialCard: "#F9F9F9",
       },
       boxShadow: {

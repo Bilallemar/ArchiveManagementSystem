@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   TextField,
   InputAdornment,
@@ -15,11 +15,12 @@ import SearchIcon from "@mui/icons-material/Search";
 const Filter = ({
   value,
   onChange,
-  placeholder = "لټون...",
+  placeholder = "جستجو...",
   width = "300px",
   height = "40px",
   field,
   onFieldChange,
+  fields = [], // د فیلډونو لیست د props له لارې
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -45,13 +46,18 @@ const Filter = ({
           },
         }}
       >
-        <InputLabel id="field-label"></InputLabel>
-        <Select labelId="field-label" value={field} onChange={onFieldChange}>
-          <MenuItem value="serialNumber">سریال نمبر</MenuItem>
-          <MenuItem value="archiveNumber">آرشیف نمبر</MenuItem>
-          <MenuItem value="department">شعبه</MenuItem>
-          <MenuItem value="recipient">مرسل</MenuItem>
-          <MenuItem value="sender">مرسل الیه</MenuItem>
+        <InputLabel id="field-label">فلټر</InputLabel>
+        <Select
+          labelId="field-label"
+          value={field}
+          onChange={onFieldChange}
+          label="فلټر"
+        >
+          {fields.map((f) => (
+            <MenuItem key={f.value} value={f.value}>
+              {f.label}
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
 
@@ -79,7 +85,7 @@ const Filter = ({
           },
         }}
         onKeyPress={(e) => {
-          if (e.key === "Enter") e.preventDefault(); // page reload مخنیوی
+          if (e.key === "Enter") e.preventDefault(); // د page reload مخنیوی
         }}
       />
     </Box>

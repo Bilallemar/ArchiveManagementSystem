@@ -1,6 +1,8 @@
 package com.MCIT.ArchiveManagementSystem.models.StorageManagement;
 
 import jakarta.persistence.*;
+
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +30,10 @@ public class ReceivedIssuedBook {
     private String letterNumber;  
 
     @Column(name = "issued_date")
-    private LocalDate issuedDate; 
+    private Date issuedDate; 
 
     @Column(name = "received_date")
-    private LocalDate receivedDate; 
+    private Date receivedDate; 
 
     @Column(name = "summary", columnDefinition = "TEXT")
     private String summary; 
@@ -65,11 +67,11 @@ public class ReceivedIssuedBook {
     public String getLetterNumber() { return letterNumber; }
     public void setLetterNumber(String letterNumber) { this.letterNumber = letterNumber; }
 
-    public LocalDate getIssuedDate() { return issuedDate; }
-    public void setIssuedDate(LocalDate issuedDate) { this.issuedDate = issuedDate; }
+    public Date getIssuedDate() { return issuedDate; }
+    public void setIssuedDate(Date issuedDate) { this.issuedDate = issuedDate; }
 
-    public LocalDate getReceivedDate() { return receivedDate; }
-    public void setReceivedDate(LocalDate receivedDate) { this.receivedDate = receivedDate; }
+    public Date getReceivedDate() { return receivedDate; }
+    public void setReceivedDate(Date receivedDate) { this.receivedDate = receivedDate; }
 
     public String getSummary() { return summary; }
     public void setSummary(String summary) { this.summary = summary; }

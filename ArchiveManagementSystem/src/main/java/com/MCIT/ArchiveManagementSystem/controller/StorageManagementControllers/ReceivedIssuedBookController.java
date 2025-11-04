@@ -33,7 +33,6 @@ public class ReceivedIssuedBookController {
     private final ReceivedIssuedBookService receivedIssuedBookService;
     private final Path fileStorageLocation;
     private final FileService fileService;
-    private final ReceivedIssuedBookRepository receivedIssuedBookRepository;
 
     
     public ReceivedIssuedBookController( ReceivedIssuedBookService receivedIssuedBookService, FileService fileService,
@@ -41,7 +40,6 @@ public class ReceivedIssuedBookController {
         this.receivedIssuedBookService = receivedIssuedBookService;
         this.fileService = fileService;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
-        this.receivedIssuedBookRepository = receivedIssuedBookRepository;
         
         try {
             Files.createDirectories(this.fileStorageLocation);

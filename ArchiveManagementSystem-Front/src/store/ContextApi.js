@@ -112,7 +112,7 @@ export const ContextProvider = ({ children }) => {
       setCurrentUser(data);
     } catch (error) {
       console.error("Error fetching current user", error);
-      toast.error("Session expired, please login again");
+      toast.error("pired, please login again");
       localStorage.clear();
       setCurrentUser(null);
       window.location.href = "/login";

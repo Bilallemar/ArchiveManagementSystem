@@ -1,3 +1,4 @@
+
 package com.MCIT.ArchiveManagementSystem.controller;
 
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.*;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -57,20 +59,33 @@ public class FileController {
                 return ResponseEntity.badRequest().body("File is empty");
             }
 
-            // Sanitize filename and generate unique filename
-            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            // Clean filename safely
+            String originalFilename = StringUtils.cleanPath(
+                    Objects.requireNonNull(file.getOriginalFilename(), "Filename cannot be null")
+            );
+
+            // Extract file extension safely
+            String fileExtension = "";
+            int dotIndex = originalFilename.lastIndexOf(".");
+            if (dotIndex > 0) {
+                fileExtension = originalFilename.substring(dotIndex);
+            }
+
+            // Generate unique filename
             String uniqueFilename = UUID.randomUUID() + fileExtension;
 
             // Store file
             Path targetPath = uploadDir.resolve(uniqueFilename);
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
+            // Fallback for content type
+            String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+
             // Create file entity
             FileEntity fileEntity = new FileEntity();
             fileEntity.setFileName(originalFilename);
             fileEntity.setFilePath(targetPath.toString());
-            fileEntity.setFileType(file.getContentType());
+            fileEntity.setFileType(contentType);
             fileEntity.setReceipt(receipt);
 
             FileEntity savedFile = fileRepository.save(fileEntity);
@@ -143,3 +158,7 @@ public class FileController {
         }
     }
 }
+
+
+
+

@@ -1,6 +1,7 @@
 package com.MCIT.ArchiveManagementSystem.services.StorageManagementService;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +10,8 @@ import com.MCIT.ArchiveManagementSystem.models.StorageManagement.Receipts;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.ReceiptsRepository;
 import com.MCIT.ArchiveManagementSystem.services.FileService;
+
+import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,45 +53,55 @@ public class ReceiptsService {
         return receipts;
     }
 
-    public Receipts updateReceipt(Long id, Receipts receiptsDetails, MultipartFile fileURL) {
-        Receipts receipts = receiptsRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Receipt not found with id: " + id));
+   @Transactional
+public Receipts updateReceipt(Long id, Receipts receiptsDetails, MultipartFile[] fileURL) {
+    // 1. موجوده ریکارډ ترلاسه کړه
+    Receipts receipts = receiptsRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Receipt not found with id: " + id));
 
-        receipts.setSerialNumber(receiptsDetails.getSerialNumber());
-        receipts.setArchiveNumber(receiptsDetails.getArchiveNumber());
-        receipts.setDepartment(receiptsDetails.getDepartment());
-        receipts.setLetterNumber(receiptsDetails.getLetterNumber());
-        receipts.setLetterDate(receiptsDetails.getLetterDate());
-        receipts.setSender(receiptsDetails.getSender());
-        receipts.setRecipient(receiptsDetails.getRecipient());
-        receipts.setSubjectType(receiptsDetails.getSubjectType());
-        receipts.setRemarks(receiptsDetails.getRemarks());
+    // 2. اصلي فیلډونه اپډېټ کړه
+    receipts.setSerialNumber(receiptsDetails.getSerialNumber());
+    receipts.setArchiveNumber(receiptsDetails.getArchiveNumber());
+    receipts.setDepartment(receiptsDetails.getDepartment());
+    receipts.setLetterNumber(receiptsDetails.getLetterNumber());
+    receipts.setLetterDate(receiptsDetails.getLetterDate());
+    receipts.setSender(receiptsDetails.getSender());
+    receipts.setRecipient(receiptsDetails.getRecipient());
+    receipts.setSubjectType(receiptsDetails.getSubjectType());
+    receipts.setRemarks(receiptsDetails.getRemarks());
 
-      if (fileURL != null && !fileURL.isEmpty()) {
-            // Delete existing files both from file system and DB
-            if (receipts.getAttachments() != null) {
-                for (FileEntity oldFile : receipts.getAttachments()) {
-                    fileService.deleteFile(oldFile.getFileName());
-                    fileRepository.delete(oldFile);
-                }
-                receipts.getAttachments().clear();
+    // 3. فایلونه اپډېټ یا اضافه کړه که موجود وي
+    if (fileURL != null && fileURL.length > 0) {
+        // 3a. موجوده فایلونه حذف کړه
+        if (receipts.getAttachments() != null) {
+            for (FileEntity oldFile : receipts.getAttachments()) {
+                fileService.deleteFile(oldFile.getFilePath()); // د حقیقي مسیر نه فایل حذف
+                fileRepository.delete(oldFile);               // DB نه حذف
             }
-
-            // Save new file
-            String filePath = fileService.savefile(fileURL, receipts);
-
-            FileEntity newFileEntity = new FileEntity();
-            newFileEntity.setFilePath(filePath);
-            newFileEntity.setFileName(fileURL.getOriginalFilename());
-            newFileEntity.setFileType(fileURL.getContentType());
-            newFileEntity.setReceipt(receipts);
-            fileRepository.save(newFileEntity);
-
-            receipts.getAttachments().add(newFileEntity);
+            receipts.getAttachments().clear();
         }
 
-        return receiptsRepository.save(receipts);
+        // 3b. نوي فایلونه ذخیره کړه
+        List<String> storedPaths = fileService.savefiles(fileURL, receipts); // د څو فایلونو save method
+
+        List<FileEntity> newAttachments = new ArrayList<>();
+        for (int i = 0; i < fileURL.length; i++) {
+            MultipartFile f = fileURL[i];
+            FileEntity fe = new FileEntity();
+            fe.setFilePath(storedPaths.get(i));         // حقیقي مسیر
+            fe.setFileName(f.getOriginalFilename());   // د فایل اصل نوم
+            fe.setFileType(f.getContentType());        // فایل ټایپ
+            fe.setReceipt(receipts);                   // د ریکارډ سره رابطه
+            fileRepository.save(fe);                   // DB ته ذخیره کړه
+            newAttachments.add(fe);
+        }
+
+        receipts.setAttachments(newAttachments);
     }
+
+    // 4. وروستی ریکارډ ذخیره کړه او واپس یې کړه
+    return receiptsRepository.save(receipts);
+}
 
     public void deleteReceipt(Long id) {
         Receipts receipts = receiptsRepository.findById(id)

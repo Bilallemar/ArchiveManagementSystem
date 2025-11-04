@@ -1,6 +1,5 @@
 package com.MCIT.ArchiveManagementSystem.controller.StorageManagementControllers;
 
-import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.Receipts;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.ReceiptsRepository;
 import com.MCIT.ArchiveManagementSystem.services.FileService;
@@ -33,7 +32,6 @@ public class ReceiptsController {
     private final ReceiptsService receiptsService;
     private final Path fileStorageLocation;
     private final FileService fileService;
-    private final ReceiptsRepository receiptsRepository;
 
     
     public ReceiptsController(ReceiptsService receiptsService, FileService fileService,
@@ -41,7 +39,6 @@ public class ReceiptsController {
         this.receiptsService = receiptsService;
         this.fileService = fileService;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
-        this.receiptsRepository = receiptsRepository;
         
         try {
             Files.createDirectories(this.fileStorageLocation);
@@ -64,7 +61,8 @@ public class ReceiptsController {
 
     // Original create endpoint (kept for backward compatibility)
     @PostMapping
-    public Receipts createReceipt(@RequestPart("receipts") String receipts,@RequestPart(value = "fileURL", required = true) MultipartFile fileURL) throws IOException {
+    public Receipts createReceipt(@RequestPart("receipts") String receipts,
+    @RequestPart(value = "fileURL", required = true) MultipartFile fileURL) throws IOException {
 
 
         ObjectMapper mapper = new ObjectMapper();
@@ -78,49 +76,28 @@ public class ReceiptsController {
 
 
 
+
+
 @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public ResponseEntity<Receipts> updateReceipt(
         @PathVariable Long id,
-        @RequestPart("receipts") String receipts,
-        @RequestPart(value = "fileURL", required = false) MultipartFile fileURL) {
+        @RequestPart("receipts") String receiptsJson,              // JSON string د Receipts object لپاره
+        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
 
     try {
+        // JSON string parse کوو
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        Receipts recivedReceipts = mapper.readValue(receipts, Receipts.class);
+        Receipts recivedReceipts = mapper.readValue(receiptsJson, Receipts.class);
 
-        Receipts existingReceipt = receiptsService.getReceiptById(id)
-                                    .orElseThrow(() -> new RuntimeException("Receipt not found"));
-
-        if (fileURL != null && !fileURL.isEmpty()) {
-            String newFilePath = fileService.savefile(fileURL, existingReceipt);
-
-            FileEntity newFileEntity = new FileEntity();
-            newFileEntity.setFilePath(newFilePath);
-            newFileEntity.setFileName(fileURL.getOriginalFilename());
-            newFileEntity.setFileType(fileURL.getContentType());
-            newFileEntity.setReceipt(existingReceipt);
-
-            List<FileEntity> attachments = existingReceipt.getAttachments();
-            attachments.add(newFileEntity);
-
-            recivedReceipts.setAttachments(attachments);
-        } else {
-            recivedReceipts.setAttachments(existingReceipt.getAttachments());
-        }
-
-        // اړین دی چې ID وساتل شي ترڅو اپډېټ وشي نه نو به نوی ریکارډ جوړ شي
-        recivedReceipts.setId(id);
-
-        Receipts updatedReceipt = receiptsService.updateReceipt(id, recivedReceipts,fileURL);
+        // service ته پاس کوو
+        Receipts updatedReceipt = receiptsService.updateReceipt(id, recivedReceipts, fileURL);
 
         return ResponseEntity.ok(updatedReceipt);
-
     } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 }
-
 
 
     @DeleteMapping("/{id}")

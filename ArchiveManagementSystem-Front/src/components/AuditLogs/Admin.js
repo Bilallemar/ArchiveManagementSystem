@@ -1,6 +1,6 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import AdminSidebar from "./AdminAreaSidebar";
+import AdminSidebar from "../Sidebar ";
 import UserList from "./UserList";
 import UserDetails from "./UserDetails";
 import { useMyContext } from "../../store/ContextApi";

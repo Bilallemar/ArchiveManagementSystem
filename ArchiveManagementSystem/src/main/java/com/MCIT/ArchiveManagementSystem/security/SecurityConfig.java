@@ -66,7 +66,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/files/**").permitAll()
                 .requestMatchers("/api/received-issued-books/**").permitAll()
                 .requestMatchers("/api/received-issued-books/download/**").permitAll() 
-
+                .requestMatchers("/importDoc/**").permitAll()
+                .requestMatchers("/exportDoc/**").permitAll()
+                .requestMatchers("/annual-reports/**").permitAll()
+                .requestMatchers("/annual-reports_info/**").permitAll()
+                .requestMatchers("/api/attendanceBook/**").permitAll()
+                .requestMatchers("/api/fileOffices/**").permitAll()
+                .requestMatchers("/api/received-issued-books-repository/**").permitAll()
 
 
 

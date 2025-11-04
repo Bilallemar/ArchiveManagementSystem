@@ -10,7 +10,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { getReceipts } from "../services/ReceiptsApi";
+import { getReceipts } from "../services/StorageManagement/ReceiptsApi";
 
 export default function LandingPage() {
   const [chartData, setChartData] = useState({
