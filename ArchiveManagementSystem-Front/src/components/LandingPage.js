@@ -262,7 +262,7 @@ export default function LandingPage() {
                       {
                         id: 1,
                         value: chartData.totalSender || 0,
-                        color: "#0f4339",
+                        color: "#f7ae24",
                       },
                       {
                         id: 2,
@@ -301,9 +301,9 @@ export default function LandingPage() {
                 }}
               >
                 {[
-                  { color: "#0f4339", label: "Sender" },
-                  { color: "#ccf9d6", label: "Recipient" },
-                  { color: "#6de39c", label: "File" },
+                  { color: "#f7ae24", label: "مرسل" },
+                  { color: "#ccf9d6", label: "مرسل الیه" },
+                  { color: "#6de39c", label: "فایل" },
                 ].map((item, idx) => (
                   <Box
                     key={idx}

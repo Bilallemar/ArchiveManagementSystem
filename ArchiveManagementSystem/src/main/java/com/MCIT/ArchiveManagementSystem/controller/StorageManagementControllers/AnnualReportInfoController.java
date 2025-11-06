@@ -11,13 +11,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.AnnualReportInfo;
 import com.MCIT.ArchiveManagementSystem.services.StorageManagementService.AnnualReportInfoService;
 
 @RestController
-@RequestMapping("/annual-reports-info")
+@RequestMapping("/api/annual-reports-info")
 public class AnnualReportInfoController {
     
 
@@ -62,6 +63,13 @@ private final AnnualReportInfoService annualReportInfoService;
                     .body("AnnualReport with ID " + id + " not found.");
         }
     }
+
+        @GetMapping("/search")
+public List<AnnualReportInfo> searchAnnualReport(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) String field) {
+    return annualReportInfoService.searchByKeyword(field, keyword);
+}
 }
 
 

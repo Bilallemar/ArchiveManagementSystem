@@ -17,7 +17,7 @@ public class AnnualReportInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; 
     private String bookNumber;
-    private String pravince;  
+    private String province;  
     private String district;
     private LocalDate year;  
     private String waseqaType;

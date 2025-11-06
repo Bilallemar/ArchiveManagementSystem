@@ -8,14 +8,14 @@ import com.MCIT.ArchiveManagementSystem.models.StorageManagement.AnnualReportInf
 
 public interface AnnualReportInfoRepository extends JpaRepository<AnnualReportInfo, Long> {
 
-    //  List<AnnualReportInfo> findByBookNumberContainingIgnoreCaseOrPravinceContainingIgnoreCaseOrDistrictContainingIgnoreCase(
-    //     String bookNumber, String pravince, String district
-    // );
+     List<AnnualReportInfo> findByBookNumberContainingIgnoreCaseOrProvinceContainingIgnoreCaseOrDistrictContainingIgnoreCase(
+        String bookNumber, String province, String district
+    );
 
-    // // 🔹 د هر فیلډ لپاره جلا methods (د فلټر لپاره)
-    // List<AnnualReportInfo> findByBookNumberContainingIgnoreCase(String keyword);
-    // List<AnnualReportInfo> findByPravinceContainingIgnoreCase(String keyword);
-    // List<AnnualReportInfo> findByDistrictContainingIgnoreCase(String keyword);
+    // 🔹 د هر فیلډ لپاره جلا methods (د فلټر لپاره)
+    List<AnnualReportInfo> findByBookNumberContainingIgnoreCase(String keyword);
+    List<AnnualReportInfo> findByProvinceContainingIgnoreCase(String keyword);
+    List<AnnualReportInfo> findByDistrictContainingIgnoreCase(String keyword);
 
     
 }

@@ -11,6 +11,9 @@ import toast from "react-hot-toast";
 import { useMyContext } from "../../store/ContextApi";
 import { useEffect } from "react";
 import TextField from "@mui/material/TextField";
+import { IconButton, InputAdornment } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { AccountCircle } from "@mui/icons-material";
 
 const Login = () => {
   // Step 1: Login method and Step 2: Verify 2FA
@@ -20,7 +23,10 @@ const Login = () => {
   // Access the token and setToken function using the useMyContext hook from the ContextProvider
   const { setToken, token } = useMyContext();
   const navigate = useNavigate();
-
+  const [showPassword, setShowPassword] = useState(false);
+  const handleTogglePassword = () => {
+    setShowPassword((prev) => !prev);
+  };
   //react hook form initialization
   const {
     register,
@@ -47,7 +53,7 @@ const Login = () => {
     //store the token on the context state  so that it can be shared any where in our application by context provider
     setToken(token);
 
-    navigate("/receipts");
+    navigate("/");
   };
 
   //function for handle login with credentials
@@ -158,10 +164,32 @@ const Login = () => {
                   helperText={errors.username?.message}
                   id="username"
                   label="UserName"
-                  variant="standard"
+                  variant="outlined"
                   fullWidth
                   required
-                  placeholder="type your username"
+                  placeholder="Type your username"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AccountCircle sx={{ color: "action.active" }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "10px",
+                      "& fieldset": {
+                        borderColor: "#90caf9", // پیکه آبي رنګ
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#1976d2", // ژور آبي رنګ کله hover شي
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#1976d2",
+                        borderWidth: "2px",
+                      },
+                    },
+                  }}
                 />
                 <TextField
                   {...register("password", {
@@ -171,11 +199,42 @@ const Login = () => {
                   helperText={errors.password?.message}
                   id="password"
                   label="Password"
-                  variant="standard"
                   fullWidth
                   required
-                  type="password"
-                  placeholder="type your password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Type your password"
+                  variant="outlined" // بدل کړه له standard څخه outlined ته
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={handleTogglePassword}
+                          edge="end"
+                          sx={{
+                            color: "action.active",
+                            "&:hover": { backgroundColor: "transarent" },
+                          }}
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "10px",
+                      "& fieldset": {
+                        borderColor: "#90caf9", // پیکه آبي رنګ
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#1976d2", // ژور آبي رنګ کله hover شي
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#1976d2",
+                        borderWidth: "2px",
+                      },
+                    },
+                  }}
                 />
               </div>
               <Buttons

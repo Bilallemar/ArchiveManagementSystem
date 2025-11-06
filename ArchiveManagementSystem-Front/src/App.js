@@ -30,6 +30,9 @@ import UpdateReceivedIssuedBook from "./components/StorageManagement/ReceivedIss
 import AnnualReportList from "./components/StorageManagement/AnnualReport/AnnualReportList";
 import AddAnnualReport from "./components/StorageManagement/AnnualReport/AddAnnualReport";
 import UpdateAnnualReport from "./components/StorageManagement/AnnualReport/UpdateAnnualReport";
+import AnnualReportInfoList from "./components/StorageManagement/AnnualReportInfo/AnnualReportInfoList";
+import AddAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/AddAnnualReportInfo";
+import UpdateAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/UpdateAnnualReportInfo";
 // import Footer from "./components/Footer/Footer";
 
 const App = () => {
@@ -56,6 +59,31 @@ const App = () => {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route
+          path="/annual-reports-info"
+          element={
+            <ProtectedRoute>
+              <AnnualReportInfoList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annual-reports-info/add-annual-report-info"
+          element={
+            <ProtectedRoute>
+              <AddAnnualReportInfo />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annual-reports-info/:id"
+          element={
+            <ProtectedRoute>
+              <UpdateAnnualReportInfo />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/annual-reports"
           element={

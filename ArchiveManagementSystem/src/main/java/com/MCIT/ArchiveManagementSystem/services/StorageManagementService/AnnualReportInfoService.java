@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.AnnualReportInfo;
-import com.MCIT.ArchiveManagementSystem.models.StorageManagement.Receipts;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.AnnualReportInfoRepository;
 
 @Service
@@ -29,7 +28,7 @@ public class AnnualReportInfoService {
         AnnualReportInfo existingReport = annualReportInfoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("AnnualReportInfo not found with id: " + id));
         existingReport.setBookNumber(annualReportDetails.getBookNumber());
-        existingReport.setPravince(annualReportDetails.getPravince());
+        existingReport.setProvince(annualReportDetails.getProvince());
         existingReport.setDistrict(annualReportDetails.getDistrict());
         existingReport.setYear(annualReportDetails.getYear());
         existingReport.setWaseqaType(annualReportDetails.getWaseqaType());
@@ -43,5 +42,35 @@ public class AnnualReportInfoService {
                 .orElseThrow(() -> new RuntimeException("annualReportInfo not found with id: " + id));
         annualReportInfoRepository.delete(annualReport);
     }
+public List<AnnualReportInfo> searchByKeyword(String field, String keyword) {
+    // keyword null یا empty وي، ټول ریکارډونه راوړه
+    if (keyword == null || keyword.trim().isEmpty()) {
+        return annualReportInfoRepository.findAll();
+    }
 
+    // field null یا empty وي، default search په ټولو فیلډونو
+    if (field == null || field.trim().isEmpty()) {
+        return annualReportInfoRepository
+            .findByBookNumberContainingIgnoreCaseOrProvinceContainingIgnoreCaseOrDistrictContainingIgnoreCase(
+            
+                keyword, keyword, keyword
+            );
+    }
+
+    // اوس safe ده چې switch وکاروې
+    switch (field) {
+        case "bookNumber":
+            return annualReportInfoRepository.findByBookNumberContainingIgnoreCase(keyword);
+        case "province":
+            return annualReportInfoRepository.findByProvinceContainingIgnoreCase(keyword);
+        case "district":
+            return annualReportInfoRepository.findByDistrictContainingIgnoreCase(keyword);
+
+        default:
+            return annualReportInfoRepository
+                .findByBookNumberContainingIgnoreCaseOrProvinceContainingIgnoreCaseOrDistrictContainingIgnoreCase(
+                    keyword, keyword, keyword
+                );
+    }
+}
 }
