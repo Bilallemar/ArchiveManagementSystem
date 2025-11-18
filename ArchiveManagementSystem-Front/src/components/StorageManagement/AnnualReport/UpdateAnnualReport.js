@@ -288,7 +288,7 @@ export default function UpdateAnnualReport() {
                 name="year"
                 type="date"
                 InputLabelProps={{ shrink: true }}
-                label=" سال"
+                label="  کال"
                 variant="outlined"
                 value={formData.year}
                 onChange={handleInputChange}
