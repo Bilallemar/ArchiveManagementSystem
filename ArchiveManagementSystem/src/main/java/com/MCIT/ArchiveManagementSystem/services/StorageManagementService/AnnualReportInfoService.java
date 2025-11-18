@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.AnnualReportInfo;
-import com.MCIT.ArchiveManagementSystem.models.StorageManagement.Receipts;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.AnnualReportInfoRepository;
 
 @Service
