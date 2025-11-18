@@ -1,4 +1,7 @@
+
+
 package com.MCIT.ArchiveManagementSystem.models;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -22,7 +25,7 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(columnNames = "username"),
                 @UniqueConstraint(columnNames = "email")
         })
-public class User{
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -58,9 +61,15 @@ public class User{
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE})
     @JoinColumn(name = "role_id", referencedColumnName = "role_id")
-    @JsonBackReference
+    @JsonBackReference("role-user")  // FIXED: Added unique name
     @ToString.Exclude
     private Role role;
+    
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE})
+    @JoinColumn(name = "management_id", referencedColumnName = "management_id")
+    @JsonBackReference("management-user")  // FIXED: Added unique name
+    @ToString.Exclude
+    private Management management;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -92,5 +101,3 @@ public class User{
         return getClass().hashCode();
     }
 }
-
-

@@ -48,6 +48,22 @@ public class JwtUtils {
                 .signWith(key())
                 .compact();
     }
+public String generateTokenWithManagement(UserDetailsImpl userDetails, Long managementId) {
+    String username = userDetails.getUsername();
+    String roles = userDetails.getAuthorities().stream()
+            .map(authority -> authority.getAuthority())
+            .collect(Collectors.joining(","));
+
+    return Jwts.builder()
+            .subject(username)
+            .claim("roles", roles)
+            .claim("is2faEnabled", userDetails.is2faEnabled())
+            .claim("managementId", managementId)
+            .issuedAt(new Date())
+            .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
+            .signWith(key())
+            .compact();
+}
 
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parser()
