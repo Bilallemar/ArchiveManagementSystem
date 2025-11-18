@@ -3,7 +3,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.MCIT.ArchiveManagementSystem.models.AuditLog;
-import com.MCIT.ArchiveManagementSystem.models.Note;
 import com.MCIT.ArchiveManagementSystem.repositories.AuditLogRepository;
 import com.MCIT.ArchiveManagementSystem.services.AuditLogService;
 
@@ -17,23 +16,23 @@ public class AuditLogServiceImpl implements AuditLogService {
     AuditLogRepository auditLogRepository;
 
     @Override
-    public void logNoteCreation(String username, Note note){
+    public void logNoteCreation(String username){
         AuditLog log = new AuditLog();
         log.setAction("CREATE");
         log.setUsername(username);
-        log.setNoteId(note.getId());
-        log.setNoteContent(note.getContent());
+        // log.setNoteId(note.getId());
+        // log.setNoteContent(note.getContent());
         log.setTimestamp(LocalDateTime.now());
         auditLogRepository.save(log);
     }
 
     @Override
-    public void logNoteUpdate(String username, Note note){
+    public void logNoteUpdate(String username ){
         AuditLog log = new AuditLog();
         log.setAction("UPDATE");
         log.setUsername(username);
-        log.setNoteId(note.getId());
-        log.setNoteContent(note.getContent());
+        // log.setNoteId(note.getId());
+        // log.setNoteContent(note.getContent());
         log.setTimestamp(LocalDateTime.now());
         auditLogRepository.save(log);
     }
