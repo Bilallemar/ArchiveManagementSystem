@@ -4,8 +4,10 @@ import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.HifziyaHaz
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,20 +25,19 @@ public class HifziyaHazariController {
     }
 
 
-   @PostMapping
-    public HifziyaHazari createHifziyaHazari
-    (@RequestBody String hifziyaHazari
-      ) throws IOException {
+   
+@PostMapping(consumes = {"multipart/form-data"})
+public HifziyaHazari createHifziyaHazari(
+        @RequestPart("hifziyaHazari") String hifziyaHazari,
+        @RequestPart(value = "fileURL", required = false) MultipartFile fileURL
+) throws IOException {
 
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    HifziyaHazari recivedHifziyaHazari = mapper.readValue(hifziyaHazari, HifziyaHazari.class);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        HifziyaHazari recivedHifziyaHazari = mapper.readValue(hifziyaHazari, HifziyaHazari.class);
-
-
-
-        return hifziyaHazariService.createHifziyaHazari(recivedHifziyaHazari);
-    }
+    return hifziyaHazariService.createHifziyaHazari(recivedHifziyaHazari, fileURL);
+}
 
 
 
@@ -51,17 +52,25 @@ public class HifziyaHazariController {
 
     // Get AttendanceBook by ID
     @GetMapping("/{id}")
-    public ResponseEntity<HifziyaHazari> getHifziyaHazariById(@PathVariable Integer id) {
-        return hifziyaHazariService.getHifziyaHazariById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-    @PutMapping("/{id}")
-public HifziyaHazari updateEmpoymentOffice(
+    public ResponseEntity<HifziyaHazari> getHifziyaHazariById(
         @PathVariable Integer id,
-        @RequestBody HifziyaHazari hifziyaHazari
-        ) {
-    return hifziyaHazariService.updateHifziyaHazari(id, hifziyaHazari);
+        @RequestPart("hifziyaHazari") String registrationJson,
+         @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL    )         // JSON string د Receipts object لپاره
+       {
+
+    try {
+        // JSON string parse کوو
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        HifziyaHazari recivedHifziyaHazari = mapper.readValue(registrationJson, HifziyaHazari.class);
+
+        // service ته پاس کوو
+        HifziyaHazari updatedHifziyaHazari = hifziyaHazariService.updateHifziyaHazari(id, recivedHifziyaHazari, fileURL);
+
+        return ResponseEntity.ok(updatedHifziyaHazari);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
 }
     // Delete AttendanceBook by ID
     @DeleteMapping("/{id}")

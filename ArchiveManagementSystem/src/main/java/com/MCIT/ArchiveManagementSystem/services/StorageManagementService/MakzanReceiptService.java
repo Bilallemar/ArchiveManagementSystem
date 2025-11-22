@@ -46,50 +46,50 @@ public class MakzanReceiptService {
     public Optional<MakzanReceipt> getReceiptById(Integer id) {
         return makzanReceiptRepository.findById(id);
     }
-public MakzanReceipt createReceipt(MakzanReceipt receipts, MultipartFile fileURL) {
+public MakzanReceipt createReceipt(MakzanReceipt makzanReceipts, MultipartFile fileURL) {
     // 1. MakzanReceipt ذخیره کړه
-    receipts = makzanReceiptRepository.save(receipts);
+    makzanReceipts = makzanReceiptRepository.save(makzanReceipts);
 
     // 2. که فایل موجود وي، ذخیره یې کړه
     if (fileURL != null && !fileURL.isEmpty()) {
         FileEntity fileEntity = new FileEntity();
-        fileEntity.setFilePath(fileService.savefile(fileURL, receipts));
+        fileEntity.setFilePath(fileService.savefile(fileURL, makzanReceipts));
         fileEntity.setFileName(fileURL.getOriginalFilename());
         fileEntity.setFileType(fileURL.getContentType());
-        fileEntity.setMakzanReceipt(receipts);      // د ریکارډ سره تړاو
+        fileEntity.setMakzanReceipt(makzanReceipts);      // د ریکارډ سره تړاو
         fileRepository.save(fileEntity);            // DB ته ذخیره
-        receipts.getFiles().add(fileEntity);        // لیست ته اضافه
+        makzanReceipts.getFiles().add(fileEntity);        // لیست ته اضافه
     }
 
-    return receipts;
+    return makzanReceipts;
 }
 
    @Transactional
-public MakzanReceipt updateReceipt(Integer id, MakzanReceipt receiptsDetails, MultipartFile[] fileURL) {
+public MakzanReceipt updateReceipt(Integer id, MakzanReceipt makzanReceiptsDetails, MultipartFile[] fileURL) {
     // 1. موجوده ریکارډ ترلاسه کړه
-    MakzanReceipt receipts = makzanReceiptRepository.findById(id)
+    MakzanReceipt makzanReceipts = makzanReceiptRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Receipt not found with id: " + id));
 
     // 2. اصلي فیلډونه اپډېټ کړه
-    receipts.setLetterNo(receiptsDetails.getLetterNo());
-    receipts.setLetterDate(receiptsDetails.getLetterDate());
-    receipts.setSubjectType(receiptsDetails.getSubjectType());
-    receipts.setDescription(receiptsDetails.getDescription());
+    makzanReceipts.setLetterNo(makzanReceiptsDetails.getLetterNo());
+    makzanReceipts.setLetterDate(makzanReceiptsDetails.getLetterDate());
+    makzanReceipts.setSubjectType(makzanReceiptsDetails.getSubjectType());
+    makzanReceipts.setDescription(makzanReceiptsDetails.getDescription());
    
 
     // 3. فایلونه اپډېټ یا اضافه کړه که موجود وي
     if (fileURL != null && fileURL.length > 0) {
         // 3a. موجوده فایلونه حذف کړه
-        if (receipts.getFiles() != null) {
-            for (FileEntity oldFile : receipts.getFiles()) {
+        if (makzanReceipts.getFiles() != null) {
+            for (FileEntity oldFile : makzanReceipts.getFiles()) {
                 fileService.deleteFile(oldFile.getFilePath()); // د حقیقي مسیر نه فایل حذف
                 fileRepository.delete(oldFile);               // DB نه حذف
             }
-            receipts.getFiles().clear();
+            makzanReceipts.getFiles().clear();
         }
 
         // 3b. نوي فایلونه ذخیره کړه
-        List<String> storedPaths = fileService.savefiles(fileURL, receipts); // د څو فایلونو save method
+        List<String> storedPaths = fileService.savefiles(fileURL, makzanReceipts); // د څو فایلونو save method
 
         List<FileEntity> newAttachments = new ArrayList<>();
         for (int i = 0; i < fileURL.length; i++) {
@@ -98,22 +98,22 @@ public MakzanReceipt updateReceipt(Integer id, MakzanReceipt receiptsDetails, Mu
             fe.setFilePath(storedPaths.get(i));         // حقیقي مسیر
             fe.setFileName(f.getOriginalFilename());   // د فایل اصل نوم
             fe.setFileType(f.getContentType());        // فایل ټایپ
-            fe.setMakzanReceipt(receipts);                   // د ریکارډ سره رابطه
+            fe.setMakzanReceipt(makzanReceipts);                   // د ریکارډ سره رابطه
             fileRepository.save(fe);                   // DB ته ذخیره کړه
             newAttachments.add(fe);
         }
 
-        receipts.setFiles(newAttachments);
+        makzanReceipts.setFiles(newAttachments);
     }
 
     // 4. وروستی ریکارډ ذخیره کړه او واپس یې کړه
-    return makzanReceiptRepository.save(receipts);
+    return makzanReceiptRepository.save(makzanReceipts);
 }
 
     public void deleteReceipt(Integer id) {
-        MakzanReceipt receipts = makzanReceiptRepository.findById(id)
+        MakzanReceipt makzanReceipts = makzanReceiptRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Receipt not found with id: " + id));
-        makzanReceiptRepository.delete(receipts);
+        makzanReceiptRepository.delete(makzanReceipts);
     }
 
 

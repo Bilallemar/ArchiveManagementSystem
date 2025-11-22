@@ -35,7 +35,6 @@ public class HifziyaHazari {
     @JoinColumn(name = "org")
     private Org org;
 
-    private String file;
     private String description;
     private Boolean isIndraj;
 

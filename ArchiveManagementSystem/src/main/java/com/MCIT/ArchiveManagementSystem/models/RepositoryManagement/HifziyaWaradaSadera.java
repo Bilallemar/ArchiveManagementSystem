@@ -34,7 +34,6 @@ public class HifziyaWaradaSadera {
     private String outgoingDate;
     private String summary;
     private String description;
-    private String file;
     private Boolean isIndraj;
 
     @OneToMany(mappedBy = "hifziyaWaradaSadera", cascade = CascadeType.ALL, orphanRemoval = true)
