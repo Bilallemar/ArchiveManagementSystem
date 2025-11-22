@@ -11,6 +11,11 @@ import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.services.FileService;
+import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
+import java.util.ArrayList;
+
 
 
 @Service
@@ -21,11 +26,15 @@ public class MakzanReceiptService {
   
 
     private final MakzanReceiptRepository makzanReceiptRepository;
+    private final FileService fileService;
+    private final FileRepository fileRepository;
 
 
 
-    public MakzanReceiptService(MakzanReceiptRepository makzanReceiptRepository ) {
+    public MakzanReceiptService(MakzanReceiptRepository makzanReceiptRepository, FileService fileService, FileRepository fileRepository) {
         this.makzanReceiptRepository = makzanReceiptRepository;
+        this.fileService = fileService;
+        this.fileRepository = fileRepository;
      
 
     }
@@ -37,15 +46,23 @@ public class MakzanReceiptService {
     public Optional<MakzanReceipt> getReceiptById(Integer id) {
         return makzanReceiptRepository.findById(id);
     }
+public MakzanReceipt createReceipt(MakzanReceipt receipts, MultipartFile fileURL) {
+    // 1. MakzanReceipt ذخیره کړه
+    receipts = makzanReceiptRepository.save(receipts);
 
-    public MakzanReceipt createReceipt(MakzanReceipt receipts,MultipartFile fileURL)  {
-        receipts = makzanReceiptRepository.save(receipts);
-
-        // FileEntity fileEntity = new FileEntity();
-        // fileEntity.setFilePath(fileService.savefile(fileURL,receipts));
-
-        return receipts;
+    // 2. که فایل موجود وي، ذخیره یې کړه
+    if (fileURL != null && !fileURL.isEmpty()) {
+        FileEntity fileEntity = new FileEntity();
+        fileEntity.setFilePath(fileService.savefile(fileURL, receipts));
+        fileEntity.setFileName(fileURL.getOriginalFilename());
+        fileEntity.setFileType(fileURL.getContentType());
+        fileEntity.setMakzanReceipt(receipts);      // د ریکارډ سره تړاو
+        fileRepository.save(fileEntity);            // DB ته ذخیره
+        receipts.getFiles().add(fileEntity);        // لیست ته اضافه
     }
+
+    return receipts;
+}
 
    @Transactional
 public MakzanReceipt updateReceipt(Integer id, MakzanReceipt receiptsDetails, MultipartFile[] fileURL) {
@@ -57,38 +74,37 @@ public MakzanReceipt updateReceipt(Integer id, MakzanReceipt receiptsDetails, Mu
     receipts.setLetterNo(receiptsDetails.getLetterNo());
     receipts.setLetterDate(receiptsDetails.getLetterDate());
     receipts.setSubjectType(receiptsDetails.getSubjectType());
-    receipts.setFile(receiptsDetails.getFile());
     receipts.setDescription(receiptsDetails.getDescription());
    
 
     // 3. فایلونه اپډېټ یا اضافه کړه که موجود وي
-    // if (fileURL != null && fileURL.length > 0) {
-    //     // 3a. موجوده فایلونه حذف کړه
-    //     if (receipts.getAttachments() != null) {
-    //         for (FileEntity oldFile : receipts.getAttachments()) {
-    //             fileService.deleteFile(oldFile.getFilePath()); // د حقیقي مسیر نه فایل حذف
-    //             fileRepository.delete(oldFile);               // DB نه حذف
-    //         }
-    //         receipts.getAttachments().clear();
-    //     }
+    if (fileURL != null && fileURL.length > 0) {
+        // 3a. موجوده فایلونه حذف کړه
+        if (receipts.getFiles() != null) {
+            for (FileEntity oldFile : receipts.getFiles()) {
+                fileService.deleteFile(oldFile.getFilePath()); // د حقیقي مسیر نه فایل حذف
+                fileRepository.delete(oldFile);               // DB نه حذف
+            }
+            receipts.getFiles().clear();
+        }
 
         // 3b. نوي فایلونه ذخیره کړه
-    //     List<String> storedPaths = fileService.savefiles(fileURL, receipts); // د څو فایلونو save method
+        List<String> storedPaths = fileService.savefiles(fileURL, receipts); // د څو فایلونو save method
 
-    //     List<FileEntity> newAttachments = new ArrayList<>();
-    //     for (int i = 0; i < fileURL.length; i++) {
-    //         MultipartFile f = fileURL[i];
-    //         FileEntity fe = new FileEntity();
-    //         fe.setFilePath(storedPaths.get(i));         // حقیقي مسیر
-    //         fe.setFileName(f.getOriginalFilename());   // د فایل اصل نوم
-    //         fe.setFileType(f.getContentType());        // فایل ټایپ
-    //         fe.setReceipt(receipts);                   // د ریکارډ سره رابطه
-    //         fileRepository.save(fe);                   // DB ته ذخیره کړه
-    //         newAttachments.add(fe);
-    //     }
+        List<FileEntity> newAttachments = new ArrayList<>();
+        for (int i = 0; i < fileURL.length; i++) {
+            MultipartFile f = fileURL[i];
+            FileEntity fe = new FileEntity();
+            fe.setFilePath(storedPaths.get(i));         // حقیقي مسیر
+            fe.setFileName(f.getOriginalFilename());   // د فایل اصل نوم
+            fe.setFileType(f.getContentType());        // فایل ټایپ
+            fe.setMakzanReceipt(receipts);                   // د ریکارډ سره رابطه
+            fileRepository.save(fe);                   // DB ته ذخیره کړه
+            newAttachments.add(fe);
+        }
 
-    //     receipts.setAttachments(newAttachments);
-    // }
+        receipts.setFiles(newAttachments);
+    }
 
     // 4. وروستی ریکارډ ذخیره کړه او واپس یې کړه
     return makzanReceiptRepository.save(receipts);

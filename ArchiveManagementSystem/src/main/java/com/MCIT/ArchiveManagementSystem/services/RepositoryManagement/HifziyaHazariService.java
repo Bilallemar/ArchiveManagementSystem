@@ -34,7 +34,6 @@ public class HifziyaHazariService {
         existingDoc.setType(fileOfficeDetails.getType());
         existingDoc.setYear(fileOfficeDetails.getYear());
         existingDoc.setOrg(fileOfficeDetails.getOrg());
-        existingDoc.setFile(fileOfficeDetails.getFile());
         existingDoc.setDescription(fileOfficeDetails.getDescription());
         existingDoc.setIsIndraj(fileOfficeDetails.getIsIndraj());
 

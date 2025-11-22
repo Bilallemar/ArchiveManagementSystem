@@ -2,8 +2,14 @@ package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Org;
 
 @Entity
@@ -30,5 +36,9 @@ public class HifziyaWaradaSadera {
     private String description;
     private String file;
     private Boolean isIndraj;
-}
 
+    @OneToMany(mappedBy = "hifziyaWaradaSadera", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude          // ADD THIS
+    @EqualsAndHashCode.Exclude // ADD THIS
+    private List<FileEntity> files = new ArrayList<>();
+}

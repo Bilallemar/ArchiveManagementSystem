@@ -50,7 +50,6 @@ public HifziyaWaradaSadera updateHifziyaWaradaSadera(Integer id, HifziyaWaradaSa
     existingDoc.setOutgoingDate(hifziyaWaradaSaderaDetails.getOutgoingDate());
     existingDoc.setSummary(hifziyaWaradaSaderaDetails.getSummary());
     existingDoc.setDescription(hifziyaWaradaSaderaDetails.getDescription());
-    existingDoc.setFile(hifziyaWaradaSaderaDetails.getFile());
     existingDoc.setIsIndraj(hifziyaWaradaSaderaDetails.getIsIndraj());
 
     // if (fileURL != null && fileURL.length > 0) {
