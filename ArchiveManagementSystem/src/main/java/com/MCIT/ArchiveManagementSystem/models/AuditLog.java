@@ -15,7 +15,7 @@ public class AuditLog {
     private Long id;
     private String action;
     private String username;
-    private Long noteId;
-    private String noteContent;
+    private Integer recordId;
+    private String RecordContent;
     private LocalDateTime timestamp;
 }

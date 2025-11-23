@@ -5,14 +5,16 @@ import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.Makza
 import com.MCIT.ArchiveManagementSystem.services.StorageManagementService.MakzanReceiptService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
+import com.MCIT.ArchiveManagementSystem.services.AuditLogService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.security.core.Authentication;
 
 
 import java.io.IOException;
@@ -29,12 +31,15 @@ public class MakzanReceiptController {
 
     private final MakzanReceiptService receiptsService;
     private final Path fileStorageLocation;
+    private final AuditLogService auditLogService;
     // private final FileService fileService;
 
     
     public MakzanReceiptController(MakzanReceiptService receiptsService,  
-                              MakzanReceiptRepository receiptsRepository) {
+                              MakzanReceiptRepository receiptsRepository,
+                              AuditLogService auditLogService) {
         this.receiptsService = receiptsService;
+        this.auditLogService = auditLogService;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
         
         try {
@@ -56,20 +61,30 @@ public class MakzanReceiptController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Original create endpoint (kept for backward compatibility)
-    @PostMapping
-    public MakzanReceipt createReceipt(@RequestPart("receipts") String receipts,
-    @RequestPart(value = "fileURL", required = true) MultipartFile fileURL) throws IOException {
 
+@PostMapping
+public MakzanReceipt createReceipt(
+        @RequestPart("receipts") String receipts,
+        @RequestPart(value = "fileURL", required = true) MultipartFile fileURL) throws IOException {
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        MakzanReceipt recivedReceipts = mapper.readValue(receipts, MakzanReceipt.class);
+    // JSON string → MakzanReceipt object
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    MakzanReceipt recivedReceipts = mapper.readValue(receipts, MakzanReceipt.class);
 
+    // DB ته save کول
+    MakzanReceipt savedReceipt = receiptsService.createReceipt(recivedReceipts, fileURL);
 
+    // اوسني لاګ ان کس username ترلاسه کول
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String username = authentication.getName();
 
-        return receiptsService.createReceipt(recivedReceipts, fileURL);
-    }
+    // AuditLog ثبتول
+    auditLogService.logCreation(username, savedReceipt);
+
+    return savedReceipt;
+}
+
 
 
 
