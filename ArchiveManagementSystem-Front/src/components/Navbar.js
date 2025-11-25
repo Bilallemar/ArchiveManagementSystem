@@ -167,19 +167,19 @@ const Navbar = () => {
             >
               {token && (
                 <>
-                  <Button
+                  {/* <Button
                     component={Link}
                     to="/annual-reports-info"
                     sx={getButtonStyles("/annual-reports-info")}
                   >
                     ګزارش راپور
-                  </Button>
+                  </Button> */}
                   <Button
                     component={Link}
                     to="/annual-reports"
                     sx={getButtonStyles("/annual-reports")}
                   >
-                    رپور سال تمام
+                    سوانح
                   </Button>
                   <Button
                     component={Link}
@@ -190,10 +190,10 @@ const Navbar = () => {
                   </Button>
                   <Button
                     component={Link}
-                    to="/receipts"
-                    sx={getButtonStyles("/receipts")}
+                    to="/hifziya-hazari"
+                    sx={getButtonStyles("/hifziya-hazari")}
                   >
-                    رسیدات
+                    کتاب حاضري
                   </Button>
                 </>
               )}

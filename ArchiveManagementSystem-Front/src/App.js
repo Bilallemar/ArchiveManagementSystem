@@ -21,18 +21,18 @@ import NotFound from "./components/NotFound";
 import ContactPage from "./components/contactPage/ContactPage";
 import AboutPage from "./components/aboutPage/AboutPage";
 import ResetPassword from "./components/Auth/ResetPassword";
-import ReceiptsList from "./components/StorageManagement/Receipts/ReceiptsList";
-import AddReceipt from "./components/StorageManagement/Receipts/AddReceipt";
-import UpdateReceipt from "./components/StorageManagement/Receipts/UpdateReceipt";
-import ReceivedIssuedBookList from "./components/StorageManagement/ReceivedIssuedBook/ReceivedIssuedBookList";
-import AddReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/AddReceivedIssuedBook";
-import UpdateReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/UpdateReceivedIssuedBook";
-import AnnualReportList from "./components/StorageManagement/AnnualReport/AnnualReportList";
-import AddAnnualReport from "./components/StorageManagement/AnnualReport/AddAnnualReport";
-import UpdateAnnualReport from "./components/StorageManagement/AnnualReport/UpdateAnnualReport";
-import AnnualReportInfoList from "./components/StorageManagement/AnnualReportInfo/AnnualReportInfoList";
-import AddAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/AddAnnualReportInfo";
-import UpdateAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/UpdateAnnualReportInfo";
+import HazariList from "./components/Hifziya/HifziyaHazari/HazariList";
+// import AddReceipt from "./components/StorageManagement/Receipts/AddReceipt";
+// import UpdateReceipt from "./components/StorageManagement/Receipts/UpdateReceipt";
+// import ReceivedIssuedBookList from "./components/StorageManagement/ReceivedIssuedBook/ReceivedIssuedBookList";
+// import AddReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/AddReceivedIssuedBook";
+// import UpdateReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/UpdateReceivedIssuedBook";
+// import AnnualReportList from "./components/StorageManagement/AnnualReport/AnnualReportList";
+// import AddAnnualReport from "./components/StorageManagement/AnnualReport/AddAnnualReport";
+// import UpdateAnnualReport from "./components/StorageManagement/AnnualReport/UpdateAnnualReport";
+// import AnnualReportInfoList from "./components/StorageManagement/AnnualReportInfo/AnnualReportInfoList";
+// import AddAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/AddAnnualReportInfo";
+// import UpdateAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/UpdateAnnualReportInfo";
 // import Footer from "./components/Footer/Footer";
 
 const App = () => {
@@ -59,7 +59,7 @@ const App = () => {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route
+        {/* <Route
           path="/annual-reports-info"
           element={
             <ProtectedRoute>
@@ -147,12 +147,12 @@ const App = () => {
               <AddReceipt />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
-          path="/receipts"
+          path="/hifziya-hazari"
           element={
             <ProtectedRoute>
-              <ReceiptsList />
+              <HazariList />
             </ProtectedRoute>
           }
         />
