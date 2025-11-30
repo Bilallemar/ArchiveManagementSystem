@@ -167,13 +167,13 @@ const Navbar = () => {
             >
               {token && (
                 <>
-                  {/* <Button
+                  <Button
                     component={Link}
-                    to="/annual-reports-info"
-                    sx={getButtonStyles("/annual-reports-info")}
+                    to="/archives"
+                    sx={getButtonStyles("/archives")}
                   >
-                    ګزارش راپور
-                  </Button> */}
+                    ارشیف
+                  </Button>
                   <Button
                     component={Link}
                     to="/annual-reports"

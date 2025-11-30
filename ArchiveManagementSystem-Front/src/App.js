@@ -22,6 +22,8 @@ import ContactPage from "./components/contactPage/ContactPage";
 import AboutPage from "./components/aboutPage/AboutPage";
 import ResetPassword from "./components/Auth/ResetPassword";
 import HazariList from "./components/Hifziya/HifziyaHazari/HazariList";
+import ArchiveList from "./components/Archive/ArchiveList";
+
 // import AddReceipt from "./components/StorageManagement/Receipts/AddReceipt";
 // import UpdateReceipt from "./components/StorageManagement/Receipts/UpdateReceipt";
 // import ReceivedIssuedBookList from "./components/StorageManagement/ReceivedIssuedBook/ReceivedIssuedBookList";
@@ -59,6 +61,15 @@ const App = () => {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+
+          <Route
+          path="/archives"
+          element={
+            <ProtectedRoute>
+              <ArchiveList />
+            </ProtectedRoute>
+          }
+        />
         {/* <Route
           path="/annual-reports-info"
           element={
