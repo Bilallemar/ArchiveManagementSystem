@@ -35,15 +35,41 @@ public class HifziyaHazariController {
 
 
    
+// @PostMapping(consumes = {"multipart/form-data"})
+// public HifziyaHazari createHifziyaHazari(
+//         @RequestPart("hifziyaHazari") String hifziyaHazari,
+//         @RequestPart(value = "fileURL", required = false) MultipartFile fileURL
+// ) throws IOException {
+
+//     ObjectMapper mapper = new ObjectMapper();
+//     mapper.registerModule(new JavaTimeModule());
+//     HifziyaHazari recivedHifziyaHazari = mapper.readValue(hifziyaHazari, HifziyaHazari.class);
+
+//     return hifziyaHazariService.createHifziyaHazari(recivedHifziyaHazari, fileURL);
+// }
 @PostMapping(consumes = {"multipart/form-data"})
 public HifziyaHazari createHifziyaHazari(
         @RequestPart("hifziyaHazari") String hifziyaHazari,
         @RequestPart(value = "fileURL", required = false) MultipartFile fileURL
 ) throws IOException {
 
+    // -------------------------------
+    // 🔹 ډیباګ: چاپ کړئ JSON
+    System.out.println("Received JSON: " + hifziyaHazari);
+
+    if (fileURL != null) {
+        System.out.println("Received File: " + fileURL.getOriginalFilename() + ", size=" + fileURL.getSize());
+    } else {
+        System.out.println("No file received");
+    }
+    // -------------------------------
+
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
     HifziyaHazari recivedHifziyaHazari = mapper.readValue(hifziyaHazari, HifziyaHazari.class);
+
+    // 🔹 ډیباګ: چاپ کړئ Parsed Object
+    System.out.println("Parsed HifziyaHazari: " + recivedHifziyaHazari);
 
     return hifziyaHazariService.createHifziyaHazari(recivedHifziyaHazari, fileURL);
 }

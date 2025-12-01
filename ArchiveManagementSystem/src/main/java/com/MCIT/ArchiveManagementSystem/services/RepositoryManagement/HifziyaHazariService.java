@@ -36,22 +36,45 @@ public class HifziyaHazariService {
     public Optional<HifziyaHazari> getHifziyaHazariById(Integer id) {
         return hifziyaHazariRepository.findById(id);
     }
-    public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile fileURL) {
-  hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
+//     public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile fileURL) {
+//   hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
 
-    // 2. که فایل موجود وي، ذخیره یې کړه
+//     // 2. که فایل موجود وي، ذخیره یې کړه
+//     if (fileURL != null && !fileURL.isEmpty()) {
+//         FileEntity fileEntity = new FileEntity();
+//         fileEntity.setFilePath(fileService.savefile(fileURL, hifziyaHazari));
+//         fileEntity.setFileName(fileURL.getOriginalFilename());
+//         fileEntity.setFileType(fileURL.getContentType());
+//         fileEntity.setHifziyaHazari(hifziyaHazari);      // د ریکارډ سره تړاو
+//         fileRepository.save(fileEntity);            // DB ته ذخیره
+//         hifziyaHazari.getFiles().add(fileEntity);        // لیست ته اضافه
+//     }
+
+//     return hifziyaHazari;
+//     }
+public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile fileURL) {
+    // 🔹 ډیباګ: چاپ کړئ د ریکارډ معلومات
+    System.out.println("Saving HifziyaHazari: " + hifziyaHazari);
+
+    hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
+
+    // که فایل موجود وي، ذخیره یې کړه
     if (fileURL != null && !fileURL.isEmpty()) {
+        System.out.println("Saving file: " + fileURL.getOriginalFilename());
         FileEntity fileEntity = new FileEntity();
         fileEntity.setFilePath(fileService.savefile(fileURL, hifziyaHazari));
         fileEntity.setFileName(fileURL.getOriginalFilename());
         fileEntity.setFileType(fileURL.getContentType());
-        fileEntity.setHifziyaHazari(hifziyaHazari);      // د ریکارډ سره تړاو
-        fileRepository.save(fileEntity);            // DB ته ذخیره
-        hifziyaHazari.getFiles().add(fileEntity);        // لیست ته اضافه
+        fileEntity.setHifziyaHazari(hifziyaHazari);
+        fileRepository.save(fileEntity);
+        hifziyaHazari.getFiles().add(fileEntity);
+    } else {
+        System.out.println("No file to save in Service");
     }
 
     return hifziyaHazari;
-    }
+}
+
        @Transactional
     public HifziyaHazari updateHifziyaHazari(Integer id, HifziyaHazari hifziyaHazariDetails, MultipartFile[] fileURL) {
         HifziyaHazari existingDoc = hifziyaHazariRepository.findById(id)

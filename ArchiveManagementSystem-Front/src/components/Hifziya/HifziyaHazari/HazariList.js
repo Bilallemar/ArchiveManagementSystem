@@ -46,7 +46,7 @@ const columns = [
   { id: "actions", label: "عملیات", minWidth: 120 },
 ];
 
-export default function AnnualReportList() {
+export default function HazariList() {
   const [report, setReport] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -123,7 +123,7 @@ export default function AnnualReportList() {
     handleClose();
   };
   const handleNewReport = () => {
-    navigate("/hifziya-hazari/add-hifziya-hazari");
+    navigate("/hifziya-hazari/add-hazari");
   };
 
   const handleDelete = async () => {
@@ -282,7 +282,7 @@ export default function AnnualReportList() {
                         </TableCell>
 
                         <TableCell align="center">
-                          {new Date(row.year).toLocaleDateString("en-GB")}
+                          {row.year || "N/A"}
                         </TableCell>
                         <TableCell align="center">
                           {row.org?.name || "N/A"}

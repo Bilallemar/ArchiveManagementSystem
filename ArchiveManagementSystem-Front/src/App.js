@@ -22,6 +22,7 @@ import ContactPage from "./components/contactPage/ContactPage";
 import AboutPage from "./components/aboutPage/AboutPage";
 import ResetPassword from "./components/Auth/ResetPassword";
 import HazariList from "./components/Hifziya/HifziyaHazari/HazariList";
+import AddHazari from "./components/Hifziya/HifziyaHazari/AddHazari";
 // import AddReceipt from "./components/StorageManagement/Receipts/AddReceipt";
 // import UpdateReceipt from "./components/StorageManagement/Receipts/UpdateReceipt";
 // import ReceivedIssuedBookList from "./components/StorageManagement/ReceivedIssuedBook/ReceivedIssuedBookList";
@@ -148,6 +149,14 @@ const App = () => {
             </ProtectedRoute>
           }
         /> */}
+        <Route
+          path="/hifziya-hazari/add-hazari"
+          element={
+            <ProtectedRoute>
+              <AddHazari />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/hifziya-hazari"
           element={
