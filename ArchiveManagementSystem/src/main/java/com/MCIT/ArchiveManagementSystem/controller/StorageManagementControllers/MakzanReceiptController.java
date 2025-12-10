@@ -1,12 +1,15 @@
 package com.MCIT.ArchiveManagementSystem.controller.StorageManagementControllers;
 
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaWaradaSadera;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanReceiptRepository;
+import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
 import com.MCIT.ArchiveManagementSystem.services.StorageManagementService.MakzanReceiptService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.MCIT.ArchiveManagementSystem.services.AuditLogService;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,10 @@ public class MakzanReceiptController {
     private final MakzanReceiptService receiptsService;
     private final Path fileStorageLocation;
     private final AuditLogService auditLogService;
+        @Autowired
+    private ManagementSecurityService managementSecurity;
+        private static final Long MAKHZAN_MANAGEMENT_ID = 3L; // Makhzan management ID
+
     // private final FileService fileService;
 
     
@@ -51,40 +58,38 @@ public class MakzanReceiptController {
 
     @GetMapping
     public List<MakzanReceipt> getAllReceipts() {
+                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+
         return receiptsService.getAllReceipts();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<MakzanReceipt> getReceiptById(@PathVariable Integer id) {
+                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+
         return receiptsService.getReceiptById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
 
-@PostMapping
+
+
+@PostMapping(consumes = {"multipart/form-data"})
 public MakzanReceipt createReceipt(
         @RequestPart("receipts") String receipts,
-        @RequestPart(value = "fileURL", required = true) MultipartFile fileURL) throws IOException {
+    @RequestPart(value = "fileURL", required = true) MultipartFile fileUR
+       
+) throws IOException {
+                    managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
-    // JSON string → MakzanReceipt object
+    
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
-    MakzanReceipt recivedReceipts = mapper.readValue(receipts, MakzanReceipt.class);
+    MakzanReceipt recivedrMakzanReceipt = mapper.readValue(receipts, MakzanReceipt.class);
 
-    // DB ته save کول
-    MakzanReceipt savedReceipt = receiptsService.createReceipt(recivedReceipts, fileURL);
-
-    // اوسني لاګ ان کس username ترلاسه کول
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String username = authentication.getName();
-
-    // AuditLog ثبتول
-    auditLogService.logCreation(username, savedReceipt);
-
-    return savedReceipt;
+    return receiptsService.createReceipt(recivedrMakzanReceipt, fileUR);
 }
-
 
 
 
@@ -95,6 +100,8 @@ public ResponseEntity<MakzanReceipt> updateReceipt(
         @PathVariable Integer id,
         @RequestPart("receipts") String receiptsJson,              // JSON string د Receipts object لپاره
         @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
+                    managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+
 
     try {
         // JSON string parse کوو
@@ -114,6 +121,8 @@ public ResponseEntity<MakzanReceipt> updateReceipt(
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteReceipt(@PathVariable Integer id) {
+                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+
         try {
             // Optional: Add file deletion logic here if you want to delete associated files
             receiptsService.deleteReceipt(id);

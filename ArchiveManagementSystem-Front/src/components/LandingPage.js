@@ -8,9 +8,17 @@ import {
   Grid,
   useTheme,
   useMediaQuery,
+  Chip,
+  Alert,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { getReceipts } from "../services/StorageManagement/ReceiptsApi";
+import {
+  getDashboardConfig,
+  getManagementName,
+  isAdmin,
+  hasManagement,
+} from "../utils/managementUtils";
+import api from "../services/api";
 
 export default function LandingPage() {
   const [chartData, setChartData] = useState({
@@ -27,7 +35,14 @@ export default function LandingPage() {
       file: 0,
     },
   });
-  const [key, animate] = React.useReducer((v) => v + 1, 0);
+
+  const [managementStats, setManagementStats] = useState({
+    archives: 0,
+    sawanih: 0,
+    receipts: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
 
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
@@ -55,105 +70,190 @@ export default function LandingPage() {
     "حوت",
   ];
 
+  const dashboardConfig = getDashboardConfig();
+  const managementName = getManagementName();
+  const userIsAdmin = isAdmin();
+  const userHasManagement = hasManagement();
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await getReceipts();
-        const receipts = response.data;
+        setLoading(true);
 
-        // Group by month
-        const monthCounts = {};
-        const dayCounts = {}; // د ټولو ورځو ډاټا
+        // Load receipts data for charts
+        try {
+          const receiptsResponse = await api.get("/makzan-receipts");
+          const receipts = receiptsResponse.data || [];
 
-        receipts.forEach((r) => {
-          const date = new Date(r.letterDate);
-          const monthName = monthNames[date.getMonth()];
+          if (receipts.length > 0) {
+            // Group by month
+            const monthCounts = {};
+            const dayCounts = {};
 
-          // د ورځې key د local وخت پر اساس
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, "0"); // 1-12
-          const day = String(date.getDate()).padStart(2, "0");
-          const dayKey = `${year}-${month}-${day}`;
+            receipts.forEach((r) => {
+              const date = new Date(r.letterDate);
+              const monthName = monthNames[date.getMonth()];
 
-          // Monthly counts
-          if (!monthCounts[monthName])
-            monthCounts[monthName] = { sender: 0, recipient: 0, file: 0 };
-          monthCounts[monthName].sender += 1;
-          monthCounts[monthName].recipient += 1;
-          monthCounts[monthName].file += 1;
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const day = String(date.getDate()).padStart(2, "0");
+              const dayKey = `${year}-${month}-${day}`;
 
-          // Daily counts
-          if (!dayCounts[dayKey])
-            dayCounts[dayKey] = { sender: 0, recipient: 0, file: 0 };
-          dayCounts[dayKey].sender += 1;
-          dayCounts[dayKey].recipient += 1;
-          dayCounts[dayKey].file += 1;
-        });
+              if (!monthCounts[monthName])
+                monthCounts[monthName] = { sender: 0, recipient: 0, file: 0 };
+              monthCounts[monthName].sender += 1;
+              monthCounts[monthName].recipient += 1;
+              monthCounts[monthName].file += 1;
 
-        const sortedMonths = monthNames.filter((m) => monthCounts[m]);
-        const senderData = sortedMonths.map((m) => monthCounts[m].sender);
-        const recipientData = sortedMonths.map((m) => monthCounts[m].recipient);
-        const fileData = sortedMonths.map((m) => monthCounts[m].file);
+              if (!dayCounts[dayKey])
+                dayCounts[dayKey] = { sender: 0, recipient: 0, file: 0 };
+              dayCounts[dayKey].sender += 1;
+              dayCounts[dayKey].recipient += 1;
+              dayCounts[dayKey].file += 1;
+            });
 
-        // د تیرې اوونۍ تاریخونه
-        const today = new Date();
-        const weekAgo = new Date();
-        weekAgo.setDate(today.getDate() - 7);
+            const sortedMonths = monthNames.filter((m) => monthCounts[m]);
+            const senderData = sortedMonths.map((m) => monthCounts[m].sender);
+            const recipientData = sortedMonths.map(
+              (m) => monthCounts[m].recipient
+            );
+            const fileData = sortedMonths.map((m) => monthCounts[m].file);
 
-        let weeklySender = 0,
-          weeklyRecipient = 0,
-          weeklyFile = 0;
-        Object.keys(dayCounts).forEach((dayKey) => {
-          const d = new Date(dayKey);
-          if (d >= weekAgo && d < today) {
-            weeklySender += dayCounts[dayKey].sender;
-            weeklyRecipient += dayCounts[dayKey].recipient;
-            weeklyFile += dayCounts[dayKey].file;
+            // Calculate weekly data
+            const today = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 7);
+
+            let weeklySender = 0,
+              weeklyRecipient = 0,
+              weeklyFile = 0;
+            Object.keys(dayCounts).forEach((dayKey) => {
+              const d = new Date(dayKey);
+              if (d >= weekAgo && d < today) {
+                weeklySender += dayCounts[dayKey].sender;
+                weeklyRecipient += dayCounts[dayKey].recipient;
+                weeklyFile += dayCounts[dayKey].file;
+              }
+            });
+
+            setChartData({
+              months: sortedMonths,
+              senderData,
+              recipientData,
+              fileData,
+              totalSender: senderData.reduce((a, b) => a + b, 0),
+              totalRecipient: recipientData.reduce((a, b) => a + b, 0),
+              totalFile: fileData.reduce((a, b) => a + b, 0),
+              weeklyData: {
+                sender: weeklySender,
+                recipient: weeklyRecipient,
+                file: weeklyFile,
+              },
+            });
           }
-        });
+        } catch (error) {
+          console.error("Failed to load receipts:", error);
+        }
 
-        const weeklyData = {
-          sender: weeklySender,
-          recipient: weeklyRecipient,
-          file: weeklyFile,
-        };
+        // Load management-specific stats for admin
+        if (userIsAdmin) {
+          try {
+            const [archivesRes, sawanihRes, receiptsRes] =
+              await Promise.allSettled([
+                api.get("/archives"),
+                api.get("/sawanih"),
+                api.get("/makzan-receipts"),
+              ]);
 
-        console.log("Weekly data:", weeklyData);
-
-        setChartData({
-          months: sortedMonths,
-          senderData,
-          recipientData,
-          fileData,
-          totalSender: senderData.reduce((a, b) => a + b, 0),
-          totalRecipient: recipientData.reduce((a, b) => a + b, 0),
-          totalFile: fileData.reduce((a, b) => a + b, 0),
-          weeklyData,
-        });
+            setManagementStats({
+              archives:
+                archivesRes.status === "fulfilled"
+                  ? archivesRes.value.data?.length || 0
+                  : 0,
+              sawanih:
+                sawanihRes.status === "fulfilled"
+                  ? sawanihRes.value.data?.length || 0
+                  : 0,
+              receipts:
+                receiptsRes.status === "fulfilled"
+                  ? receiptsRes.value.data?.length || 0
+                  : 0,
+            });
+          } catch (error) {
+            console.error("Failed to load management stats:", error);
+          }
+        }
       } catch (error) {
-        console.error("Failed to load receipts for chart:", error);
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [userIsAdmin]);
 
   const statCards = [
     {
       title: "مرسل الیه",
       value: chartData.weeklyData.recipient || 0,
       color: "#4e79a7",
+      icon: "📥",
     },
     {
       title: "مرسل",
       value: chartData.weeklyData.sender || 0,
       color: "#f28e2b",
+      icon: "📤",
     },
-    { title: "فایل", value: chartData.weeklyData.file || 0, color: "#e15759" },
+    {
+      title: "فایل",
+      value: chartData.weeklyData.file || 0,
+      color: "#e15759",
+      icon: "📁",
+    },
   ];
+
+  // Show warning if no management
+  if (!userHasManagement && !userIsAdmin) {
+    return (
+      <Box sx={{ padding: 3 }}>
+        <Alert severity="warning">
+          <Typography variant="h6">No Management Assigned</Typography>
+          <Typography>
+            You have not been assigned to any management department. Please
+            contact your administrator.
+          </Typography>
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ padding: 2, backgroundColor: "#ffffff" }}>
+      {/* Management Header */}
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 600, fontFamily: "B nazanin" }}
+        >
+          ډشبورډ
+        </Typography>
+        <Chip
+          label={userIsAdmin ? "اډمین" : managementName}
+          color={userIsAdmin ? "error" : "primary"}
+          sx={{ fontWeight: 600, fontFamily: "B nazanin" }}
+        />
+      </Box>
+
+      {/* Weekly Stats Cards */}
       <Grid container spacing={2} sx={{ mb: 2, justifyContent: "center" }}>
         {statCards.map((card, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>
@@ -170,11 +270,14 @@ export default function LandingPage() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  mb: 1,
                 }}
               >
                 <Box>
-                  <Typography variant="subtitle2" color="textSecondary">
+                  <Typography
+                    variant="subtitle2"
+                    color="textSecondary"
+                    sx={{ fontFamily: "B nazanin" }}
+                  >
                     {card.title}
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 600 }}>
@@ -182,7 +285,11 @@ export default function LandingPage() {
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ color: "text.secondary", fontWeight: 500 }}
+                    sx={{
+                      color: "text.secondary",
+                      fontWeight: 500,
+                      fontFamily: "B nazanin",
+                    }}
                   >
                     تیرې اوونۍ
                   </Typography>
@@ -196,17 +303,13 @@ export default function LandingPage() {
                     }}
                   >
                     {(() => {
-                      // د کارت ډول ته مطابق فیصدي محاسبه
                       let total = 0;
                       if (card.title === "مرسل الیه")
                         total = chartData.totalRecipient;
                       if (card.title === "مرسل") total = chartData.totalSender;
                       if (card.title === "فایل") total = chartData.totalFile;
-
-                      // د پرون ورځ د هماغه نوع ریکارډ د مجموعې فیصدي
                       const percentage =
                         total > 0 ? ((card.value / total) * 100).toFixed(1) : 0;
-
                       return `${percentage}%`;
                     })()}
                   </Typography>
@@ -223,9 +326,7 @@ export default function LandingPage() {
                     fontSize: "24px",
                   }}
                 >
-                  {card.title === "مرسل الیه" && "📥"}
-                  {card.title === "مرسل" && "📤"}
-                  {card.title === "فایل" && "📁"}
+                  {card.icon}
                 </Box>
               </Box>
             </Card>
@@ -233,8 +334,54 @@ export default function LandingPage() {
         ))}
       </Grid>
 
-      {/* Rest of your component remains the same */}
+      {/* Management Stats for Admin */}
+      {userIsAdmin && (
+        <Grid container spacing={2} sx={{ mb: 2, justifyContent: "center" }}>
+          <Grid item xs={12} sm={4}>
+            <Card sx={{ boxShadow: 3, borderRadius: 3, padding: 2 }}>
+              <Typography variant="h6" sx={{ fontFamily: "B nazanin", mb: 1 }}>
+                آرشیف
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 600, color: "#4e79a7" }}
+              >
+                {managementStats.archives}
+              </Typography>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card sx={{ boxShadow: 3, borderRadius: 3, padding: 2 }}>
+              <Typography variant="h6" sx={{ fontFamily: "B nazanin", mb: 1 }}>
+                سوانح
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 600, color: "#f28e2b" }}
+              >
+                {managementStats.sawanih}
+              </Typography>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card sx={{ boxShadow: 3, borderRadius: 3, padding: 2 }}>
+              <Typography variant="h6" sx={{ fontFamily: "B nazanin", mb: 1 }}>
+                رسیدات
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 600, color: "#e15759" }}
+              >
+                {managementStats.receipts}
+              </Typography>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* Charts */}
       <Grid container spacing={2} sx={{ justifyContent: "center" }}>
+        {/* Pie Chart */}
         <Grid item xs={12} md={4}>
           <Card
             sx={{
@@ -250,82 +397,88 @@ export default function LandingPage() {
           >
             <Typography
               variant="h6"
-              sx={{ mb: 1, fontWeight: 600, textAlign: "center" }}
+              sx={{
+                mb: 1,
+                fontWeight: 600,
+                textAlign: "center",
+                fontFamily: "B nazanin",
+              }}
             >
               توزیع سیستم اسناد
             </Typography>
-            <Box sx={{ position: "relative", display: "inline-block" }}>
-              <PieChart
-                series={[
-                  {
-                    data: [
-                      {
-                        id: 1,
-                        value: chartData.totalSender || 0,
-                        color: "#f7ae24",
-                      },
-                      {
-                        id: 2,
-                        value: chartData.totalRecipient || 0,
-                        color: "#ccf9d6",
-                      },
-                      {
-                        id: 3,
-                        value: chartData.totalFile || 0,
-                        color: "#6de39c",
-                      },
-                    ],
-                    arcLabel: (item) =>
-                      `${Math.round(
-                        (item.value /
-                          ((chartData.totalSender || 0) +
-                            (chartData.totalRecipient || 0) +
-                            (chartData.totalFile || 0))) *
-                          100
-                      )}%`,
-                    innerRadius,
-                    outerRadius,
-                    cornerRadius: 3,
+            <PieChart
+              series={[
+                {
+                  data: [
+                    {
+                      id: 1,
+                      value: chartData.totalSender || 1,
+                      color: "#f7ae24",
+                    },
+                    {
+                      id: 2,
+                      value: chartData.totalRecipient || 1,
+                      color: "#ccf9d6",
+                    },
+                    {
+                      id: 3,
+                      value: chartData.totalFile || 1,
+                      color: "#6de39c",
+                    },
+                  ],
+                  arcLabel: (item) => {
+                    const total =
+                      (chartData.totalSender || 0) +
+                      (chartData.totalRecipient || 0) +
+                      (chartData.totalFile || 0);
+                    return total > 0
+                      ? `${Math.round((item.value / total) * 100)}%`
+                      : "0%";
                   },
-                ]}
-                width={pieWidth}
-                height={pieHeight}
-              />
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 4,
-                  mt: 2,
-                  flexWrap: "wrap",
-                }}
-              >
-                {[
-                  { color: "#f7ae24", label: "مرسل" },
-                  { color: "#ccf9d6", label: "مرسل الیه" },
-                  { color: "#6de39c", label: "فایل" },
-                ].map((item, idx) => (
+                  innerRadius,
+                  outerRadius,
+                  cornerRadius: 3,
+                },
+              ]}
+              width={pieWidth}
+              height={pieHeight}
+            />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 4,
+                mt: 2,
+                flexWrap: "wrap",
+              }}
+            >
+              {[
+                { color: "#f7ae24", label: "مرسل" },
+                { color: "#ccf9d6", label: "مرسل الیه" },
+                { color: "#6de39c", label: "فایل" },
+              ].map((item, idx) => (
+                <Box
+                  key={idx}
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <Box
-                    key={idx}
-                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                  >
-                    <Box
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        bgcolor: item.color,
-                        borderRadius: "4px",
-                      }}
-                    />
-                    <Typography variant="body2">{item.label}</Typography>
-                  </Box>
-                ))}
-              </Box>
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      bgcolor: item.color,
+                      borderRadius: "4px",
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ fontFamily: "B nazanin" }}>
+                    {item.label}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
           </Card>
         </Grid>
 
-        {/* Monthly Bar Chart */}
+        {/* Bar Chart */}
         <Grid item xs={12} md={8}>
           <Card
             sx={{
@@ -337,12 +490,16 @@ export default function LandingPage() {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              width: "100%",
             }}
           >
             <Typography
               variant="h6"
-              sx={{ mb: 1, fontWeight: 600, textAlign: "center" }}
+              sx={{
+                mb: 1,
+                fontWeight: 600,
+                textAlign: "center",
+                fontFamily: "B nazanin",
+              }}
             >
               اسناد بر اساس ماه
             </Typography>
@@ -350,11 +507,13 @@ export default function LandingPage() {
               sx={{ width: "100%", flexGrow: 1, px: { xs: 1, sm: 2, md: 4 } }}
             >
               <BarChart
-                key={key}
                 xAxis={[
                   {
                     scaleType: "band",
-                    data: chartData.months || [],
+                    data:
+                      chartData.months.length > 0
+                        ? chartData.months
+                        : ["No Data"],
                     tickLabelStyle: {
                       fontSize: isXs ? 10 : isSm ? 11 : 12,
                       fontWeight: 500,
@@ -374,17 +533,24 @@ export default function LandingPage() {
                 series={[
                   {
                     label: "فایل",
-                    data: chartData.fileData || [],
+                    data:
+                      chartData.fileData.length > 0 ? chartData.fileData : [0],
                     color: "#40b6d7",
                   },
                   {
                     label: "مرسل الیه",
-                    data: chartData.recipientData || [],
-                    color: "#f7ae24",
+                    data:
+                      chartData.recipientData.length > 0
+                        ? chartData.recipientData
+                        : [0],
+                    color: "#f28e2b",
                   },
                   {
                     label: "مرسل",
-                    data: chartData.senderData || [],
+                    data:
+                      chartData.senderData.length > 0
+                        ? chartData.senderData
+                        : [0],
                     color: "#227767",
                   },
                 ]}

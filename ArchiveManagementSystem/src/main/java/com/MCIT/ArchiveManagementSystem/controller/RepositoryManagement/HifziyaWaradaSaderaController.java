@@ -10,9 +10,15 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaWaradaSadera;
+import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
+import com.MCIT.ArchiveManagementSystem.services.FileService;
 import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.HifziyaWaradaSaderaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
@@ -28,31 +34,42 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RequestMapping("/api/hifziya-warada-sadera")
 public class HifziyaWaradaSaderaController {
 private final HifziyaWaradaSaderaService hifziyaWaradaSaderaService;
+private final FileService fileService;
+    @Autowired
+    private ManagementSecurityService managementSecurity;
+        private static final Long HIFZIYA_MANAGEMENT_ID = 2L; // Hifziya management ID
 
-    public HifziyaWaradaSaderaController( HifziyaWaradaSaderaService hifziyaWaradaSaderaService  ) {
+    public HifziyaWaradaSaderaController( HifziyaWaradaSaderaService hifziyaWaradaSaderaService, FileService fileService) {
         this.hifziyaWaradaSaderaService = hifziyaWaradaSaderaService;
+        this.fileService = fileService;
     }
     
 
 @GetMapping
 public List<HifziyaWaradaSadera>getAllHifziyaWaradaSadera() {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
     return hifziyaWaradaSaderaService.getAllHifziyaWaradaSadera();
 
 }
 @GetMapping("/{id}")
 public ResponseEntity<HifziyaWaradaSadera>getHifziyaWaradaSaderaById(@PathVariable Integer id) {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
     return hifziyaWaradaSaderaService.getHifziyaWaradaSaderaById(id)
     .map(ResponseEntity::ok)
     .orElse(ResponseEntity.notFound().build());
 
 }
 
-@PostMapping
+@PostMapping(consumes = {"multipart/form-data"})
 public HifziyaWaradaSadera createHifziyaWaradaSadera(
         @RequestPart("hifziyaWaradaSadera") String hifziyaWaradaSadera,
     @RequestPart(value = "fileURL", required = true) MultipartFile fileUR
        
 ) throws IOException {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
     
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
@@ -62,13 +79,14 @@ public HifziyaWaradaSadera createHifziyaWaradaSadera(
 }
 
 
-
 @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<HifziyaWaradaSadera> updateReceipt(
+public ResponseEntity<HifziyaWaradaSadera> updateHifziyaWaradaSadera(
         @PathVariable Integer id,
         @RequestPart("hifziyaWaradaSadera") String registrationJson,
          @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL    )         // JSON string د Receipts object لپاره
        {
+                managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
 
     try {
         // JSON string parse کوو
@@ -86,6 +104,8 @@ public ResponseEntity<HifziyaWaradaSadera> updateReceipt(
 }
 @DeleteMapping("/{id}")
 public ResponseEntity<?> deleteHifziyaWaradaSadera(@PathVariable Integer id) {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
     try {
             // Optional: Add file deletion logic here if you want to delete associated files
             hifziyaWaradaSaderaService.deleteHifziyaWaradaSadera(id);
@@ -94,5 +114,19 @@ public ResponseEntity<?> deleteHifziyaWaradaSadera(@PathVariable Integer id) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("HifziyaWaradaSadera with ID " + id + " not found.");
         }
+}
+
+
+  @GetMapping("/download/{filename:.+}")
+public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
+    Resource resource = fileService.loadFileAsResource(filename);
+
+    return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                    "attachment; filename=\"" + resource.getFilename() + "\"")
+            .body(resource);
 }
 }

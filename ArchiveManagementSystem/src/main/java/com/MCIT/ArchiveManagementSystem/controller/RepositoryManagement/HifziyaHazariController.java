@@ -1,5 +1,6 @@
 package com.MCIT.ArchiveManagementSystem.controller.RepositoryManagement;
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazari;
+import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
 import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.HifziyaHazariService;
 import com.MCIT.ArchiveManagementSystem.services.FileService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -27,6 +26,10 @@ public class HifziyaHazariController {
 
     private final HifziyaHazariService hifziyaHazariService;
     private final FileService fileService;
+        @Autowired
+    private ManagementSecurityService managementSecurity;
+        private static final Long HIFZIYA_MANAGEMENT_ID = 2L; // Hifziya management ID
+;
 
     public HifziyaHazariController(HifziyaHazariService hifziyaHazariService, FileService fileService) {
         this.hifziyaHazariService = hifziyaHazariService;
@@ -35,23 +38,14 @@ public class HifziyaHazariController {
 
 
    
-// @PostMapping(consumes = {"multipart/form-data"})
-// public HifziyaHazari createHifziyaHazari(
-//         @RequestPart("hifziyaHazari") String hifziyaHazari,
-//         @RequestPart(value = "fileURL", required = false) MultipartFile fileURL
-// ) throws IOException {
 
-//     ObjectMapper mapper = new ObjectMapper();
-//     mapper.registerModule(new JavaTimeModule());
-//     HifziyaHazari recivedHifziyaHazari = mapper.readValue(hifziyaHazari, HifziyaHazari.class);
-
-//     return hifziyaHazariService.createHifziyaHazari(recivedHifziyaHazari, fileURL);
-// }
 @PostMapping(consumes = {"multipart/form-data"})
 public HifziyaHazari createHifziyaHazari(
         @RequestPart("hifziyaHazari") String hifziyaHazari,
         @RequestPart(value = "fileURL", required = false) MultipartFile fileURL
 ) throws IOException {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
 
     // -------------------------------
     // 🔹 ډیباګ: چاپ کړئ JSON
@@ -82,11 +76,15 @@ public HifziyaHazari createHifziyaHazari(
     // Get all AttendanceBooks
     @GetMapping
     public List<HifziyaHazari> getAllHifziyaHazaris() {
+                managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
         return hifziyaHazariService.getAllHifziyaHazaris();
     }
 
     @GetMapping("/{id}")
 public ResponseEntity<HifziyaHazari>getHifziyaHazariById(@PathVariable Integer id) {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
     return hifziyaHazariService.getHifziyaHazariById(id)
     .map(ResponseEntity::ok)
     .orElse(ResponseEntity.notFound().build());
@@ -99,6 +97,8 @@ public ResponseEntity<HifziyaHazari>getHifziyaHazariById(@PathVariable Integer i
         @RequestPart("hifziyaHazari") String registrationJson,
          @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL    )         // JSON string د Receipts object لپاره
        {
+                managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
 
     try {
         // JSON string parse کوو
@@ -117,12 +117,16 @@ public ResponseEntity<HifziyaHazari>getHifziyaHazariById(@PathVariable Integer i
     // Delete AttendanceBook by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteHifziyaHazari(@PathVariable Integer id) {
+                managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
         hifziyaHazariService.deleteHifziyaHazari(id);
         return ResponseEntity.ok("HifziyaHazari with ID " + id + " has been deleted successfully.");
     }
 
   @GetMapping("/download/{filename:.+}")
 public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
+
     Resource resource = fileService.loadFileAsResource(filename);
 
     return ResponseEntity.ok()

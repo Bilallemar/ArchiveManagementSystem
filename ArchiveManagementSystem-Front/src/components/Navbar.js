@@ -16,6 +16,10 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import { RxCross2 } from "react-icons/rx";
 import Sidebar from "./Sidebar ";
+import {
+  getNavigationItems,
+  clearUserManagement,
+} from "../utils/managementUtils";
 
 const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -27,7 +31,9 @@ const Navbar = () => {
   const { token, setToken, setCurrentUser, isAdmin, setIsAdmin } =
     useMyContext();
 
-  // ✅ د سایډ بار کنټرول
+  // Get navigation items based on user's management
+  const navigationItems = getNavigationItems();
+
   const toggleSidebar = (state) => setSidebarOpen(state);
 
   const handleLogout = () => {
@@ -35,6 +41,7 @@ const Navbar = () => {
     localStorage.removeItem("USER");
     localStorage.removeItem("CSRF_TOKEN");
     localStorage.removeItem("IS_ADMIN");
+    clearUserManagement();
     setToken(null);
     setCurrentUser(null);
     setIsAdmin(false);
@@ -44,12 +51,19 @@ const Navbar = () => {
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
+
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
   };
 
-  // د login/signup پاڼو کې Navbar پټ ساتل
-  const hiddenRoutes = ["/login", "/signup"];
+  // Hide navbar on specific routes
+  const hiddenRoutes = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/oauth2/redirect",
+  ];
   if (hiddenRoutes.includes(pathname)) return null;
 
   const getButtonStyles = (routePath) => ({
@@ -63,6 +77,7 @@ const Navbar = () => {
       color: pathname === routePath ? "green" : "#637381",
     },
     transition: "all 0.2s ease",
+    fontFamily: "B nazanin",
   });
 
   return (
@@ -138,24 +153,26 @@ const Navbar = () => {
                 onClose={handleCloseNavMenu}
                 sx={{ display: { xs: "block", md: "none" } }}
               >
-                {token && (
-                  <MenuItem
-                    component={Link}
-                    to="/receipts"
-                    onClick={handleCloseNavMenu}
-                  >
-                    <Typography
-                      textAlign="center"
-                      sx={{ fontFamily: "B nazanin" }}
+                {token &&
+                  navigationItems.map((item) => (
+                    <MenuItem
+                      key={item.path}
+                      component={Link}
+                      to={item.path}
+                      onClick={handleCloseNavMenu}
                     >
-                      رسیدات
-                    </Typography>
-                  </MenuItem>
-                )}
+                      <Typography
+                        textAlign="center"
+                        sx={{ fontFamily: "B nazanin" }}
+                      >
+                        {item.label}
+                      </Typography>
+                    </MenuItem>
+                  ))}
               </Menu>
             </Box>
 
-            {/* Desktop Links */}
+            {/* Desktop Links - Dynamic based on management */}
             <Box
               sx={{
                 flexGrow: 1,
@@ -165,38 +182,17 @@ const Navbar = () => {
                 mr: 2,
               }}
             >
-              {token && (
-                <>
-                  {/* <Button
-                    component={Link}
-                    to="/annual-reports-info"
-                    sx={getButtonStyles("/annual-reports-info")}
-                  >
-                    ګزارش راپور
-                  </Button> */}
+              {token &&
+                navigationItems.map((item) => (
                   <Button
+                    key={item.path}
                     component={Link}
-                    to="/annual-reports"
-                    sx={getButtonStyles("/annual-reports")}
+                    to={item.path}
+                    sx={getButtonStyles(item.path)}
                   >
-                    سوانح
+                    {item.label}
                   </Button>
-                  <Button
-                    component={Link}
-                    to="/received-issued-books"
-                    sx={getButtonStyles("/received-issued-books")}
-                  >
-                    کتاب وارده وصادره
-                  </Button>
-                  <Button
-                    component={Link}
-                    to="/hifziya-hazari"
-                    sx={getButtonStyles("/hifziya-hazari")}
-                  >
-                    کتاب حاضري
-                  </Button>
-                </>
-              )}
+                ))}
             </Box>
 
             {/* User Avatar */}
@@ -207,7 +203,6 @@ const Navbar = () => {
                     <Avatar alt="User" src="bilal.jpg" />
                   </IconButton>
 
-                  {/* ✅ Sidebar Component */}
                   <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} />
                 </>
               ) : (

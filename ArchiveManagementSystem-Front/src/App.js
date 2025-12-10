@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
+import { MANAGEMENTS } from "./utils/managementUtils";
 
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -21,20 +22,28 @@ import NotFound from "./components/NotFound";
 import ContactPage from "./components/contactPage/ContactPage";
 import AboutPage from "./components/aboutPage/AboutPage";
 import ResetPassword from "./components/Auth/ResetPassword";
+import UserManagementPanel from "./components/Admin/UserManagementPanel";
 import HazariList from "./components/Hifziya/HifziyaHazari/HazariList";
 import AddHazari from "./components/Hifziya/HifziyaHazari/AddHazari";
-// import AddReceipt from "./components/StorageManagement/Receipts/AddReceipt";
-// import UpdateReceipt from "./components/StorageManagement/Receipts/UpdateReceipt";
-// import ReceivedIssuedBookList from "./components/StorageManagement/ReceivedIssuedBook/ReceivedIssuedBookList";
-// import AddReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/AddReceivedIssuedBook";
-// import UpdateReceivedIssuedBook from "./components/StorageManagement/ReceivedIssuedBook/UpdateReceivedIssuedBook";
-// import AnnualReportList from "./components/StorageManagement/AnnualReport/AnnualReportList";
-// import AddAnnualReport from "./components/StorageManagement/AnnualReport/AddAnnualReport";
-// import UpdateAnnualReport from "./components/StorageManagement/AnnualReport/UpdateAnnualReport";
-// import AnnualReportInfoList from "./components/StorageManagement/AnnualReportInfo/AnnualReportInfoList";
-// import AddAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/AddAnnualReportInfo";
-// import UpdateAnnualReportInfo from "./components/StorageManagement/AnnualReportInfo/UpdateAnnualReportInfo";
-// import Footer from "./components/Footer/Footer";
+import UpdateHazari from "./components/Hifziya/HifziyaHazari/UpdateHazari";
+import HifziyaWaradaSaderaList from "./components/Hifziya/HifziyaWaradaSadera/HifziyaWaradaSaderaList";
+import AddHifziyaWaradaSadera from "./components/Hifziya/HifziyaWaradaSadera/AddHifziyaWaradaSadera";
+import UpdateHifziyaWaradaSadera from "./components/Hifziya/HifziyaWaradaSadera/UpdateHifziyaWaradaSadera";
+import SawanihList from "./components/Hifziya/Sawanih/SawanihList";
+import AddSawanih from "./components/Hifziya/Sawanih/AddSawanih";
+import UpdateSawanih from "./components/Hifziya/Sawanih/UpdateSawanih";
+import ArchiveList from "./components/ArchiveManagement/Archive/ArchiveList";
+import AddArchive from "./components/ArchiveManagement/Archive/AddArchive";
+import UpdateArchive from "./components/ArchiveManagement/Archive/UpdateArchive";
+import MakzanSubmissionReportList from "./components/StorageManagement/MakzanSubmissionReport/MakzanSubmissionReportList";
+import AddMakzanSubmissionReport from "./components/StorageManagement/MakzanSubmissionReport/AddMakzanSubmissionReport";
+import UpdateMakzanSubmissionReport from "./components/StorageManagement/MakzanSubmissionReport/UpdateMakzanSubmissionReport";
+import MakzanReceiptList from "./components/StorageManagement/MakzanReceipt/MakzanReceiptList";
+import AddMakzanReceipt from "./components/StorageManagement/MakzanReceipt/AddMakzanReceipt";
+import UpdateMakzanReceipt from "./components/StorageManagement/MakzanReceipt/UpdateMakzanReceipt";
+import MakzanAnnualReportList from "./components/StorageManagement/MakzanAnnualReport/MakzanAnnualReportList";
+import AddMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/AddMakzanAnnualReport";
+import UpdateMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/UpdateMakzanAnnualReport";
 
 const App = () => {
   const location = useLocation();
@@ -53,106 +62,82 @@ const App = () => {
       {shouldShowNavbar && <Navbar />}
       <Toaster position="bottom-center" reverseOrder={false} />
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        {/* <Route path="/" element={<LandingPage />} /> */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute requiresManagement={true}>
+              <LandingPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        {/* <Route
-          path="/annual-reports-info"
-          element={
-            <ProtectedRoute>
-              <AnnualReportInfoList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/annual-reports-info/add-annual-report-info"
-          element={
-            <ProtectedRoute>
-              <AddAnnualReportInfo />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/annual-reports-info/:id"
-          element={
-            <ProtectedRoute>
-              <UpdateAnnualReportInfo />
-            </ProtectedRoute>
-          }
-        />
 
         <Route
-          path="/annual-reports"
+          path="/sawanih/:id"
           element={
-            <ProtectedRoute>
-              <AnnualReportList />
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+              <UpdateSawanih />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/annual-reports/add-annual-report"
+          path="/sawanih/add-sawanih"
           element={
-            <ProtectedRoute>
-              <AddAnnualReport />
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+              <AddSawanih />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/annual-reports/:id"
+          path="/sawanih"
           element={
-            <ProtectedRoute>
-              <UpdateAnnualReport />
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+              <SawanihList />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/received-issued-books"
+          path="/hifziya-warada-sadera/:id"
           element={
-            <ProtectedRoute>
-              <ReceivedIssuedBookList />
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+              <UpdateHifziyaWaradaSadera />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/received-issued-books/add-received-issued-book"
+          path="/hifziya-warada-sadera/add-hifziya-warada-sadera"
           element={
-            <ProtectedRoute>
-              <AddReceivedIssuedBook />
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+              <AddHifziyaWaradaSadera />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/received-issued-books/:id"
+          path="/hifziya-warada-sadera"
           element={
-            <ProtectedRoute>
-              <UpdateReceivedIssuedBook />
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+              <HifziyaWaradaSaderaList />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/receipts/:id"
+          path="/hifziya-hazari/:id"
           element={
-            <ProtectedRoute>
-              <UpdateReceipt />
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+              <UpdateHazari />
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/receipts/add-receipt"
-          element={
-            <ProtectedRoute>
-              <AddReceipt />
-            </ProtectedRoute>
-          }
-        /> */}
         <Route
           path="/hifziya-hazari/add-hazari"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
               <AddHazari />
             </ProtectedRoute>
           }
@@ -160,7 +145,7 @@ const App = () => {
         <Route
           path="/hifziya-hazari"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
               <HazariList />
             </ProtectedRoute>
           }
@@ -171,6 +156,110 @@ const App = () => {
           element={
             <ProtectedRoute adminPage={true}>
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/user-management"
+          element={
+            <ProtectedRoute adminPage={true}>
+              <UserManagementPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annual-reports-info"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <MakzanSubmissionReportList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annual-reports-info/add"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <AddMakzanSubmissionReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annual-reports-info/:id"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <UpdateMakzanSubmissionReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/makzan-receipts"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <MakzanReceiptList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/makzan-receipts/add"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <AddMakzanReceipt />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/makzan-receipts/:id"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <UpdateMakzanReceipt />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/makzan-annual-reports"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <MakzanAnnualReportList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/makzan-annual-reports/add"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <AddMakzanAnnualReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/makzan-annual-reports/:id"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+              <UpdateMakzanAnnualReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/archive"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+              <ArchiveList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/archive/add"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+              <AddArchive />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/archive/:id"
+          element={
+            <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+              <UpdateArchive />
             </ProtectedRoute>
           }
         />

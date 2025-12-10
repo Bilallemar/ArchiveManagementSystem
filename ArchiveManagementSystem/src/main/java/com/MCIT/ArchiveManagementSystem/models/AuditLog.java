@@ -16,6 +16,6 @@ public class AuditLog {
     private String action;
     private String username;
     private Integer recordId;
-    private String RecordContent;
+    private String recordContent;
     private LocalDateTime timestamp;
 }

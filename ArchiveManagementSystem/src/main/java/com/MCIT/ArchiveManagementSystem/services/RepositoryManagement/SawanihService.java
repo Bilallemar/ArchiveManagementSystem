@@ -52,30 +52,6 @@ public class SawanihService {
         book.setOrg(bookDetails.getOrg());
         book.setPageQuantity(bookDetails.getPageQuantity());
         book.setDescription(bookDetails.getDescription());
-        book.setIsIndraj(bookDetails.getIsIndraj());
-
-
-        // فایلونه اپډېټ کول
-        // if (fileURL != null && !fileURL.isEmpty()) {
-        //     if (book.getAttachments() != null) {
-        //         for (FileEntity oldFile : book.getAttachments()) {
-        //             fileService.deleteFile(oldFile.getFileName());
-        //             fileRepository.delete(oldFile);
-        //         }
-        //         book.getAttachments().clear();
-        //     }
-
-        //     String filePath = fileService.savefile(fileURL, book);
-
-        //     FileEntity newFileEntity = new FileEntity();
-        //     newFileEntity.setFilePath(filePath);
-        //     newFileEntity.setFileName(fileURL.getOriginalFilename());
-        //     newFileEntity.setFileType(fileURL.getContentType());
-        //     newFileEntity.setSawanih(book);
-        //     fileRepository.save(newFileEntity);
-
-        //     book.getAttachments().add(newFileEntity);
-        // }
 
         return sawanihRepository.save(book);
     }

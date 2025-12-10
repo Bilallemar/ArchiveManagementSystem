@@ -31,6 +31,6 @@ public class Archive {
     private String description;
     private String docType;
     private Integer year;
-    private Boolean isIndraj;
+    private Boolean isIncoming;
 }
 

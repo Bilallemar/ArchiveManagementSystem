@@ -34,7 +34,7 @@ public class HifziyaWaradaSadera {
     private String outgoingDate;
     private String summary;
     private String description;
-    private Boolean isIndraj;
+    private Boolean isHifziya;
 
     @OneToMany(mappedBy = "hifziyaWaradaSadera", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude          // ADD THIS

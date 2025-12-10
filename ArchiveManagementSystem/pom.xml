@@ -126,6 +126,8 @@
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
+							 <version>1.18.32</version> <!-- دا اضافه کړئ -->
+
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
@@ -133,6 +135,7 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				
 				<configuration>
 					<annotationProcessorPaths>
 						<!-- 🧠 Lombok Annotation Processor -->

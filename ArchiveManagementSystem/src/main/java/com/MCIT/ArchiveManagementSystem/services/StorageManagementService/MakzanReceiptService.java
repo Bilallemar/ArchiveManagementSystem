@@ -9,10 +9,13 @@ import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.Makza
 
 import jakarta.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.services.FileService;
+import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.HifziyaWaradaSaderaService;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
 import java.util.ArrayList;
 
@@ -23,7 +26,8 @@ public class MakzanReceiptService {
 
     
 
-  
+          private static final Logger logger = LoggerFactory.getLogger(HifziyaWaradaSaderaService.class);
+
 
     private final MakzanReceiptRepository makzanReceiptRepository;
     private final FileService fileService;
@@ -46,24 +50,29 @@ public class MakzanReceiptService {
     public Optional<MakzanReceipt> getReceiptById(Integer id) {
         return makzanReceiptRepository.findById(id);
     }
+
+@Transactional
 public MakzanReceipt createReceipt(MakzanReceipt makzanReceipts, MultipartFile fileURL) {
-    // 1. MakzanReceipt ذخیره کړه
-    makzanReceipts = makzanReceiptRepository.save(makzanReceipts);
-
-    // 2. که فایل موجود وي، ذخیره یې کړه
+    
+    // Save the main entity first (without files)
+    MakzanReceipt savedEntity = makzanReceiptRepository.save(makzanReceipts);
+    
     if (fileURL != null && !fileURL.isEmpty()) {
-        FileEntity fileEntity = new FileEntity();
-        fileEntity.setFilePath(fileService.savefile(fileURL, makzanReceipts));
-        fileEntity.setFileName(fileURL.getOriginalFilename());
-        fileEntity.setFileType(fileURL.getContentType());
-        fileEntity.setMakzanReceipt(makzanReceipts);      // د ریکارډ سره تړاو
-        fileRepository.save(fileEntity);            // DB ته ذخیره
-        makzanReceipts.getFiles().add(fileEntity);        // لیست ته اضافه
+        try {
+            // This already saves the file to disk AND database
+            fileService.savefile(fileURL, savedEntity);
+            
+            // NO NEED TO SAVE AGAIN - remove all the code below!
+            // The fileService.savefile() already handled everything
+            
+        } catch (Exception e) {
+            logger.error("Failed to save file: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save file: " + e.getMessage(), e);
+        }
     }
-
-    return makzanReceipts;
+    
+    return savedEntity;
 }
-
    @Transactional
 public MakzanReceipt updateReceipt(Integer id, MakzanReceipt makzanReceiptsDetails, MultipartFile[] fileURL) {
     // 1. موجوده ریکارډ ترلاسه کړه

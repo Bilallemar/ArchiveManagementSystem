@@ -34,20 +34,31 @@ public class JwtUtils {
         return null;
     }
 
-    public String generateTokenFromUsername(UserDetailsImpl userDetails) {
-        String username = userDetails.getUsername();
-        String roles = userDetails.getAuthorities().stream()
-                .map(authority -> authority.getAuthority())
-                .collect(Collectors.joining(","));
-        return Jwts.builder()
-                .subject(username)
-                .claim("roles", roles)
-                .claim("is2faEnabled", userDetails.is2faEnabled())
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(key())
-                .compact();
+public String generateTokenFromUsername(UserDetailsImpl userDetails) {
+    String username = userDetails.getUsername();
+    String roles = userDetails.getAuthorities().stream()
+            .map(authority -> authority.getAuthority())
+            .collect(Collectors.joining(","));
+    
+    // Get management ID from UserDetails
+    Long managementId = userDetails.getManagement() != null 
+            ? userDetails.getManagement().getManagementId() 
+            : null;
+    
+    JwtBuilder builder = Jwts.builder()
+            .subject(username)
+            .claim("roles", roles)
+            .claim("is2faEnabled", userDetails.is2faEnabled())
+            .issuedAt(new Date())
+            .expiration(new Date((new Date()).getTime() + jwtExpirationMs));
+    
+    // Add management ID if available
+    if (managementId != null) {
+        builder.claim("managementId", managementId);
     }
+    
+    return builder.signWith(key()).compact();
+}
 public String generateTokenWithManagement(UserDetailsImpl userDetails, Long managementId) {
     String username = userDetails.getUsername();
     String roles = userDetails.getAuthorities().stream()

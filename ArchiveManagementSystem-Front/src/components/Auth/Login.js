@@ -14,16 +14,22 @@ import TextField from "@mui/material/TextField";
 import { IconButton, InputAdornment } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { AccountCircle } from "@mui/icons-material";
+import { setUserManagement } from "../../utils/managementUtils";
+
+// ✅ Make sure you destructure setIsAdmin and setCurrentUser here
 
 const Login = () => {
   // Step 1: Login method and Step 2: Verify 2FA
   const [step, setStep] = useState(1);
   const [jwtToken, setJwtToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingResponseData, setPendingResponseData] = useState(null);
+
   // Access the token and setToken function using the useMyContext hook from the ContextProvider
-  const { setToken, token } = useMyContext();
+  const { setToken, token, setIsAdmin, setCurrentUser } = useMyContext();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+
   const handleTogglePassword = () => {
     setShowPassword((prev) => !prev);
   };
@@ -42,54 +48,110 @@ const Login = () => {
     mode: "onTouched",
   });
 
-  const handleSuccessfulLogin = (token, decodedToken) => {
-    const user = {
-      username: decodedToken.sub,
-      roles: decodedToken.roles ? decodedToken.roles.split(",") : [],
-    };
-    localStorage.setItem("JWT_TOKEN", token);
-    localStorage.setItem("USER", JSON.stringify(user));
+  const handleSuccessfulLogin = async (responseData) => {
+    try {
+      const { jwtToken, username, roles, management, isAdmin } = responseData;
 
-    //store the token on the context state  so that it can be shared any where in our application by context provider
-    setToken(token);
+      // Store JWT token
+      localStorage.setItem("JWT_TOKEN", jwtToken);
 
-    navigate("/");
+      // Store user info
+      const user = {
+        username: username,
+        roles: roles || [],
+      };
+      localStorage.setItem("USER", JSON.stringify(user));
+
+      // Store admin status
+      const adminStatus = isAdmin || false;
+      localStorage.setItem("IS_ADMIN", adminStatus.toString());
+
+      // Store management info if provided by backend
+      if (management) {
+        setUserManagement(management);
+        console.log("✅ Management stored:", management);
+      } else {
+        // If backend doesn't send management, try to fetch it
+        try {
+          const managementResponse = await api.get(
+            "/user-management/my-management"
+          );
+          if (managementResponse.data) {
+            setUserManagement(managementResponse.data);
+            console.log(
+              "✅ Management fetched and stored:",
+              managementResponse.data
+            );
+          }
+        } catch (error) {
+          console.log("⚠️ No management assigned to user");
+          localStorage.removeItem("USER_MANAGEMENT");
+
+          // If user is not admin and has no management, show warning
+          if (!adminStatus) {
+            toast.error(
+              "تاسو ته څانګه تعین شوې نه ده. د اډمین سره اړیکه ونیسئ"
+            );
+          }
+        }
+      }
+
+      // Update context
+      setToken(jwtToken);
+      setCurrentUser(user);
+      setIsAdmin(adminStatus);
+
+      // Show success message
+      if (management) {
+        toast.success(`ښه راغلاست! ${management.managementName} ته`);
+      } else {
+        toast.success("ښه راغلاست!");
+      }
+
+      // Navigate to home
+      navigate("/");
+    } catch (error) {
+      console.error("Error in handleSuccessfulLogin:", error);
+      toast.error("د لاګین په بهیر کې ستونزه رامنځته شوه");
+    }
   };
-
   //function for handle login with credentials
   const onLoginHandler = async (data) => {
     try {
       setLoading(true);
       const response = await api.post("/auth/public/signin", data);
 
-      //showing success message with react hot toast
-      toast.success("Login Successful");
-
-      //reset the input field by using reset() function provided by react hook form after submission
-      reset();
+      console.log("Login response:", response.data);
 
       if (response.status === 200 && response.data.jwtToken) {
-        setJwtToken(response.data.jwtToken);
         const decodedToken = jwtDecode(response.data.jwtToken);
+
         if (decodedToken.is2faEnabled) {
-          setStep(2); // Move to 2FA verification step
+          setJwtToken(response.data.jwtToken);
+          // setManagementData(response.data.management); // Store for 2FA step
+          toast.success("Please verify 2FA code.");
+          setStep(2);
         } else {
-          handleSuccessfulLogin(response.data.jwtToken, decodedToken);
+          handleSuccessfulLogin(response.data); // Pass full response
         }
+
+        reset();
       } else {
-        toast.error(
-          "Login failed. Please check your credentials and try again."
-        );
+        toast.error("Login failed. Please check your credentials.");
       }
     } catch (error) {
-      if (error) {
+      console.error("Login error:", error);
+
+      // Handle 403 - no management assigned
+      if (error.response?.status === 403) {
+        toast.error("You are not assigned to any management. Contact admin.");
+      } else {
         toast.error("Invalid credentials");
       }
     } finally {
       setLoading(false);
     }
   };
-
   //function for verify 2fa authentication
   const onVerify2FaHandler = async (data) => {
     const code = data.code;
@@ -155,7 +217,7 @@ const Login = () => {
                 <div className="flex items-center justify-between gap-1 py-5 "></div>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4">
                 <TextField
                   {...register("username", {
                     required: "*UserName is required",
@@ -169,21 +231,26 @@ const Login = () => {
                   required
                   placeholder="Type your username"
                   InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <AccountCircle sx={{ color: "action.active" }} />
+                    // 🔵 ایکن ښي طرف ته
+                    endAdornment: (
+                      <InputAdornment
+                        position="end"
+                        sx={{
+                          background: "transparent", // ایکن بیک‌ګرونډ ختم
+                          marginRight: "4px", // ښه فضا
+                        }}
+                      >
+                        <AccountCircle sx={{ color: "#1976d2" }} />{" "}
+                        {/* آبي رنګ */}
                       </InputAdornment>
                     ),
                   }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
-                      "& fieldset": {
-                        borderColor: "#90caf9", // پیکه آبي رنګ
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#1976d2", // ژور آبي رنګ کله hover شي
-                      },
+                      backgroundColor: "#e3f2fd", // 🔵 همرنګ بیک‌ګرونډ
+                      "& fieldset": { borderColor: "#90caf9" },
+                      "&:hover fieldset": { borderColor: "#1976d2" },
                       "&.Mui-focused fieldset": {
                         borderColor: "#1976d2",
                         borderWidth: "2px",
@@ -191,6 +258,7 @@ const Login = () => {
                     },
                   }}
                 />
+
                 <TextField
                   {...register("password", {
                     required: "*Password is required",
@@ -203,16 +271,22 @@ const Login = () => {
                   required
                   type={showPassword ? "text" : "password"}
                   placeholder="Type your password"
-                  variant="outlined" // بدل کړه له standard څخه outlined ته
+                  variant="outlined"
                   InputProps={{
                     endAdornment: (
-                      <InputAdornment position="end">
+                      <InputAdornment
+                        position="end"
+                        sx={{
+                          background: "transparent",
+                          marginRight: "4px",
+                        }}
+                      >
                         <IconButton
                           onClick={handleTogglePassword}
                           edge="end"
                           sx={{
-                            color: "action.active",
-                            "&:hover": { backgroundColor: "transarent" },
+                            color: "#1976d2",
+                            background: "transparent !important", // 🔵 ایکن بیک‌ګرونډ ختم
                           }}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -223,12 +297,9 @@ const Login = () => {
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
-                      "& fieldset": {
-                        borderColor: "#90caf9", // پیکه آبي رنګ
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#1976d2", // ژور آبي رنګ کله hover شي
-                      },
+                      backgroundColor: "#e3f2fd",
+                      "& fieldset": { borderColor: "#90caf9" },
+                      "&:hover fieldset": { borderColor: "#1976d2" },
                       "&.Mui-focused fieldset": {
                         borderColor: "#1976d2",
                         borderWidth: "2px",

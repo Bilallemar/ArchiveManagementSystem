@@ -26,22 +26,22 @@ public class FileEntity {
     @ManyToOne
     @JoinColumn(name = "makzan_receipt_id")
     @JsonIgnore
-    @ToString.Exclude          // ADD THIS
-    @EqualsAndHashCode.Exclude // ADD THIS
+    @ToString.Exclude          
+    @EqualsAndHashCode.Exclude 
     private MakzanReceipt makzanReceipt;
 
     @ManyToOne
     @JoinColumn(name = "hifziya_warada_sadera_id")
     @JsonIgnore
-    @ToString.Exclude          // ADD THIS
-    @EqualsAndHashCode.Exclude // ADD THIS
+    @ToString.Exclude          
+    @EqualsAndHashCode.Exclude 
     private HifziyaWaradaSadera hifziyaWaradaSadera;
 
     @ManyToOne
     @JoinColumn(name = "hifziya_hazari_id")
     @JsonIgnore
-    @ToString.Exclude          // ADD THIS
-    @EqualsAndHashCode.Exclude // ADD THIS
+    @ToString.Exclude         
+    @EqualsAndHashCode.Exclude 
     private HifziyaHazari hifziyaHazari;
 }
 

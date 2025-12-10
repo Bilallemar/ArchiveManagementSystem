@@ -176,6 +176,26 @@ const Sidebar = ({ open, toggleSidebar }) => {
                         />
                       </ListItemButton>
                     </ListItem>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          navigate("/admin/user-management");
+                          toggleSidebar(false);
+                        }}
+                        sx={{
+                          justifyContent: "flex-end",
+                          "&:hover": { bgcolor: "#f5f5f5" },
+                        }}
+                      >
+                        <ListItemText
+                          primary="د کاروونکو مدیریت"
+                          primaryTypographyProps={{
+                            textAlign: "right",
+                            color: "#9aa0ac",
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
                   </List>
                 </Collapse>
               </>

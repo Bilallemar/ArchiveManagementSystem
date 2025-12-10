@@ -30,6 +30,5 @@ public class Sawanih {
 
     private String description;
     private Integer pageQuantity;
-    private Boolean isIndraj;
 }
 

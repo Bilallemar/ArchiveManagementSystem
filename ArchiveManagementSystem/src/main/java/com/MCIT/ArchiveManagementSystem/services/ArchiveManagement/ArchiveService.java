@@ -42,7 +42,7 @@ public Archive updateArchive(Integer id, Archive exportDocDetails) {
     existingDoc.setDocType(exportDocDetails.getDocType());
     existingDoc.setYear(exportDocDetails.getYear());
     existingDoc.setDescription(exportDocDetails.getDescription());
-    existingDoc.setIsIndraj(exportDocDetails.getIsIndraj());
+    existingDoc.setIsIncoming(exportDocDetails.getIsIncoming());
 
     return exportDocRepository.save(existingDoc);
 }

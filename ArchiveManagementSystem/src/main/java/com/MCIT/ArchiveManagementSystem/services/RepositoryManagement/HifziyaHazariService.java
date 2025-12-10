@@ -36,22 +36,7 @@ public class HifziyaHazariService {
     public Optional<HifziyaHazari> getHifziyaHazariById(Integer id) {
         return hifziyaHazariRepository.findById(id);
     }
-//     public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile fileURL) {
-//   hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
 
-//     // 2. که فایل موجود وي، ذخیره یې کړه
-//     if (fileURL != null && !fileURL.isEmpty()) {
-//         FileEntity fileEntity = new FileEntity();
-//         fileEntity.setFilePath(fileService.savefile(fileURL, hifziyaHazari));
-//         fileEntity.setFileName(fileURL.getOriginalFilename());
-//         fileEntity.setFileType(fileURL.getContentType());
-//         fileEntity.setHifziyaHazari(hifziyaHazari);      // د ریکارډ سره تړاو
-//         fileRepository.save(fileEntity);            // DB ته ذخیره
-//         hifziyaHazari.getFiles().add(fileEntity);        // لیست ته اضافه
-//     }
-
-//     return hifziyaHazari;
-//     }
 public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile fileURL) {
     // 🔹 ډیباګ: چاپ کړئ د ریکارډ معلومات
     System.out.println("Saving HifziyaHazari: " + hifziyaHazari);

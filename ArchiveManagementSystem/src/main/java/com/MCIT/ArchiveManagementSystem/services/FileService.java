@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -59,20 +60,28 @@ public class FileService {
         }
     }
 
-    public void deleteFile(String filename) {
-        try {
-            Path filePath = getFile(filename);
-            boolean deleted = Files.deleteIfExists(filePath);
+public void deleteFile(String filePath) {
+    try {
+        Path path = root.resolve(filePath).normalize();
+        File file = path.toFile();
+
+        if (file.exists()) {
+            boolean deleted = file.delete();
             if (deleted) {
-                logger.info("File deleted successfully: {}", filename);
+                logger.info("File deleted: {}", path);
             } else {
-                logger.warn("File not found for deletion: {}", filename);
+                logger.warn("File deletion returned false: {}", path);
             }
-        } catch (IOException e) {
-            logger.error("Could not delete file: {}", filename, e);
-            throw new RuntimeException("Could not delete file: " + e.getMessage(), e);
+        } else {
+            logger.warn("File not found (may have been already deleted): {}", path);
         }
+
+    } catch (Exception e) {
+        logger.error("Error deleting file: {}", filePath, e);
+        // Don't rethrow - just log the error
     }
+}
+
 
     @Transactional
     public <T> List<String> savefiles(MultipartFile[] files, T owner) {
@@ -165,9 +174,7 @@ public class FileService {
             fileEntity.setMakzanReceipt((MakzanReceipt) owner);}
 else if (owner instanceof HifziyaWaradaSadera) {
     fileEntity.setHifziyaWaradaSadera((HifziyaWaradaSadera) owner);
-} else if (owner instanceof MakzanReceipt) {
-    fileEntity.setMakzanReceipt((MakzanReceipt) owner);
-} else if (owner instanceof HifziyaHazari) {
+}  else if (owner instanceof HifziyaHazari) {
     fileEntity.setHifziyaHazari((HifziyaHazari) owner);
 
         } else {
