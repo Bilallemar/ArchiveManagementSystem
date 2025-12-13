@@ -111,39 +111,39 @@ export default function LandingPage() {
 
   //   loadData();
   // }, [userIsAdmin]);
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // useEffect(() => {
+  //   const loadDashboardData = async () => {
+  //     try {
+  //       setLoading(true);
+  //       setError(null);
 
-        // د weekly/dashboard stats ترلاسه کول
-        const weeklyRes = await api.get("/dashboard/stats");
-        console.log("Weekly Dashboard Data:", weeklyRes.data); // دا به ډاټا چاپ کړي
+  //       // د weekly/dashboard stats ترلاسه کول
+  //       const weeklyRes = await api.get("/dashboard/stats");
+  //       console.log("Weekly Dashboard Data:", weeklyRes.data); // دا به ډاټا چاپ کړي
 
-        setChartData(weeklyRes.data);
+  //       setChartData(weeklyRes.data);
 
-        // که user اډمین وي، management stats هم ترلاسه کړئ
-        if (userIsAdmin) {
-          const mgmtRes = await api.get("/dashboard/management-stats");
-          setManagementStats(mgmtRes.data);
-        }
-      } catch (err) {
-        console.error("Dashboard load error:", err);
-        if (err.response && err.response.status === 401) {
-          setError("ستاسو سیشن پای ته رسیدلی، لطفاً بیا login وکړئ.");
-        } else if (err.response && err.response.status === 403) {
-          setError("Access denied. د اډمین سره اړیکه ونیسئ.");
-        } else {
-          setError("Dashboard ډاټا ترلاسه کول ناکام شول. بیا هڅه وکړئ.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       // که user اډمین وي، management stats هم ترلاسه کړئ
+  //       if (userIsAdmin) {
+  //         const mgmtRes = await api.get("/dashboard/management-stats");
+  //         setManagementStats(mgmtRes.data);
+  //       }
+  //     } catch (err) {
+  //       console.error("Dashboard load error:", err);
+  //       if (err.response && err.response.status === 401) {
+  //         setError("ستاسو سیشن پای ته رسیدلی، لطفاً بیا login وکړئ.");
+  //       } else if (err.response && err.response.status === 403) {
+  //         setError("Access denied. د اډمین سره اړیکه ونیسئ.");
+  //       } else {
+  //         setError("Dashboard ډاټا ترلاسه کول ناکام شول. بیا هڅه وکړئ.");
+  //       }
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    loadDashboardData();
-  }, [userIsAdmin]);
+  //   loadDashboardData();
+  // }, [userIsAdmin]);
 
   // Weekly stats cards for regular users
   const statCards = [
