@@ -1,6 +1,5 @@
 package com.MCIT.ArchiveManagementSystem.security;
 
-import com.MCIT.ArchiveManagementSystem.models.AppRole;
 import com.MCIT.ArchiveManagementSystem.security.services.UserDetailsImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;

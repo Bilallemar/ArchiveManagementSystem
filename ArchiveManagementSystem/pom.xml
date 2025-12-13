@@ -24,6 +24,12 @@
 
 	<dependencies>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+
 		<!-- 🔐 Spring Security: د امنیت لپاره -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

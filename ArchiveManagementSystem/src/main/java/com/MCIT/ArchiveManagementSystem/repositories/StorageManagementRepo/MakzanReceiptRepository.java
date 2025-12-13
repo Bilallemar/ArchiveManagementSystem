@@ -1,11 +1,19 @@
 package com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
 
 
 public interface MakzanReceiptRepository extends JpaRepository<MakzanReceipt, Integer> {
+    // List<MakzanReceipt> findByManagement(Management management);
+
+    // Long countByManagement(Management management);
+
+    // د Management فیلډ لپاره اضافه کړه
 
     // 🔹 د ټولو فیلډونو کې سرچ (OR condition)
     // List<MakzanReceipt> findBySerialNumberContainingIgnoreCaseOrArchiveNumberContainingIgnoreCaseOrDepartmentContainingIgnoreCaseOrRecipientContainingIgnoreCaseOrSenderContainingIgnoreCase(
