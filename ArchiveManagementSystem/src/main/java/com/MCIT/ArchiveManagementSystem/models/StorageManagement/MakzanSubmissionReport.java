@@ -1,9 +1,13 @@
 package com.MCIT.ArchiveManagementSystem.models.StorageManagement;
 
+import com.MCIT.ArchiveManagementSystem.models.Management;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,7 +23,9 @@ public class MakzanSubmissionReport {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
+  @ManyToOne
+    @JoinColumn(name = "management_id")
+    private Management management;
     private String address;
     private Integer year;
     private String docType;

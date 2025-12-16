@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
 
 @Entity
@@ -28,7 +29,10 @@ public class HifziyaWaradaSadera {
     @ManyToOne
     @JoinColumn(name = "org")
     private Org org;
-
+  @ManyToOne
+    @JoinColumn(name = "management_id")
+    private Management management;
+    
     private String letterNumber;
     private String incommingDate;
     private String outgoingDate;

@@ -1,5 +1,7 @@
 package com.MCIT.ArchiveManagementSystem.models.StorageManagement;
 
+import com.MCIT.ArchiveManagementSystem.models.Management;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +17,9 @@ public class MakzanAnnualReport {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+  @ManyToOne
+    @JoinColumn(name = "management_id")
+    private Management management;
 
     private String address;
     private Integer year;

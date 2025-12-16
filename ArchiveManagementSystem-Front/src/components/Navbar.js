@@ -77,7 +77,6 @@ const Navbar = () => {
       color: pathname === routePath ? "green" : "#637381",
     },
     transition: "all 0.2s ease",
-    fontFamily: "B nazanin",
   });
 
   return (
@@ -161,12 +160,7 @@ const Navbar = () => {
                       to={item.path}
                       onClick={handleCloseNavMenu}
                     >
-                      <Typography
-                        textAlign="center"
-                        sx={{ fontFamily: "B nazanin" }}
-                      >
-                        {item.label}
-                      </Typography>
+                      <Typography textAlign="center">{item.label}</Typography>
                     </MenuItem>
                   ))}
               </Menu>

@@ -208,7 +208,6 @@ export default function ArchiveList() {
             <Typography
               variant="h5"
               sx={{
-                fontFamily: "B Nazanin",
                 fontWeight: "bold",
               }}
             >

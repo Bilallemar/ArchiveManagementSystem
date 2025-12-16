@@ -125,7 +125,6 @@ export default function AddArchive() {
             position: "absolute",
             top: { xs: -40, sm: -50, md: -80 },
             right: 20,
-            fontFamily: "B nazanin",
             fontWeight: "bold",
             fontSize: { xs: 20, sm: 22, md: 24 },
           }}

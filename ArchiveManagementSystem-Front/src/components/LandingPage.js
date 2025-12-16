@@ -11,6 +11,7 @@ import {
   Chip,
   Alert,
   CircularProgress,
+  Paper,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
@@ -65,111 +66,63 @@ export default function LandingPage() {
   const userIsAdmin = isAdmin();
   const userHasManagement = hasManagement();
 
-  // useEffect(() => {
-  //   const loadData = async () => {
-  //     try {
-  //       setLoading(true);
-  //       setError(null);
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  //       // Load dashboard stats
-  //       try {
-  //         const statsResponse = await api.get("/dashboard/stats");
-  //         console.log("Dashboard stats response:", statsResponse.data);
-  //         setChartData(statsResponse.data);
-  //       } catch (err) {
-  //         console.error("Failed to load stats:", err);
-  //         console.error("Error details:", err.response);
+        const weeklyRes = await api.get("/dashboard/stats");
+        console.log("Weekly Dashboard Data:", weeklyRes.data);
+        setChartData(weeklyRes.data);
 
-  //         if (err.response && err.response.status === 401) {
-  //           setError("Session expired. Please log in again.");
-  //         } else if (err.response && err.response.status === 403) {
-  //           setError("Access denied. Please contact your administrator.");
-  //         } else {
-  //           setError("Failed to load dashboard data. Please try again.");
-  //         }
-  //       }
+        if (userIsAdmin) {
+          const mgmtRes = await api.get("/dashboard/management-stats");
+          console.log("Management Dashboard Data:", mgmtRes.data);
+          setManagementStats(mgmtRes.data);
+        }
+      } catch (err) {
+        console.error("Dashboard load error:", err);
+        if (err.response && err.response.status === 401) {
+          setError("ستاسو سیشن پای ته رسیدلی، لطفاً بیا login وکړئ.");
+        } else if (err.response && err.response.status === 403) {
+          setError("Access denied. د اډمین سره اړیکه ونیسئ.");
+        } else {
+          setError("Dashboard ډاټا ترلاسه کول ناکام شول. بیا هڅه وکړئ.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //       // Load management-specific stats for admin
-  //       if (userIsAdmin) {
-  //         try {
-  //           const mgmtStatsResponse = await api.get(
-  //             "/dashboard/management-stats"
-  //           );
-  //           console.log("Management stats response:", mgmtStatsResponse.data);
-  //           setManagementStats(mgmtStatsResponse.data);
-  //         } catch (err) {
-  //           console.error("Failed to load management stats:", err);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error("Failed to load dashboard data:", error);
-  //       setError("An error occurred while loading the dashboard");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   loadData();
-  // }, [userIsAdmin]);
-  // useEffect(() => {
-  //   const loadDashboardData = async () => {
-  //     try {
-  //       setLoading(true);
-  //       setError(null);
-
-  //       // د weekly/dashboard stats ترلاسه کول
-  //       const weeklyRes = await api.get("/dashboard/stats");
-  //       console.log("Weekly Dashboard Data:", weeklyRes.data); // دا به ډاټا چاپ کړي
-
-  //       setChartData(weeklyRes.data);
-
-  //       // که user اډمین وي، management stats هم ترلاسه کړئ
-  //       if (userIsAdmin) {
-  //         const mgmtRes = await api.get("/dashboard/management-stats");
-  //         setManagementStats(mgmtRes.data);
-  //       }
-  //     } catch (err) {
-  //       console.error("Dashboard load error:", err);
-  //       if (err.response && err.response.status === 401) {
-  //         setError("ستاسو سیشن پای ته رسیدلی، لطفاً بیا login وکړئ.");
-  //       } else if (err.response && err.response.status === 403) {
-  //         setError("Access denied. د اډمین سره اړیکه ونیسئ.");
-  //       } else {
-  //         setError("Dashboard ډاټا ترلاسه کول ناکام شول. بیا هڅه وکړئ.");
-  //       }
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   loadDashboardData();
-  // }, [userIsAdmin]);
+    loadDashboardData();
+  }, [userIsAdmin]);
 
   // Weekly stats cards for regular users
   const statCards = [
     {
       title: "مرسل الیه",
       value: chartData.weeklyData.recipient || 0,
-      color: "#5B8DEE",
-      icon: "📥",
       total: chartData.totalRecipient,
-      gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      icon: "📥",
+      color: "#00B8D9",
+      bgColor: "rgba(0, 184, 217, 0.08)",
     },
     {
       title: "مرسل",
       value: chartData.weeklyData.sender || 0,
-      color: "#F59E42",
-      icon: "📤",
       total: chartData.totalSender,
-      gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      icon: "📤",
+      color: "#FFAB00",
+      bgColor: "rgba(255, 171, 0, 0.08)",
     },
     {
       title: "فایل",
       value: chartData.weeklyData.file || 0,
-      color: "#4ECDC4",
-      icon: "📁",
       total: chartData.totalFile,
-      gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      icon: "📁",
+      color: "#22C55E",
+      bgColor: "rgba(34, 197, 94, 0.08)",
     },
   ];
 
@@ -178,58 +131,58 @@ export default function LandingPage() {
     {
       title: "آرشیف",
       value: managementStats.archives,
-      color: "#667eea",
       icon: "📚",
-      gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      color: "#00B8D9",
+      bgColor: "rgba(0, 184, 217, 0.08)",
     },
     {
       title: "سوانح",
       value: managementStats.sawanih,
-      color: "#f093fb",
       icon: "📋",
-      gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      color: "#8B5CF6",
+      bgColor: "rgba(139, 92, 246, 0.08)",
     },
     {
       title: "حفظیه حاضری",
       value: managementStats.hifziyaHazari,
-      color: "#4facfe",
       icon: "📝",
-      gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      color: "#FFAB00",
+      bgColor: "rgba(255, 171, 0, 0.08)",
     },
     {
       title: "حفظیه وارده صادره",
       value: managementStats.hifziyaWaradaSadera,
-      color: "#43e97b",
       icon: "📄",
-      gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      color: "#22C55E",
+      bgColor: "rgba(34, 197, 94, 0.08)",
     },
     {
       title: "مخزن رسیدات",
       value: managementStats.makzanReceipts,
-      color: "#fa709a",
       icon: "🗃️",
-      gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      color: "#FF5630",
+      bgColor: "rgba(255, 86, 48, 0.08)",
     },
     {
       title: "مخزن سالانه گزارش",
       value: managementStats.makzanAnnualReports,
-      color: "#30cfd0",
       icon: "📊",
-      gradient: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
+      color: "#00B8D9",
+      bgColor: "rgba(0, 184, 217, 0.08)",
     },
     {
       title: "مخزن تسلیمی گزارش",
       value: managementStats.makzanSubmissionReports,
-      color: "#a8edea",
       icon: "📑",
-      gradient: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+      color: "#8B5CF6",
+      bgColor: "rgba(139, 92, 246, 0.08)",
     },
     {
       title: "مجموع اسناد",
       value: managementStats.totalDocuments,
-      color: "#ff9a9e",
       icon: "📦",
-      gradient: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
+      color: "#7C3AED",
+      bgColor: "rgba(124, 58, 237, 0.08)",
     },
   ];
 
@@ -242,15 +195,12 @@ export default function LandingPage() {
           justifyContent: "center",
           alignItems: "center",
           height: "80vh",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          backgroundColor: "#f9fafb",
         }}
       >
         <Box sx={{ textAlign: "center" }}>
-          <CircularProgress size={60} sx={{ color: "#fff", mb: 2 }} />
-          <Typography
-            variant="h6"
-            sx={{ color: "#fff", fontFamily: "B nazanin" }}
-          >
+          <CircularProgress size={60} sx={{ color: "#00B8D9", mb: 2 }} />
+          <Typography variant="h6" sx={{ color: "#637381" }}>
             په لوډولو کې دی...
           </Typography>
         </Box>
@@ -261,26 +211,38 @@ export default function LandingPage() {
   // Error state
   if (error) {
     return (
-      <Box sx={{ padding: 3 }}>
-        <Alert severity="error" sx={{ borderRadius: 3 }}>
-          <Typography variant="h6" sx={{ fontFamily: "B nazanin" }}>
+      <Box sx={{ padding: 3, backgroundColor: "#f9fafb", minHeight: "100vh" }}>
+        <Alert
+          severity="error"
+          sx={{
+            borderRadius: 2,
+            border: "1px solid rgba(255, 86, 48, 0.2)",
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1 }}>
             تېروتنه
           </Typography>
-          <Typography sx={{ fontFamily: "B nazanin" }}>{error}</Typography>
+          <Typography>{error}</Typography>
         </Alert>
       </Box>
     );
   }
 
-  // No management warning (non-admin users only)
+  // No management warning
   if (!userHasManagement && !userIsAdmin) {
     return (
-      <Box sx={{ padding: 3, mb: 4 }}>
-        <Alert severity="warning" sx={{ borderRadius: 3 }}>
-          <Typography variant="h6" sx={{ fontFamily: "B nazanin" }}>
+      <Box sx={{ padding: 3, backgroundColor: "#f9fafb", minHeight: "100vh" }}>
+        <Alert
+          severity="warning"
+          sx={{
+            borderRadius: 2,
+            border: "1px solid rgba(255, 171, 0, 0.2)",
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1 }}>
             هیڅ مدیریت ندی ټاکل شوی
           </Typography>
-          <Typography sx={{ fontFamily: "B nazanin" }}>
+          <Typography>
             تاسو هیڅ مدیریت ته ندی ټاکل شوي. مهرباني وکړئ خپل اډمین سره اړیکه
             ونیسئ.
           </Typography>
@@ -297,7 +259,13 @@ export default function LandingPage() {
       chartData.totalFile > 0);
 
   return (
-    <Box sx={{ padding: 3, backgroundColor: "#f5f7fa", minHeight: "100vh" }}>
+    <Box
+      sx={{
+        padding: { xs: 2, sm: 3 },
+        backgroundColor: "#f9fafb",
+        minHeight: "100vh",
+      }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -305,19 +273,14 @@ export default function LandingPage() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          padding: 3,
-          borderRadius: 4,
-          boxShadow: "0 8px 32px rgba(102, 126, 234, 0.3)",
         }}
       >
         <Typography
           variant="h4"
           sx={{
             fontWeight: 700,
-            fontFamily: "B nazanin",
-            color: "#fff",
-            textShadow: "2px 2px 4px rgba(0,0,0,0.2)",
+            color: "#212B36",
+            fontSize: { xs: "1.5rem", sm: "2rem" },
           }}
         >
           ډشبورډ
@@ -325,75 +288,74 @@ export default function LandingPage() {
         <Chip
           label={userIsAdmin ? "اډمین" : managementName}
           sx={{
-            background: userIsAdmin
-              ? "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-              : "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+            backgroundColor: userIsAdmin ? "#FF5630" : "#00B8D9",
             color: "#fff",
-            fontWeight: 700,
-            fontFamily: "B nazanin",
-            fontSize: "1.1rem",
-            padding: "8px 16px",
-            height: "auto",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+            fontWeight: 600,
+            fontSize: "0.875rem",
+            height: 32,
+            borderRadius: "8px",
+            "& .MuiChip-label": {
+              px: 1.5,
+            },
           }}
         />
       </Box>
 
-      {/* Admin View - Management Stats Only */}
+      {/* Admin View - Management Stats */}
       {userIsAdmin && (
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {managementCards.map((card, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
               <Card
                 sx={{
-                  background: card.gradient,
-                  borderRadius: 4,
-                  padding: 3,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  p: 3,
+                  borderRadius: 2,
+                  boxShadow:
+                    "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   "&:hover": {
-                    transform: "translateY(-8px)",
-                    boxShadow: "0 12px 48px rgba(0,0,0,0.15)",
+                    boxShadow:
+                      "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.2) 0px 16px 32px -4px",
                   },
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontFamily: "B nazanin",
-                        color: "#fff",
-                        mb: 1,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {card.title}
-                    </Typography>
+                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: card.bgColor,
+                      fontSize: "2rem",
+                      mr: 2,
+                    }}
+                  >
+                    {card.icon}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
                     <Typography
                       variant="h3"
                       sx={{
-                        fontWeight: 800,
-                        color: "#fff",
-                        textShadow: "2px 2px 4px rgba(0,0,0,0.2)",
+                        fontWeight: 700,
+                        color: "#212B36",
+                        mb: 0.5,
+                        fontSize: "1.75rem",
                       }}
                     >
                       {card.value}
                     </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      fontSize: "48px",
-                      filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.2))",
-                    }}
-                  >
-                    {card.icon}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#637381",
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      {card.title}
+                    </Typography>
                   </Box>
                 </Box>
               </Card>
@@ -409,43 +371,41 @@ export default function LandingPage() {
             <Grid item xs={12} sm={6} md={4} key={index}>
               <Card
                 sx={{
-                  background: card.gradient,
-                  borderRadius: 4,
-                  padding: 3,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  p: 3,
+                  borderRadius: 2,
+                  boxShadow:
+                    "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   "&:hover": {
-                    transform: "translateY(-8px)",
-                    boxShadow: "0 12px 48px rgba(0,0,0,0.15)",
+                    boxShadow:
+                      "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.2) 0px 16px 32px -4px",
                   },
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontFamily: "B nazanin",
-                        color: "#fff",
-                        mb: 1,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {card.title}
-                    </Typography>
+                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: card.bgColor,
+                      fontSize: "2rem",
+                      mr: 2,
+                    }}
+                  >
+                    {card.icon}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
                     <Typography
                       variant="h3"
                       sx={{
-                        fontWeight: 800,
-                        color: "#fff",
-                        mb: 1,
-                        textShadow: "2px 2px 4px rgba(0,0,0,0.2)",
+                        fontWeight: 700,
+                        color: "#212B36",
+                        mb: 0.5,
+                        fontSize: "1.75rem",
                       }}
                     >
                       {card.value}
@@ -453,46 +413,42 @@ export default function LandingPage() {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: "rgba(255,255,255,0.9)",
-                        fontFamily: "B nazanin",
+                        color: "#637381",
+                        fontSize: "0.875rem",
                         mb: 1,
                       }}
                     >
-                      تیرې اوونۍ
+                      {card.title}
                     </Typography>
-                    <Box
-                      sx={{
-                        display: "inline-block",
-                        backgroundColor: "rgba(255,255,255,0.3)",
-                        padding: "4px 12px",
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Chip
+                        label={`${card.total} مجموع`}
+                        size="small"
                         sx={{
-                          color: "#fff",
-                          fontWeight: 700,
+                          backgroundColor: card.bgColor,
+                          color: card.color,
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                          height: 24,
+                        }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "#637381",
+                          fontSize: "0.75rem",
                         }}
                       >
                         {(() => {
                           const total = card.total || 0;
                           const percentage =
                             total > 0
-                              ? ((card.value / total) * 100).toFixed(1)
+                              ? ((card.value / total) * 100).toFixed(0)
                               : 0;
-                          return `${percentage}%`;
+                          return `${percentage}% تیرې اوونۍ`;
                         })()}
                       </Typography>
                     </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      fontSize: "56px",
-                      filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.2))",
-                    }}
-                  >
-                    {card.icon}
                   </Box>
                 </Box>
               </Card>
@@ -504,48 +460,49 @@ export default function LandingPage() {
       {/* No Data Message */}
       {!hasData && (
         <Box sx={{ textAlign: "center", py: 8 }}>
-          <Alert
-            severity="info"
+          <Paper
             sx={{
-              borderRadius: 4,
-              padding: 4,
-              backgroundColor: "#e3f2fd",
-              border: "2px dashed #2196f3",
+              p: 6,
+              borderRadius: 2,
+              border: "2px dashed rgba(145, 158, 171, 0.24)",
+              backgroundColor: "transparent",
             }}
           >
-            <Typography variant="h5" sx={{ fontFamily: "B nazanin", mb: 2 }}>
+            <Typography
+              variant="h5"
+              sx={{ color: "#212B36", mb: 2, fontWeight: 600 }}
+            >
               هیڅ معلومات شتون نلري
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: "B nazanin" }}>
+            <Typography variant="body1" sx={{ color: "#637381" }}>
               تراوسه هیڅ معلومات د ښودلو لپاره شتون نلري. د رسیدونو په اضافه
               کولو سره پیل وکړئ.
             </Typography>
-          </Alert>
+          </Paper>
         </Box>
       )}
 
-      {/* Charts - Only show if there's data */}
+      {/* Charts */}
       {hasData && (
         <Grid container spacing={3}>
           {/* Pie Chart */}
           <Grid item xs={12} md={5}>
             <Card
               sx={{
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                borderRadius: 4,
-                padding: 4,
-                backgroundColor: "#fff",
+                p: 3,
+                borderRadius: 2,
+                boxShadow:
+                  "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
                 height: "100%",
               }}
             >
               <Typography
-                variant="h5"
+                variant="h6"
                 sx={{
                   mb: 3,
                   fontWeight: 700,
-                  textAlign: "center",
-                  fontFamily: "B nazanin",
-                  color: "#667eea",
+                  color: "#212B36",
+                  fontSize: "1.125rem",
                 }}
               >
                 د اسنادو توزیع
@@ -565,19 +522,19 @@ export default function LandingPage() {
                           id: 1,
                           value: chartData.totalSender || 0,
                           label: "مرسل",
-                          color: "#f093fb",
+                          color: "#FFAB00",
                         },
                         {
                           id: 2,
                           value: chartData.totalRecipient || 0,
                           label: "مرسل الیه",
-                          color: "#4facfe",
+                          color: "#00B8D9",
                         },
                         {
                           id: 3,
                           value: chartData.totalFile || 0,
                           label: "فایل",
-                          color: "#43e97b",
+                          color: "#22C55E",
                         },
                       ],
                       arcLabel: (item) => {
@@ -591,7 +548,7 @@ export default function LandingPage() {
                       },
                       innerRadius,
                       outerRadius,
-                      cornerRadius: 5,
+                      cornerRadius: 4,
                     },
                   ]}
                   width={pieWidth}
@@ -607,9 +564,9 @@ export default function LandingPage() {
                   }}
                 >
                   {[
-                    { color: "#f093fb", label: "مرسل" },
-                    { color: "#4facfe", label: "مرسل الیه" },
-                    { color: "#43e97b", label: "فایل" },
+                    { color: "#FFAB00", label: "مرسل" },
+                    { color: "#00B8D9", label: "مرسل الیه" },
+                    { color: "#22C55E", label: "فایل" },
                   ].map((item, idx) => (
                     <Box
                       key={idx}
@@ -617,16 +574,19 @@ export default function LandingPage() {
                     >
                       <Box
                         sx={{
-                          width: 20,
-                          height: 20,
+                          width: 16,
+                          height: 16,
                           bgcolor: item.color,
-                          borderRadius: "6px",
-                          boxShadow: `0 2px 8px ${item.color}80`,
+                          borderRadius: "4px",
                         }}
                       />
                       <Typography
-                        variant="body1"
-                        sx={{ fontFamily: "B nazanin", fontWeight: 600 }}
+                        variant="body2"
+                        sx={{
+                          color: "#637381",
+                          fontWeight: 500,
+                          fontSize: "0.875rem",
+                        }}
                       >
                         {item.label}
                       </Typography>
@@ -641,21 +601,20 @@ export default function LandingPage() {
           <Grid item xs={12} md={7}>
             <Card
               sx={{
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                borderRadius: 4,
-                padding: 4,
-                backgroundColor: "#fff",
+                p: 3,
+                borderRadius: 2,
+                boxShadow:
+                  "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
                 height: "100%",
               }}
             >
               <Typography
-                variant="h5"
+                variant="h6"
                 sx={{
                   mb: 3,
                   fontWeight: 700,
-                  textAlign: "center",
-                  fontFamily: "B nazanin",
-                  color: "#667eea",
+                  color: "#212B36",
+                  fontSize: "1.125rem",
                 }}
               >
                 د میاشتو له مخې اسناد
@@ -668,8 +627,8 @@ export default function LandingPage() {
                       data: chartData.months,
                       tickLabelStyle: {
                         fontSize: isXs ? 11 : isSm ? 12 : 13,
-                        fontWeight: 600,
-                        fill: "#666",
+                        fontWeight: 500,
+                        fill: "#637381",
                       },
                     },
                   ]}
@@ -677,23 +636,23 @@ export default function LandingPage() {
                     {
                       label: "مرسل",
                       data: chartData.senderData,
-                      color: "#f093fb",
+                      color: "#FFAB00",
                     },
                     {
                       label: "مرسل الیه",
                       data: chartData.recipientData,
-                      color: "#4facfe",
+                      color: "#00B8D9",
                     },
                     {
                       label: "فایل",
                       data: chartData.fileData,
-                      color: "#43e97b",
+                      color: "#22C55E",
                     },
                   ]}
                   width={chartWidth}
                   height={chartHeight}
                   slotProps={{
-                    bar: { rx: 6, ry: 6 },
+                    bar: { rx: 4, ry: 4 },
                   }}
                 />
               </Box>

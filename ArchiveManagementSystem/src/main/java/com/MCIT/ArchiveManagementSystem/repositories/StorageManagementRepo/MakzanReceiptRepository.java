@@ -9,9 +9,9 @@ import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
 
 
 public interface MakzanReceiptRepository extends JpaRepository<MakzanReceipt, Integer> {
-    // List<MakzanReceipt> findByManagement(Management management);
+    List<MakzanReceipt> findByManagement(Management management);
 
-    // Long countByManagement(Management management);
+    Long countByManagement(Management management);
 
     // د Management فیلډ لپاره اضافه کړه
 

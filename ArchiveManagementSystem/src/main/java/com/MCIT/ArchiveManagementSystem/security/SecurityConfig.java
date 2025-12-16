@@ -1,5 +1,3 @@
-
-
 package com.MCIT.ArchiveManagementSystem.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,35 +61,20 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Allow CORS preflight requests
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                
-                // Public endpoints - no authentication required
                 .requestMatchers("/api/auth/public/**").permitAll()
                 .requestMatchers("/oauth2/**").permitAll()
                 .requestMatchers("/api/csrf-token").permitAll()
-                
-                // Admin-only endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/user-management/**").hasRole("ADMIN")
-                
-                // Archive Management endpoints (Management ID: 1)
                 .requestMatchers("/api/archives/**").authenticated()
-                
-                // Hifziya/Repository Management endpoints (Management ID: 2)
                 .requestMatchers("/api/sawanih/**").authenticated()
                 .requestMatchers("/api/hifziya-hazari/**").authenticated()
                 .requestMatchers("/api/hifziya-warada-sadera/**").authenticated()
-                
-                // Makhzan/Storage Management endpoints (Management ID: 3)
                 .requestMatchers("/api/makzan-receipts/**").authenticated()
                 .requestMatchers("/api/makzan-annual-reports/**").authenticated()
                 .requestMatchers("/api/annual-reports-info/**").authenticated()
-                
-                // Management endpoints
                 .requestMatchers("/api/managements/**").authenticated()
-                
-                // Legacy/Other endpoints - keeping your existing configuration
                 .requestMatchers("/api/receipts/**").authenticated()
                 .requestMatchers("/api/receipts/download/**").authenticated()
                 .requestMatchers("/api/files/**").authenticated()
@@ -104,8 +87,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/attendanceBook/**").authenticated()
                 .requestMatchers("/api/fileOffices/**").authenticated()
                 .requestMatchers("/api/received-issued-books-repository/**").authenticated()
-                
-                // All other requests require authentication
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
@@ -118,12 +99,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         
-        // Allow multiple origins with credentials
-        config.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:3000",
-            "http://localhost:8081",
-            "http://localhost:4200"
-        ));
+        // Allow all origins with credentials
+        config.setAllowedOriginPatterns(Arrays.asList("*"));
         
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-XSRF-TOKEN", "X-Requested-With", "Accept", "Origin"));
@@ -148,17 +125,15 @@ public class SecurityConfig {
 
     @Bean
     public CommandLineRunner initData(RoleRepository roleRepository,
-                                    UserRepository userRepository,
-                                    PasswordEncoder passwordEncoder) {
+                                      UserRepository userRepository,
+                                      PasswordEncoder passwordEncoder) {
         return args -> {
-            // Create default roles
             Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_USER)));
 
             Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
 
-            // Create default user
             if (!userRepository.existsByUserName("user1")) {
                 User user1 = new User("user1", "user1@example.com",
                         passwordEncoder.encode("password1"));
@@ -174,7 +149,6 @@ public class SecurityConfig {
                 userRepository.save(user1);
             }
 
-            // Create default admin with Archive management
             if (!userRepository.existsByUserName("admin")) {
                 User admin = new User("admin", "admin@example.com",
                         passwordEncoder.encode("adminPass"));
@@ -188,7 +162,6 @@ public class SecurityConfig {
                 admin.setSignUpMethod("email");
                 admin.setRole(adminRole);
                 
-                // Assign to Archive management (ID: 1) if it exists
                 Management management = managementRepository.findById(1L).orElse(null);
                 if (management != null) {
                     admin.setManagement(management);

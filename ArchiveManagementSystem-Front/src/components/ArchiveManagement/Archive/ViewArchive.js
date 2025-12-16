@@ -15,7 +15,6 @@ export default function ViewArchive({ open, onClose, archive }) {
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle
         sx={{
-          fontFamily: "B Nazanin",
           fontWeight: "bold",
           textAlign: "right",
         }}
