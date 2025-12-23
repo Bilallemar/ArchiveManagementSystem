@@ -99,7 +99,7 @@ export default function MakzanAnnualReportList() {
   };
 
   const handleEdit = () => {
-    navigate(`/makzan-annual-reports/update/${selectedReport.id}`);
+    navigate(`/makzan-annual-reports/${selectedReport.id}`);
     handleClose();
   };
 

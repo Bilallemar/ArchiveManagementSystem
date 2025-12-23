@@ -161,5 +161,30 @@ public MakzanReceipt updateReceipt(Integer id, MakzanReceipt makzanReceiptsDetai
 //     }
 // }
 
-
+public List<MakzanReceipt> searchByKeyword(String field, String keyword) {
+    // If no keyword, return all
+    if (keyword == null || keyword.trim().isEmpty()) {
+        return makzanReceiptRepository.findAll();
+    }
+    
+    // Search specific field or all fields
+    if (field == null || field.trim().isEmpty()) {
+        return makzanReceiptRepository.searchAllFields(keyword);
+    }
+    
+    switch (field.toLowerCase()) {
+        case "no":
+            return makzanReceiptRepository.searchByNo(keyword);
+        case "docno":
+            return makzanReceiptRepository.searchByDocNo(keyword);
+        case "letterno":
+            return makzanReceiptRepository.searchByLetterNo(keyword);
+        case "subjecttype":
+            return makzanReceiptRepository.searchBySubjectType(keyword);
+        case "description":
+            return makzanReceiptRepository.searchByDescription(keyword);
+        default:
+            return makzanReceiptRepository.searchAllFields(keyword);
+    }
+}
 }

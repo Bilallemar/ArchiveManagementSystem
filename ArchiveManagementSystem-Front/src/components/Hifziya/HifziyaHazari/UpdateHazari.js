@@ -26,6 +26,7 @@ export default function UpdateHazari() {
   const { id } = useParams();
   const [formData, setFormData] = useState({
     type: "",
+    subType: "",
     year: "",
     org: "",
     description: "",
@@ -34,6 +35,7 @@ export default function UpdateHazari() {
   });
 
   const [types, setTypes] = useState([]);
+  const [subTypes, setSubTypes] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +64,7 @@ export default function UpdateHazari() {
 
         setFormData({
           type: reportData.type?.id || "",
+          subType: reportData.subType?.id || "",
           year: formattedDate,
           org: reportData.org?.id || "",
           description: reportData.description || "",
@@ -69,6 +72,14 @@ export default function UpdateHazari() {
             reportData.isIndraj !== undefined ? reportData.isIndraj : true,
           fileURL: null,
         });
+
+        // Load subtypes if type exists
+        if (reportData.type?.id) {
+          const subTypesRes = await api.get(
+            `/sub-type/by-type/${reportData.type.id}`
+          );
+          setSubTypes(subTypesRes.data);
+        }
 
         // Store existing files info
         if (reportData.files && reportData.files.length > 0) {
@@ -85,6 +96,30 @@ export default function UpdateHazari() {
 
     fetchData();
   }, [id, navigate]);
+
+  // Load SubTypes when Type changes
+  useEffect(() => {
+    const loadSubTypes = async () => {
+      if (!formData.type) {
+        setSubTypes([]);
+        setFormData((prev) => ({ ...prev, subType: "" }));
+        return;
+      }
+
+      try {
+        console.log("Loading subtypes for type:", formData.type);
+        const response = await api.get(`/sub-type/by-type/${formData.type}`);
+        console.log("SubTypes:", response.data);
+        setSubTypes(response.data);
+      } catch (error) {
+        console.error("Failed to load subtypes", error);
+        toast.error("Failed to load subtypes");
+        setSubTypes([]);
+      }
+    };
+
+    loadSubTypes();
+  }, [formData.type]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -105,7 +140,7 @@ export default function UpdateHazari() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["type", "year", "org"];
+    const requiredFields = ["type", "subType", "year", "org"];
     const missingFields = requiredFields.filter((field) => !formData[field]);
     if (missingFields.length > 0) {
       toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
@@ -121,6 +156,7 @@ export default function UpdateHazari() {
 
       const hazariData = {
         type: { id: formData.type },
+        subType: { id: formData.subType },
         year: yearAsInteger,
         org: { id: formData.org },
         description: formData.description,
@@ -187,7 +223,6 @@ export default function UpdateHazari() {
         }}
         onSubmit={handleSubmit}
       >
-        {/* Title */}
         <Box
           sx={{
             position: "absolute",
@@ -201,7 +236,6 @@ export default function UpdateHazari() {
           ویرایش کتاب حاضری
         </Box>
 
-        {/* Breadcrumbs */}
         <Box
           sx={{
             position: "absolute",
@@ -212,7 +246,6 @@ export default function UpdateHazari() {
           <PageBreadcrumbs />
         </Box>
 
-        {/* Form Fields */}
         <Grid container spacing={2} sx={{ flex: 1 }}>
           {/* Record Type */}
           <Grid item xs={12} sm={6}>
@@ -248,6 +281,37 @@ export default function UpdateHazari() {
                   types.map((type) => (
                     <MenuItem key={type.id} value={type.id}>
                       {type.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* SubType Dropdown */}
+          <Grid item xs={12} sm={6}>
+            <FormControl
+              fullWidth
+              required
+              error={!formData.subType}
+              disabled={!formData.type}
+            >
+              <InputLabel>زیر نوعیت</InputLabel>
+              <Select
+                name="subType"
+                value={formData.subType}
+                onChange={handleInputChange}
+                label="زیر نوعیت"
+                sx={{ height: 60 }}
+              >
+                {!formData.type ? (
+                  <MenuItem disabled>ابتدا نوعیت را انتخاب کنید</MenuItem>
+                ) : subTypes.length === 0 ? (
+                  <MenuItem disabled>Loading...</MenuItem>
+                ) : (
+                  subTypes.map((subType) => (
+                    <MenuItem key={subType.id} value={subType.id}>
+                      {subType.name}
                     </MenuItem>
                   ))
                 )}
@@ -311,7 +375,7 @@ export default function UpdateHazari() {
             />
           </Grid>
 
-          {/* Current File Display (Read-only) */}
+          {/* Current File Display */}
           {existingFiles.length > 0 && (
             <Grid item xs={12}>
               <TextField
@@ -348,7 +412,6 @@ export default function UpdateHazari() {
               />
             </Button>
 
-            {/* Show newly selected file */}
             {formData.fileURL && (
               <Typography
                 variant="caption"

@@ -1,6 +1,4 @@
 import React from "react";
-import { PieChart } from "@mui/x-charts/PieChart";
-import { BarChart } from "@mui/x-charts/BarChart";
 import {
   Card,
   Typography,
@@ -8,10 +6,8 @@ import {
   Grid,
   useTheme,
   useMediaQuery,
-  Chip,
   Alert,
   CircularProgress,
-  Paper,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
@@ -20,6 +16,8 @@ import {
   hasManagement,
 } from "../utils/managementUtils";
 import api from "../services/api";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
 export default function LandingPage() {
   const [chartData, setChartData] = useState({
@@ -52,16 +50,6 @@ export default function LandingPage() {
   const [error, setError] = useState(null);
 
   const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
-  const isSm = useMediaQuery(theme.breakpoints.between("sm", "md"));
-
-  const pieWidth = isXs ? 280 : isSm ? 320 : 380;
-  const pieHeight = isXs ? 280 : isSm ? 320 : 380;
-  const innerRadius = isXs ? 60 : isSm ? 75 : 90;
-  const outerRadius = isXs ? 90 : isSm ? 110 : 130;
-  const chartWidth = isXs ? 300 : isSm ? 500 : 700;
-  const chartHeight = isXs ? 250 : isSm ? 350 : 400;
-
   const managementName = getManagementName();
   const userIsAdmin = isAdmin();
   const userHasManagement = hasManagement();
@@ -73,12 +61,10 @@ export default function LandingPage() {
         setError(null);
 
         const weeklyRes = await api.get("/dashboard/stats");
-        console.log("Weekly Dashboard Data:", weeklyRes.data);
         setChartData(weeklyRes.data);
 
         if (userIsAdmin) {
           const mgmtRes = await api.get("/dashboard/management-stats");
-          console.log("Management Dashboard Data:", mgmtRes.data);
           setManagementStats(mgmtRes.data);
         }
       } catch (err) {
@@ -98,568 +84,782 @@ export default function LandingPage() {
     loadDashboardData();
   }, [userIsAdmin]);
 
-  // Weekly stats cards for regular users
+  // Mini Sparkline Component
+  const MiniSparkline = ({ data, color }) => {
+    if (!data || data.length === 0) return null;
+
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min || 1;
+    const width = 60;
+    const height = 32;
+
+    const points = data
+      .map((value, index) => {
+        const x = (index / (data.length - 1)) * width;
+        const y = height - ((value - min) / range) * height;
+        return `${x},${y}`;
+      })
+      .join(" ");
+
+    return (
+      <svg width={width} height={height} style={{ display: "block" }}>
+        <polyline
+          points={points}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  };
+
+  const calculatePercentage = (current, total) => {
+    if (total === 0) return 0;
+    return ((current / total) * 100).toFixed(1);
+  };
+
   const statCards = [
     {
-      title: "مرسل الیه",
-      value: chartData.weeklyData.recipient || 0,
-      total: chartData.totalRecipient,
-      icon: "📥",
+      title: "مجموع مرسل الیه",
+      value: chartData.totalRecipient || 0,
+      weeklyValue: chartData.weeklyData.recipient || 0,
       color: "#00B8D9",
-      bgColor: "rgba(0, 184, 217, 0.08)",
+      lightBg: "rgba(0, 184, 217, 0.08)",
+      sparklineData: chartData.recipientData || [],
     },
     {
-      title: "مرسل",
-      value: chartData.weeklyData.sender || 0,
-      total: chartData.totalSender,
-      icon: "📤",
+      title: "مجموع مرسل",
+      value: chartData.totalSender || 0,
+      weeklyValue: chartData.weeklyData.sender || 0,
       color: "#FFAB00",
-      bgColor: "rgba(255, 171, 0, 0.08)",
+      lightBg: "rgba(255, 171, 0, 0.08)",
+      sparklineData: chartData.senderData || [],
     },
     {
-      title: "فایل",
-      value: chartData.weeklyData.file || 0,
-      total: chartData.totalFile,
-      icon: "📁",
-      color: "#22C55E",
-      bgColor: "rgba(34, 197, 94, 0.08)",
+      title: "مجموع فایلونه",
+      value: chartData.totalFile || 0,
+      weeklyValue: chartData.weeklyData.file || 0,
+      color: "#00A76F",
+      lightBg: "rgba(0, 167, 111, 0.08)",
+      sparklineData: chartData.fileData || [],
     },
   ];
 
-  // Management cards for admin view
+  // Management cards styled like stat cards
   const managementCards = [
     {
-      title: "آرشیف",
-      value: managementStats.archives,
-      icon: "📚",
-      color: "#00B8D9",
-      bgColor: "rgba(0, 184, 217, 0.08)",
-    },
-    {
-      title: "سوانح",
-      value: managementStats.sawanih,
-      icon: "📋",
-      color: "#8B5CF6",
-      bgColor: "rgba(139, 92, 246, 0.08)",
-    },
-    {
-      title: "حفظیه حاضری",
-      value: managementStats.hifziyaHazari,
-      icon: "📝",
-      color: "#FFAB00",
-      bgColor: "rgba(255, 171, 0, 0.08)",
-    },
-    {
-      title: "حفظیه وارده صادره",
-      value: managementStats.hifziyaWaradaSadera,
-      icon: "📄",
-      color: "#22C55E",
-      bgColor: "rgba(34, 197, 94, 0.08)",
-    },
-    {
       title: "مخزن رسیدات",
-      value: managementStats.makzanReceipts,
-      icon: "🗃️",
+      value: managementStats.makzanReceipts || 0,
+      weeklyValue: 0,
       color: "#FF5630",
-      bgColor: "rgba(255, 86, 48, 0.08)",
+      lightBg: "rgba(255, 86, 48, 0.08)",
+      sparklineData: [2, 3, 2, 4, 3, 4, 4],
     },
     {
       title: "مخزن سالانه گزارش",
-      value: managementStats.makzanAnnualReports,
-      icon: "📊",
-      color: "#00B8D9",
-      bgColor: "rgba(0, 184, 217, 0.08)",
+      value: managementStats.makzanAnnualReports || 0,
+      weeklyValue: 0,
+      color: "#1890FF",
+      lightBg: "rgba(24, 144, 255, 0.08)",
+      sparklineData: [1, 1, 0, 1, 1, 1, 1],
     },
     {
       title: "مخزن تسلیمی گزارش",
-      value: managementStats.makzanSubmissionReports,
-      icon: "📑",
-      color: "#8B5CF6",
-      bgColor: "rgba(139, 92, 246, 0.08)",
-    },
-    {
-      title: "مجموع اسناد",
-      value: managementStats.totalDocuments,
-      icon: "📦",
-      color: "#7C3AED",
-      bgColor: "rgba(124, 58, 237, 0.08)",
+      value: managementStats.makzanSubmissionReports || 0,
+      weeklyValue: 0,
+      color: "#7635DC",
+      lightBg: "rgba(118, 53, 220, 0.08)",
+      sparklineData: [2, 2, 3, 2, 3, 3, 3],
     },
   ];
 
-  // Loading state
+  // Default months for empty chart
+  const defaultMonths = [
+    "حمل",
+    "ثور",
+    "جوزا",
+    "سرطان",
+    "اسد",
+    "سنبله",
+    "میزان",
+    "عقرب",
+    "قوس",
+    "جدی",
+    "دلو",
+    "حوت",
+  ];
+  const displayMonths =
+    chartData.months.length > 0 ? chartData.months : defaultMonths;
+  const displaySenderData =
+    chartData.senderData.length > 0 ? chartData.senderData : Array(12).fill(0);
+  const displayRecipientData =
+    chartData.recipientData.length > 0
+      ? chartData.recipientData
+      : Array(12).fill(0);
+  const displayFileData =
+    chartData.fileData.length > 0 ? chartData.fileData : Array(12).fill(0);
+
   if (loading) {
     return (
       <Box
         sx={{
           display: "flex",
-          justifyContent: "center",
           alignItems: "center",
-          height: "80vh",
-          backgroundColor: "#f9fafb",
+          justifyContent: "center",
+          minHeight: "100vh",
+          bgcolor: "#F9FAFB",
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
-          <CircularProgress size={60} sx={{ color: "#00B8D9", mb: 2 }} />
-          <Typography variant="h6" sx={{ color: "#637381" }}>
-            په لوډولو کې دی...
-          </Typography>
-        </Box>
+        <CircularProgress size={48} thickness={4} sx={{ color: "#3B82F6" }} />
       </Box>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <Box sx={{ padding: 3, backgroundColor: "#f9fafb", minHeight: "100vh" }}>
-        <Alert
-          severity="error"
-          sx={{
-            borderRadius: 2,
-            border: "1px solid rgba(255, 86, 48, 0.2)",
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            تېروتنه
-          </Typography>
-          <Typography>{error}</Typography>
+      <Box sx={{ p: 3, bgcolor: "#F9FAFB", minHeight: "100vh" }}>
+        <Alert severity="error" sx={{ borderRadius: 2 }}>
+          {error}
         </Alert>
       </Box>
     );
   }
 
-  // No management warning
   if (!userHasManagement && !userIsAdmin) {
     return (
-      <Box sx={{ padding: 3, backgroundColor: "#f9fafb", minHeight: "100vh" }}>
-        <Alert
-          severity="warning"
-          sx={{
-            borderRadius: 2,
-            border: "1px solid rgba(255, 171, 0, 0.2)",
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            هیڅ مدیریت ندی ټاکل شوی
-          </Typography>
-          <Typography>
-            تاسو هیڅ مدیریت ته ندی ټاکل شوي. مهرباني وکړئ خپل اډمین سره اړیکه
-            ونیسئ.
-          </Typography>
+      <Box sx={{ p: 3, bgcolor: "#F9FAFB", minHeight: "100vh" }}>
+        <Alert severity="warning" sx={{ borderRadius: 2 }}>
+          تاسو هیڅ مدیریت ته ندی ټاکل شوي. مهرباني وکړئ خپل اډمین سره اړیکه
+          ونیسئ.
         </Alert>
       </Box>
     );
   }
 
-  // Check if there's any data
-  const hasData =
-    chartData.months.length > 0 &&
-    (chartData.totalSender > 0 ||
-      chartData.totalRecipient > 0 ||
-      chartData.totalFile > 0);
+  const hasDonutData =
+    chartData.totalSender > 0 ||
+    chartData.totalRecipient > 0 ||
+    chartData.totalFile > 0;
 
   return (
     <Box
       sx={{
-        padding: { xs: 2, sm: 3 },
-        backgroundColor: "#f9fafb",
         minHeight: "100vh",
+        bgcolor: "#F9FAFB",
+        p: { xs: 2, sm: 3, md: 4 },
       }}
     >
-      {/* Header */}
-      <Box
-        sx={{
-          mb: 4,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            color: "#212B36",
-            fontSize: { xs: "1.5rem", sm: "2rem" },
-          }}
-        >
-          ډشبورډ
-        </Typography>
-        <Chip
-          label={userIsAdmin ? "اډمین" : managementName}
-          sx={{
-            backgroundColor: userIsAdmin ? "#FF5630" : "#00B8D9",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: "0.875rem",
-            height: 32,
-            borderRadius: "8px",
-            "& .MuiChip-label": {
-              px: 1.5,
-            },
-          }}
-        />
-      </Box>
+      <Box sx={{ maxWidth: "1400px", mx: "auto" }}>
+        {/* Stat Cards - Main */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {statCards.map((card, index) => {
+            const percentage = calculatePercentage(
+              card.weeklyValue,
+              card.value
+            );
+            const isPositive = card.weeklyValue > 0;
 
-      {/* Admin View - Management Stats */}
-      {userIsAdmin && (
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {managementCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card
-                sx={{
-                  p: 3,
-                  borderRadius: 2,
-                  boxShadow:
-                    "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  "&:hover": {
-                    boxShadow:
-                      "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.2) 0px 16px 32px -4px",
-                  },
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
-                  <Box
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: card.bgColor,
-                      fontSize: "2rem",
-                      mr: 2,
-                    }}
-                  >
-                    {card.icon}
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="h3"
-                      sx={{
-                        fontWeight: 700,
-                        color: "#212B36",
-                        mb: 0.5,
-                        fontSize: "1.75rem",
-                      }}
-                    >
-                      {card.value}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "#637381",
-                        fontSize: "0.875rem",
-                      }}
-                    >
-                      {card.title}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      {/* Regular User View - Weekly Stats */}
-      {!userIsAdmin && (
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {statCards.map((card, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card
-                sx={{
-                  p: 3,
-                  borderRadius: 2,
-                  boxShadow:
-                    "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  "&:hover": {
-                    boxShadow:
-                      "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.2) 0px 16px 32px -4px",
-                  },
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
-                  <Box
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: card.bgColor,
-                      fontSize: "2rem",
-                      mr: 2,
-                    }}
-                  >
-                    {card.icon}
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="h3"
-                      sx={{
-                        fontWeight: 700,
-                        color: "#212B36",
-                        mb: 0.5,
-                        fontSize: "1.75rem",
-                      }}
-                    >
-                      {card.value}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "#637381",
-                        fontSize: "0.875rem",
-                        mb: 1,
-                      }}
-                    >
-                      {card.title}
-                    </Typography>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Chip
-                        label={`${card.total} مجموع`}
-                        size="small"
-                        sx={{
-                          backgroundColor: card.bgColor,
-                          color: card.color,
-                          fontWeight: 600,
-                          fontSize: "0.75rem",
-                          height: 24,
-                        }}
-                      />
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "#637381",
-                          fontSize: "0.75rem",
-                        }}
-                      >
-                        {(() => {
-                          const total = card.total || 0;
-                          const percentage =
-                            total > 0
-                              ? ((card.value / total) * 100).toFixed(0)
-                              : 0;
-                          return `${percentage}% تیرې اوونۍ`;
-                        })()}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      {/* No Data Message */}
-      {!hasData && (
-        <Box sx={{ textAlign: "center", py: 8 }}>
-          <Paper
-            sx={{
-              p: 6,
-              borderRadius: 2,
-              border: "2px dashed rgba(145, 158, 171, 0.24)",
-              backgroundColor: "transparent",
-            }}
-          >
-            <Typography
-              variant="h5"
-              sx={{ color: "#212B36", mb: 2, fontWeight: 600 }}
-            >
-              هیڅ معلومات شتون نلري
-            </Typography>
-            <Typography variant="body1" sx={{ color: "#637381" }}>
-              تراوسه هیڅ معلومات د ښودلو لپاره شتون نلري. د رسیدونو په اضافه
-              کولو سره پیل وکړئ.
-            </Typography>
-          </Paper>
-        </Box>
-      )}
-
-      {/* Charts */}
-      {hasData && (
-        <Grid container spacing={3}>
-          {/* Pie Chart */}
-          <Grid item xs={12} md={5}>
-            <Card
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                boxShadow:
-                  "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
-                height: "100%",
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 3,
-                  fontWeight: 700,
-                  color: "#212B36",
-                  fontSize: "1.125rem",
-                }}
-              >
-                د اسنادو توزیع
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <PieChart
-                  series={[
-                    {
-                      data: [
-                        {
-                          id: 1,
-                          value: chartData.totalSender || 0,
-                          label: "مرسل",
-                          color: "#FFAB00",
-                        },
-                        {
-                          id: 2,
-                          value: chartData.totalRecipient || 0,
-                          label: "مرسل الیه",
-                          color: "#00B8D9",
-                        },
-                        {
-                          id: 3,
-                          value: chartData.totalFile || 0,
-                          label: "فایل",
-                          color: "#22C55E",
-                        },
-                      ],
-                      arcLabel: (item) => {
-                        const total =
-                          chartData.totalSender +
-                          chartData.totalRecipient +
-                          chartData.totalFile;
-                        return total > 0
-                          ? `${Math.round((item.value / total) * 100)}%`
-                          : "0%";
-                      },
-                      innerRadius,
-                      outerRadius,
-                      cornerRadius: 4,
-                    },
-                  ]}
-                  width={pieWidth}
-                  height={pieHeight}
-                />
-                <Box
+            return (
+              <Grid item xs={12} md={4} key={index}>
+                <Card
                   sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 3,
-                    mt: 3,
-                    flexWrap: "wrap",
+                    bgcolor: "white",
+                    borderRadius: 4,
+                    p: 3,
+                    boxShadow:
+                      "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                    border: "1px solid #F3F4F6",
+                    transition: "all 0.3s",
+                    "&:hover": {
+                      boxShadow:
+                        "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                    },
                   }}
                 >
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        sx={{
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          color: "#6B7280",
+                          mb: 1,
+                        }}
+                      >
+                        {card.title}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: "2.25rem",
+                          fontWeight: 700,
+                          color: "#111827",
+                          mb: 1.5,
+                        }}
+                      >
+                        {card.value.toLocaleString()}
+                      </Typography>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        {isPositive ? (
+                          <TrendingUpIcon
+                            sx={{ fontSize: 16, color: "#10B981" }}
+                          />
+                        ) : (
+                          <TrendingDownIcon
+                            sx={{ fontSize: 16, color: "#EF4444" }}
+                          />
+                        )}
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontSize: "0.875rem",
+                            fontWeight: 600,
+                            color: isPositive ? "#10B981" : "#EF4444",
+                          }}
+                        >
+                          {isPositive ? "+" : ""}
+                          {percentage}%
+                        </Typography>
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontSize: "0.875rem",
+                            color: "#6B7280",
+                            ml: 0.5,
+                          }}
+                        >
+                          تیرې ۷ ورځې
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        bgcolor: card.lightBg,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <MiniSparkline
+                        data={card.sparklineData}
+                        color={card.color}
+                      />
+                    </Box>
+                  </Box>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+
+        {/* Management Cards - Same Style as Stat Cards */}
+        {userIsAdmin && (
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            {managementCards.map((card, index) => {
+              const percentage = calculatePercentage(
+                card.weeklyValue,
+                card.value
+              );
+              const isPositive = card.weeklyValue >= 0;
+
+              return (
+                <Grid item xs={12} md={4} key={index}>
+                  <Card
+                    sx={{
+                      bgcolor: "white",
+                      borderRadius: 4,
+                      p: 3,
+                      boxShadow:
+                        "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                      border: "1px solid #F3F4F6",
+                      transition: "all 0.3s",
+                      "&:hover": {
+                        boxShadow:
+                          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          sx={{
+                            fontSize: "0.875rem",
+                            fontWeight: 600,
+                            color: "#6B7280",
+                            mb: 1,
+                          }}
+                        >
+                          {card.title}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: "2.25rem",
+                            fontWeight: 700,
+                            color: "#111827",
+                            mb: 1.5,
+                          }}
+                        >
+                          {card.value.toLocaleString()}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          {isPositive ? (
+                            <TrendingUpIcon
+                              sx={{ fontSize: 16, color: "#10B981" }}
+                            />
+                          ) : (
+                            <TrendingDownIcon
+                              sx={{ fontSize: 16, color: "#EF4444" }}
+                            />
+                          )}
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: "0.875rem",
+                              fontWeight: 600,
+                              color: isPositive ? "#10B981" : "#EF4444",
+                            }}
+                          >
+                            {isPositive ? "+" : ""}
+                            {percentage}%
+                          </Typography>
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: "0.875rem",
+                              color: "#6B7280",
+                              ml: 0.5,
+                            }}
+                          >
+                            تیرې ۷ ورځې
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          bgcolor: card.lightBg,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <MiniSparkline
+                          data={card.sparklineData}
+                          color={card.color}
+                        />
+                      </Box>
+                    </Box>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
+
+        {/* Charts - Always Visible */}
+        <Grid container spacing={3}>
+          {/* Donut Chart - Only show if there's data */}
+          {hasDonutData && (
+            <Grid item xs={12} lg={4}>
+              <Card
+                sx={{
+                  bgcolor: "white",
+                  borderRadius: 4,
+                  p: 3,
+                  boxShadow:
+                    "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                  border: "1px solid #F3F4F6",
+                  height: "100%",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "1.125rem",
+                    fontWeight: 700,
+                    color: "#111827",
+                    mb: 3,
+                  }}
+                >
+                  د اسنادو توزیع
+                </Typography>
+
+                <Box
+                  sx={{
+                    position: "relative",
+                    display: "flex",
+                    justifyContent: "center",
+                    mb: 3,
+                  }}
+                >
+                  <svg width="220" height="220" viewBox="0 0 220 220">
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="75"
+                      fill="none"
+                      stroke="#FFAB00"
+                      strokeWidth="35"
+                      strokeDasharray={`${
+                        (chartData.totalSender /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      } 471`}
+                      strokeDashoffset="0"
+                      transform="rotate(-90 110 110)"
+                    />
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="75"
+                      fill="none"
+                      stroke="#00B8D9"
+                      strokeWidth="35"
+                      strokeDasharray={`${
+                        (chartData.totalRecipient /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      } 471`}
+                      strokeDashoffset={`-${
+                        (chartData.totalSender /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      }`}
+                      transform="rotate(-90 110 110)"
+                    />
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="75"
+                      fill="none"
+                      stroke="#00A76F"
+                      strokeWidth="35"
+                      strokeDasharray={`${
+                        (chartData.totalFile /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      } 471`}
+                      strokeDashoffset={`-${
+                        ((chartData.totalSender + chartData.totalRecipient) /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      }`}
+                      transform="rotate(-90 110 110)"
+                    />
+                  </svg>
+
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontSize: "0.75rem", color: "#6B7280", mb: 0.5 }}
+                    >
+                      مجموع
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "1.875rem",
+                        fontWeight: 700,
+                        color: "#111827",
+                      }}
+                    >
+                      {(
+                        chartData.totalSender +
+                        chartData.totalRecipient +
+                        chartData.totalFile
+                      ).toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
+                >
                   {[
-                    { color: "#FFAB00", label: "مرسل" },
-                    { color: "#00B8D9", label: "مرسل الیه" },
-                    { color: "#22C55E", label: "فایل" },
+                    {
+                      color: "#FFAB00",
+                      label: "مرسل",
+                      value: chartData.totalSender,
+                    },
+                    {
+                      color: "#00B8D9",
+                      label: "مرسل الیه",
+                      value: chartData.totalRecipient,
+                    },
+                    {
+                      color: "#00A76F",
+                      label: "فایل",
+                      value: chartData.totalFile,
+                    },
                   ].map((item, idx) => (
                     <Box
                       key={idx}
-                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
                     >
                       <Box
-                        sx={{
-                          width: 16,
-                          height: 16,
-                          bgcolor: item.color,
-                          borderRadius: "4px",
-                        }}
-                      />
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            bgcolor: item.color,
+                            borderRadius: "50%",
+                          }}
+                        />
+                        <Typography
+                          sx={{ fontSize: "0.875rem", color: "#6B7280" }}
+                        >
+                          {item.label}
+                        </Typography>
+                      </Box>
                       <Typography
-                        variant="body2"
                         sx={{
-                          color: "#637381",
-                          fontWeight: 500,
                           fontSize: "0.875rem",
+                          fontWeight: 600,
+                          color: "#111827",
                         }}
                       >
-                        {item.label}
+                        {item.value.toLocaleString()}
                       </Typography>
                     </Box>
                   ))}
                 </Box>
-              </Box>
-            </Card>
-          </Grid>
+              </Card>
+            </Grid>
+          )}
 
-          {/* Bar Chart */}
-          <Grid item xs={12} md={7}>
+          {/* Bar Chart - Always Visible */}
+          <Grid item xs={12} lg={hasDonutData ? 8 : 12}>
             <Card
               sx={{
+                bgcolor: "white",
+                borderRadius: 4,
                 p: 3,
-                borderRadius: 2,
                 boxShadow:
-                  "rgba(145, 158, 171, 0.2) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px",
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                border: "1px solid #F3F4F6",
                 height: "100%",
               }}
             >
-              <Typography
-                variant="h6"
+              <Box
                 sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   mb: 3,
-                  fontWeight: 700,
-                  color: "#212B36",
-                  fontSize: "1.125rem",
                 }}
               >
-                د میاشتو له مخې اسناد
-              </Typography>
-              <Box sx={{ width: "100%", height: chartHeight + 50 }}>
-                <BarChart
-                  xAxis={[
-                    {
-                      scaleType: "band",
-                      data: chartData.months,
-                      tickLabelStyle: {
-                        fontSize: isXs ? 11 : isSm ? 12 : 13,
-                        fontWeight: 500,
-                        fill: "#637381",
-                      },
-                    },
-                  ]}
-                  series={[
-                    {
-                      label: "مرسل",
-                      data: chartData.senderData,
-                      color: "#FFAB00",
-                    },
-                    {
-                      label: "مرسل الیه",
-                      data: chartData.recipientData,
-                      color: "#00B8D9",
-                    },
-                    {
-                      label: "فایل",
-                      data: chartData.fileData,
-                      color: "#22C55E",
-                    },
-                  ]}
-                  width={chartWidth}
-                  height={chartHeight}
-                  slotProps={{
-                    bar: { rx: 4, ry: 4 },
+                <Typography
+                  sx={{
+                    fontSize: "1.125rem",
+                    fontWeight: 700,
+                    color: "#111827",
                   }}
-                />
+                >
+                  د میاشتو له مخې اسناد
+                </Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    bgcolor: "#EFF6FF",
+                    borderRadius: 2,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      color: "#3B82F6",
+                    }}
+                  >
+                    2024
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ position: "relative", height: 288 }}>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 32,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    fontSize: "0.75rem",
+                    color: "#6B7280",
+                  }}
+                >
+                  <span>80</span>
+                  <span>60</span>
+                  <span>40</span>
+                  <span>20</span>
+                  <span>0</span>
+                </Box>
+
+                <Box
+                  sx={{
+                    ml: 4,
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "space-between",
+                    gap: 1,
+                  }}
+                >
+                  {displayMonths.map((month, idx) => {
+                    const maxHeight = 70;
+                    const sender = (displaySenderData[idx] / maxHeight) * 100;
+                    const recipient =
+                      (displayRecipientData[idx] / maxHeight) * 100;
+                    const file = (displayFileData[idx] / maxHeight) * 100;
+
+                    return (
+                      <Box
+                        key={idx}
+                        sx={{
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                            mb: 1,
+                            height: 256,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "flex-end",
+                              height: "100%",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: "100%",
+                                bgcolor: sender > 0 ? "#FFAB00" : "#F3F4F6",
+                                borderTopLeftRadius: 4,
+                                borderTopRightRadius: 4,
+                                height: sender > 0 ? `${sender}%` : "2px",
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                width: "100%",
+                                bgcolor: recipient > 0 ? "#00B8D9" : "#F3F4F6",
+                                height: recipient > 0 ? `${recipient}%` : "2px",
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                width: "100%",
+                                bgcolor: file > 0 ? "#00A76F" : "#F3F4F6",
+                                borderBottomLeftRadius: 4,
+                                borderBottomRightRadius: 4,
+                                height: file > 0 ? `${file}%` : "2px",
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: "0.75rem",
+                            color: "#6B7280",
+                            mt: 0.5,
+                          }}
+                        >
+                          {month}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 3,
+                  mt: 2,
+                }}
+              >
+                {[
+                  { color: "#FFAB00", label: "مرسل" },
+                  { color: "#00B8D9", label: "مرسل الیه" },
+                  { color: "#00A76F", label: "فایل" },
+                ].map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                  >
+                    <Box
+                      sx={{
+                        width: 12,
+                        height: 12,
+                        bgcolor: item.color,
+                        borderRadius: "50%",
+                      }}
+                    />
+                    <Typography sx={{ fontSize: "0.875rem", color: "#6B7280" }}>
+                      {item.label}
+                    </Typography>
+                  </Box>
+                ))}
               </Box>
             </Card>
           </Grid>
         </Grid>
-      )}
+      </Box>
     </Box>
   );
 }

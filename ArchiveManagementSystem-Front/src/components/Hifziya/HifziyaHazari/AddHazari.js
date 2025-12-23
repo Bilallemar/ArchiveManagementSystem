@@ -22,6 +22,7 @@ import api from "../../../services/api";
 export default function AddHazari() {
   const [formData, setFormData] = useState({
     type: "",
+    subType: "",
     year: "",
     org: "",
     description: "",
@@ -30,19 +31,20 @@ export default function AddHazari() {
   });
 
   const [types, setTypes] = useState([]);
+  const [subTypes, setSubTypes] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Load Types and Orgs on component mount
+  // Load Types and Orgs on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
         console.log("Loading types and orgs...");
 
         const [typesRes, orgsRes] = await Promise.all([
-          api.get("/type"), // ✅ Changed from /types to /type
-          api.get("/org"), // ✅ Changed from /orgs to /org
+          api.get("/type"),
+          api.get("/org"),
         ]);
 
         console.log("Types:", typesRes.data);
@@ -57,6 +59,30 @@ export default function AddHazari() {
     };
     loadData();
   }, []);
+
+  // Load SubTypes when Type changes
+  useEffect(() => {
+    const loadSubTypes = async () => {
+      if (!formData.type) {
+        setSubTypes([]);
+        setFormData((prev) => ({ ...prev, subType: "" }));
+        return;
+      }
+
+      try {
+        console.log("Loading subtypes for type:", formData.type);
+        const response = await api.get(`/sub-type/by-type/${formData.type}`);
+        console.log("SubTypes:", response.data);
+        setSubTypes(response.data);
+      } catch (error) {
+        console.error("Failed to load subtypes", error);
+        toast.error("Failed to load subtypes");
+        setSubTypes([]);
+      }
+    };
+
+    loadSubTypes();
+  }, [formData.type]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,7 +103,7 @@ export default function AddHazari() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["type", "year", "org"];
+    const requiredFields = ["type", "subType", "year", "org"];
     const missingFields = requiredFields.filter((field) => !formData[field]);
     if (missingFields.length > 0) {
       toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
@@ -91,7 +117,8 @@ export default function AddHazari() {
       const yearAsInteger = new Date(formData.year).getFullYear();
       const hazariData = {
         type: { id: formData.type },
-        year: yearAsInteger, // 2025
+        subType: { id: formData.subType },
+        year: yearAsInteger,
         org: { id: formData.org },
         description: formData.description,
         isIndraj: formData.isIndraj,
@@ -201,6 +228,37 @@ export default function AddHazari() {
                   types.map((type) => (
                     <MenuItem key={type.id} value={type.id}>
                       {type.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* SubType Dropdown */}
+          <Grid item xs={12} sm={6}>
+            <FormControl 
+              fullWidth 
+              required 
+              error={!formData.subType}
+              disabled={!formData.type}
+            >
+              <InputLabel>زیر نوعیت</InputLabel>
+              <Select
+                name="subType"
+                value={formData.subType}
+                onChange={handleInputChange}
+                label="زیر نوعیت"
+                sx={{ height: 60 }}
+              >
+                {!formData.type ? (
+                  <MenuItem disabled>ابتدا نوعیت را انتخاب کنید</MenuItem>
+                ) : subTypes.length === 0 ? (
+                  <MenuItem disabled>Loading...</MenuItem>
+                ) : (
+                  subTypes.map((subType) => (
+                    <MenuItem key={subType.id} value={subType.id}>
+                      {subType.name}
                     </MenuItem>
                   ))
                 )}

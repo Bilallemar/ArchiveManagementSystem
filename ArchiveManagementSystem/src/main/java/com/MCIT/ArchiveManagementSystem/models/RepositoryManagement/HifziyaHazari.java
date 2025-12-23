@@ -12,6 +12,7 @@ import java.util.List;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
+import com.MCIT.ArchiveManagementSystem.models.SubType;
 import com.MCIT.ArchiveManagementSystem.models.Type;
 
 
@@ -35,7 +36,9 @@ public class HifziyaHazari {
     @ManyToOne
     @JoinColumn(name = "org")
     private Org org;
-
+    @ManyToOne
+    @JoinColumn(name = "sub_type_id")
+    private SubType subType;
   @ManyToOne
     @JoinColumn(name = "management_id")
     private Management management;

@@ -87,6 +87,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/attendanceBook/**").authenticated()
                 .requestMatchers("/api/fileOffices/**").authenticated()
                 .requestMatchers("/api/received-issued-books-repository/**").authenticated()
+                .requestMatchers("/api/type/**").authenticated()
+                .requestMatchers("/api/sub-type/**").authenticated()
+                .requestMatchers("/api/org/**").authenticated()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
@@ -123,52 +126,146 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public CommandLineRunner initData(RoleRepository roleRepository,
-                                      UserRepository userRepository,
-                                      PasswordEncoder passwordEncoder) {
-        return args -> {
-            Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
-                    .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_USER)));
-
-            Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
-                    .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
-
-            if (!userRepository.existsByUserName("user1")) {
-                User user1 = new User("user1", "user1@example.com",
-                        passwordEncoder.encode("password1"));
-                user1.setAccountNonLocked(true);
-                user1.setAccountNonExpired(true);
-                user1.setCredentialsNonExpired(true);
-                user1.setEnabled(true);
-                user1.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-                user1.setAccountExpiryDate(LocalDate.now().plusYears(1));
-                user1.setTwoFactorEnabled(false);
-                user1.setSignUpMethod("email");
-                user1.setRole(userRole);
-                userRepository.save(user1);
-            }
-
-            if (!userRepository.existsByUserName("admin")) {
-                User admin = new User("admin", "admin@example.com",
-                        passwordEncoder.encode("adminPass"));
-                admin.setAccountNonLocked(true);
-                admin.setAccountNonExpired(true);
-                admin.setCredentialsNonExpired(true);
-                admin.setEnabled(true);
-                admin.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-                admin.setAccountExpiryDate(LocalDate.now().plusYears(1));
-                admin.setTwoFactorEnabled(false);
-                admin.setSignUpMethod("email");
-                admin.setRole(adminRole);
-                
-                Management management = managementRepository.findById(1L).orElse(null);
-                if (management != null) {
-                    admin.setManagement(management);
-                }
-                
-                userRepository.save(admin);
-            }
-        };
-    }
+@Bean
+public CommandLineRunner initData(RoleRepository roleRepository,
+                                  UserRepository userRepository,
+                                  PasswordEncoder passwordEncoder,
+                                  ManagementRepository managementRepository) {
+    return args -> {
+        // ============================================
+        // 1. CREATE ALL 3 MANAGEMENTS
+        // ============================================
+        Management archiveManagement = managementRepository.findById(1L)
+                .orElseGet(() -> {
+                    Management m = new Management();
+                    m.setManagementName("Archive");
+                    return managementRepository.save(m);
+                });
+        
+        Management hifziyaManagement = managementRepository.findById(2L)
+                .orElseGet(() -> {
+                    Management m = new Management();
+                    m.setManagementName("Hifziya");
+                    return managementRepository.save(m);
+                });
+        
+        Management makhzanManagement = managementRepository.findById(3L)
+                .orElseGet(() -> {
+                    Management m = new Management();
+                    m.setManagementName("Makhzan");
+                    return managementRepository.save(m);
+                });
+        
+        System.out.println("✅ Managements created:");
+        System.out.println("   1. Archive (ID: " + archiveManagement.getManagementId() + ")");
+        System.out.println("   2. Hifziya (ID: " + hifziyaManagement.getManagementId() + ")");
+        System.out.println("   3. Makhzan (ID: " + makhzanManagement.getManagementId() + ")");
+        
+        // ============================================
+        // 2. CREATE ROLES
+        // ============================================
+        Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+                .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_USER)));
+        
+        Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
+                .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
+        
+        System.out.println("✅ Roles created");
+        
+        // ============================================
+        // 3. CREATE DEFAULT USERS WITH CORRECT MANAGEMENT
+        // ============================================
+        
+        // Create user1 - no management initially
+        if (!userRepository.existsByUserName("user1")) {
+            User user1 = new User("user1", "user1@example.com",
+                    passwordEncoder.encode("password1"));
+            user1.setAccountNonLocked(true);
+            user1.setAccountNonExpired(true);
+            user1.setCredentialsNonExpired(true);
+            user1.setEnabled(true);
+            user1.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+            user1.setAccountExpiryDate(LocalDate.now().plusYears(1));
+            user1.setTwoFactorEnabled(false);
+            user1.setSignUpMethod("email");
+            user1.setRole(userRole);
+            userRepository.save(user1);
+            System.out.println("✅ Created user: user1 (no management)");
+        }
+        
+        // Create admin - Archive management (ID: 1)
+        if (!userRepository.existsByUserName("admin")) {
+            User admin = new User("admin", "admin@example.com",
+                    passwordEncoder.encode("adminPass"));
+            admin.setAccountNonLocked(true);
+            admin.setAccountNonExpired(true);
+            admin.setCredentialsNonExpired(true);
+            admin.setEnabled(true);
+            admin.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+            admin.setAccountExpiryDate(LocalDate.now().plusYears(1));
+            admin.setTwoFactorEnabled(false);
+            admin.setSignUpMethod("email");
+            admin.setRole(adminRole);
+            admin.setManagement(archiveManagement); // Admin → Archive
+            userRepository.save(admin);
+            System.out.println("✅ Created admin: admin (Archive management)");
+        }
+        
+        // Create archive_user - Archive management (ID: 1)
+        if (!userRepository.existsByUserName("archive_user")) {
+            User archiveUser = new User("archive_user", "archive@test.com",
+                    passwordEncoder.encode("password123"));
+            archiveUser.setAccountNonLocked(true);
+            archiveUser.setAccountNonExpired(true);
+            archiveUser.setCredentialsNonExpired(true);
+            archiveUser.setEnabled(true);
+            archiveUser.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+            archiveUser.setAccountExpiryDate(LocalDate.now().plusYears(1));
+            archiveUser.setTwoFactorEnabled(false);
+            archiveUser.setSignUpMethod("email");
+            archiveUser.setRole(userRole);
+            archiveUser.setManagement(archiveManagement);
+            userRepository.save(archiveUser);
+            System.out.println("✅ Created user: archive_user (Archive management)");
+        }
+        
+        // Create tashkeel_user - Hifziya management (ID: 2)
+        if (!userRepository.existsByUserName("tashkeel_user")) {
+            User tashkeelUser = new User("tashkeel_user", "tashkeel@test.com",
+                    passwordEncoder.encode("password123"));
+            tashkeelUser.setAccountNonLocked(true);
+            tashkeelUser.setAccountNonExpired(true);
+            tashkeelUser.setCredentialsNonExpired(true);
+            tashkeelUser.setEnabled(true);
+            tashkeelUser.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+            tashkeelUser.setAccountExpiryDate(LocalDate.now().plusYears(1));
+            tashkeelUser.setTwoFactorEnabled(false);
+            tashkeelUser.setSignUpMethod("email");
+            tashkeelUser.setRole(userRole);
+            tashkeelUser.setManagement(hifziyaManagement); // Hifziya
+            userRepository.save(tashkeelUser);
+            System.out.println("✅ Created user: tashkeel_user (Hifziya management)");
+        }
+        
+        // Create makhzan_user - Makhzan management (ID: 3)
+        if (!userRepository.existsByUserName("makhzan_user")) {
+            User makhzanUser = new User("makhzan_user", "makhzan@test.com",
+                    passwordEncoder.encode("password123"));
+            makhzanUser.setAccountNonLocked(true);
+            makhzanUser.setAccountNonExpired(true);
+            makhzanUser.setCredentialsNonExpired(true);
+            makhzanUser.setEnabled(true);
+            makhzanUser.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+            makhzanUser.setAccountExpiryDate(LocalDate.now().plusYears(1));
+            makhzanUser.setTwoFactorEnabled(false);
+            makhzanUser.setSignUpMethod("email");
+            makhzanUser.setRole(userRole);
+            makhzanUser.setManagement(makhzanManagement); // Makhzan
+            userRepository.save(makhzanUser);
+            System.out.println("✅ Created user: makhzan_user (Makhzan management)");
+        }
+        
+        System.out.println("✅✅✅ Database initialization complete!");
+    };
+}
 }

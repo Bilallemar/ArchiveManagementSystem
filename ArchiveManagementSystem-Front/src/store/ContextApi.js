@@ -1,3 +1,4 @@
+// ContextApi.js
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
@@ -5,6 +6,14 @@ import toast from "react-hot-toast";
 const ContextApi = createContext();
 
 export const ContextProvider = ({ children }) => {
+  const [mode, setMode] = useState(localStorage.getItem("theme") || "light");
+
+  const toggleTheme = () => {
+    const newMode = mode === "light" ? "dark" : "light";
+    setMode(newMode);
+    localStorage.setItem("theme", newMode);
+  };
+
   const getToken = localStorage.getItem("JWT_TOKEN") || null;
   const isADmin = localStorage.getItem("IS_ADMIN")
     ? JSON.parse(localStorage.getItem("IS_ADMIN"))
@@ -38,9 +47,7 @@ export const ContextProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchUser();
-    }
+    if (token) fetchUser();
   }, [token]);
 
   return (
@@ -54,6 +61,8 @@ export const ContextProvider = ({ children }) => {
         setOpenSidebar,
         isAdmin,
         setIsAdmin,
+        mode,
+        toggleTheme,
       }}
     >
       {children}
@@ -61,7 +70,4 @@ export const ContextProvider = ({ children }) => {
   );
 };
 
-export const useMyContext = () => {
-  const context = useContext(ContextApi);
-  return context;
-};
+export const useMyContext = () => useContext(ContextApi);

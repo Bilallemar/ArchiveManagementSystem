@@ -39,6 +39,7 @@ import { toast } from "react-hot-toast";
 import AddIcon from "@mui/icons-material/Add";
 
 const columns = [
+  { id: "subType", label: "  کارمندان نوعیت", minWidth: 100 },
   { id: "type", label: "نوعیت", minWidth: 100 },
   { id: "year", label: "سال", minWidth: 120 },
   { id: "org", label: " اداره", minWidth: 100 },
@@ -278,9 +279,14 @@ export default function HazariList() {
                         key={row.id}
                       >
                         <TableCell align="center">
+                          {row.subType?.name || "N/A"}
+                        </TableCell>
+                        <TableCell align="center">
                           {row.type?.name || "N/A"}
                         </TableCell>
-
+                        {/* <TableCell align="center">
+                          {row.subType?.name || "N/A"}
+                        </TableCell> */}
                         <TableCell align="center">
                           {row.year || "N/A"}
                         </TableCell>

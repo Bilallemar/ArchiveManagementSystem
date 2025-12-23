@@ -21,12 +21,13 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useMyContext } from "../store/ContextApi";
+import { useTheme } from "@mui/material/styles";
 
 const Sidebar = ({ open, toggleSidebar }) => {
   const navigate = useNavigate();
   const { currentUser, isAdmin, setToken, setCurrentUser, setIsAdmin } =
     useMyContext();
-
+  const theme = useTheme();
   const [adminOpen, setAdminOpen] = useState(false);
 
   const handleLogout = () => {
@@ -52,8 +53,8 @@ const Sidebar = ({ open, toggleSidebar }) => {
           width: 260,
           boxSizing: "border-box",
           direction: "rtl",
-          bgcolor: "#fff",
-          color: "#000",
+          bgcolor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
         },
       }}
     >

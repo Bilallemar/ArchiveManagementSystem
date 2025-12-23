@@ -146,12 +146,12 @@ public ResponseEntity<MakzanReceipt> updateReceipt(
 //     }
 // }
 
-// @GetMapping("/search")
-// public List<MakzanReceipt> searchReceipts(
-//         @RequestParam(required = false) String keyword,
-//         @RequestParam(required = false) String field) {
-//     return receiptsService.searchByKeyword(field, keyword);
-// }
+@GetMapping("/search")
+public List<MakzanReceipt> searchReceipts(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) String field) {
+    return receiptsService.searchByKeyword(field, keyword);
+}
 
 
 
