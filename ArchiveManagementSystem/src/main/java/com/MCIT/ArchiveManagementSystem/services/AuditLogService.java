@@ -2,16 +2,19 @@ package com.MCIT.ArchiveManagementSystem.services;
 import java.util.List;
 
 import com.MCIT.ArchiveManagementSystem.models.AuditLog;
-import com.MCIT.ArchiveManagementSystem.models.Note;
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
 
 public interface AuditLogService {
-    void logNoteCreation(String username, Note note);
+    // void logNoteCreation(String username, Note note);
 
-    void logNoteUpdate(String username, Note note);
+    // void logNoteUpdate(String username, Note note);
 
-    void logNoteDeletion(String username, Long noteId);
+void logCreation(String username, MakzanReceipt makzanReceipt);
+
+    void logUpdate(String username);
+    void logDeletion(String username, Long recordId);
 
     List<AuditLog> getAllAuditLogs();
 
-    List<AuditLog> getAuditLogsForNoteId(Long id);
+    List<AuditLog> getAuditLogsForId(Long id);
 }

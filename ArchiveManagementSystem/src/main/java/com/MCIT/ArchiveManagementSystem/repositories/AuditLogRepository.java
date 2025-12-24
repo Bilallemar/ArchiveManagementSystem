@@ -6,5 +6,5 @@ import com.MCIT.ArchiveManagementSystem.models.AuditLog;
 import java.util.List;
 
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
-    List<AuditLog> findByNoteId(Long noteId);
+    List<AuditLog> findByRecordId(Long noteId);
 }

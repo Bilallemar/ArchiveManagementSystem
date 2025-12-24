@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useMyContext } from "../store/ContextApi";
 import {
@@ -13,21 +13,58 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 import MenuIcon from "@mui/icons-material/Menu";
 import { RxCross2 } from "react-icons/rx";
 import Sidebar from "./Sidebar ";
-
+import {
+  getNavigationItems,
+  clearUserManagement,
+} from "../utils/managementUtils";
+import api from "../services/api";
 const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [headerToggle, setHeaderToggle] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [imageError, setImageError] = useState(false);
+  const theme = useTheme();
 
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { token, setToken, setCurrentUser, isAdmin, setIsAdmin } =
-    useMyContext();
+  const {
+    token,
+    setToken,
+    currentUser,
+    setCurrentUser,
+    isAdmin,
+    setIsAdmin,
+    mode,
+    toggleTheme,
+  } = useMyContext();
 
-  // ✅ د سایډ بار کنټرول
+  const navigationItems = getNavigationItems();
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile();
+    }
+  }, [token]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get("/auth/profile");
+      setUserProfile(response.data);
+      setImageError(false);
+      console.log("User profile fetched:", response.data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
   const toggleSidebar = (state) => setSidebarOpen(state);
 
   const handleLogout = () => {
@@ -35,43 +72,112 @@ const Navbar = () => {
     localStorage.removeItem("USER");
     localStorage.removeItem("CSRF_TOKEN");
     localStorage.removeItem("IS_ADMIN");
+    clearUserManagement();
     setToken(null);
     setCurrentUser(null);
     setIsAdmin(false);
+    setUserProfile(null);
     navigate("/login");
   };
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
+
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
   };
 
-  // د login/signup پاڼو کې Navbar پټ ساتل
-  const hiddenRoutes = ["/login", "/signup"];
+  const hiddenRoutes = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/oauth2/redirect",
+  ];
   if (hiddenRoutes.includes(pathname)) return null;
 
   const getButtonStyles = (routePath) => ({
     my: 2,
-    color: pathname === routePath ? "green" : "#637381",
+    color:
+      pathname === routePath
+        ? theme.palette.success.main
+        : theme.palette.text.secondary,
     fontWeight: pathname === routePath ? "bold" : "normal",
     backgroundColor:
-      pathname === routePath ? "rgba(0, 128, 0, 0.1)" : "transparent",
+      pathname === routePath
+        ? mode === "dark"
+          ? "rgba(102, 187, 106, 0.15)"
+          : "rgba(0, 128, 0, 0.1)"
+        : "transparent",
     "&:hover": {
-      backgroundColor: "rgba(211, 211, 211, 0.2)",
-      color: pathname === routePath ? "green" : "#637381",
+      backgroundColor:
+        mode === "dark"
+          ? "rgba(255, 255, 255, 0.08)"
+          : "rgba(211, 211, 211, 0.2)",
+      color:
+        pathname === routePath
+          ? theme.palette.success.main
+          : theme.palette.text.secondary,
     },
     transition: "all 0.2s ease",
   });
+
+  // Get profile image URL from backend
+  const getProfileImageUrl = () => {
+    if (userProfile?.profileImage && !imageError) {
+      // Remove leading slash if present and construct full URL
+      const imagePath = userProfile.profileImage.startsWith("/")
+        ? userProfile.profileImage.substring(1)
+        : userProfile.profileImage;
+      return `http://localhost:8081/${imagePath}`;
+    }
+    return null;
+  };
+
+  const handleImageError = () => {
+    console.error("Failed to load profile image");
+    setImageError(true);
+  };
+
+  // Get user avatar - priority: profileImage from backend > existing fallbacks
+  const getUserAvatar = () => {
+    const backendImage = getProfileImageUrl();
+    if (backendImage) {
+      return backendImage;
+    }
+
+    // Fallback to existing logic
+    if (currentUser?.profileImage) {
+      return currentUser.profileImage;
+    }
+    if (currentUser?.imageUrl) {
+      return currentUser.imageUrl;
+    }
+    if (currentUser?.avatar) {
+      return currentUser.avatar;
+    }
+    return null;
+  };
+
+  const userAvatar = getUserAvatar();
+  const userName =
+    userProfile?.userName ||
+    currentUser?.name ||
+    currentUser?.username ||
+    "User";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   return (
     <>
       <AppBar
         position="static"
         sx={{
-          backgroundColor: "#ffffff",
-          boxShadow: "none",
+          backgroundColor: theme.palette.background.paper,
+          boxShadow:
+            mode === "dark"
+              ? "0px 2px 4px rgba(0, 0, 0, 0.5)"
+              : "0px 2px 4px rgba(0, 0, 0, 0.1)",
         }}
       >
         <Container maxWidth="xl">
@@ -86,7 +192,12 @@ const Navbar = () => {
                 alignItems: "center",
               }}
             >
-              <div className="w-10 h-10 rounded-full border-2 border-darkgray flex items-center justify-center transition-all mr-6">
+              <div
+                className="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all mr-6"
+                style={{
+                  borderColor: mode === "dark" ? "#ffffff" : "#4a5568",
+                }}
+              >
                 <img
                   src="logo.png"
                   alt="Logo"
@@ -102,12 +213,28 @@ const Navbar = () => {
                   fontFamily: "B nazanin",
                   fontWeight: 700,
                   letterSpacing: ".3rem",
-                  color: "black",
+                  color: theme.palette.text.primary,
                 }}
               >
                 ستره محکمه
               </Typography>
             </Link>
+
+            {/* Theme Toggle */}
+            <IconButton
+              onClick={toggleTheme}
+              sx={{
+                color: theme.palette.text.primary,
+                "&:hover": {
+                  backgroundColor:
+                    mode === "dark"
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "rgba(0, 0, 0, 0.04)",
+                },
+              }}
+            >
+              {mode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
 
             {/* Mobile Menu */}
             <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
@@ -118,7 +245,7 @@ const Navbar = () => {
                     ? () => setHeaderToggle(false)
                     : handleOpenNavMenu
                 }
-                color="black"
+                sx={{ color: theme.palette.text.primary }}
               >
                 {headerToggle ? <RxCross2 /> : <MenuIcon />}
               </IconButton>
@@ -136,22 +263,30 @@ const Navbar = () => {
                 }}
                 open={Boolean(anchorElNav)}
                 onClose={handleCloseNavMenu}
-                sx={{ display: { xs: "block", md: "none" } }}
+                sx={{
+                  display: { xs: "block", md: "none" },
+                  "& .MuiPaper-root": {
+                    backgroundColor: theme.palette.background.paper,
+                  },
+                }}
               >
-                {token && (
-                  <MenuItem
-                    component={Link}
-                    to="/receipts"
-                    onClick={handleCloseNavMenu}
-                  >
-                    <Typography
-                      textAlign="center"
-                      sx={{ fontFamily: "B nazanin" }}
+                {token &&
+                  navigationItems.map((item) => (
+                    <MenuItem
+                      key={item.path}
+                      component={Link}
+                      to={item.path}
+                      onClick={handleCloseNavMenu}
+                      sx={{
+                        color: theme.palette.text.primary,
+                        "&:hover": {
+                          backgroundColor: theme.palette.action.hover,
+                        },
+                      }}
                     >
-                      رسیدات
-                    </Typography>
-                  </MenuItem>
-                )}
+                      <Typography textAlign="center">{item.label}</Typography>
+                    </MenuItem>
+                  ))}
               </Menu>
             </Box>
 
@@ -165,50 +300,46 @@ const Navbar = () => {
                 mr: 2,
               }}
             >
-              {token && (
-                <>
+              {token &&
+                navigationItems.map((item) => (
                   <Button
+                    key={item.path}
                     component={Link}
-                    to="/annual-reports-info"
-                    sx={getButtonStyles("/annual-reports-info")}
+                    to={item.path}
+                    sx={getButtonStyles(item.path)}
                   >
-                    ګزارش راپور
+                    {item.label}
                   </Button>
-                  <Button
-                    component={Link}
-                    to="/annual-reports"
-                    sx={getButtonStyles("/annual-reports")}
-                  >
-                    رپور سال تمام
-                  </Button>
-                  <Button
-                    component={Link}
-                    to="/received-issued-books"
-                    sx={getButtonStyles("/received-issued-books")}
-                  >
-                    کتاب وارده وصادره
-                  </Button>
-                  <Button
-                    component={Link}
-                    to="/receipts"
-                    sx={getButtonStyles("/receipts")}
-                  >
-                    رسیدات
-                  </Button>
-                </>
-              )}
+                ))}
             </Box>
 
-            {/* User Avatar */}
+            {/* User Avatar - Dynamic with Backend Image */}
             <Box sx={{ flexGrow: 0 }}>
               {token ? (
                 <>
                   <IconButton onClick={() => toggleSidebar(true)} sx={{ p: 0 }}>
-                    <Avatar alt="User" src="bilal.jpg" />
+                    <Avatar
+                      alt={userName}
+                      src={userAvatar}
+                      imgProps={{
+                        onError: handleImageError,
+                      }}
+                      sx={{
+                        bgcolor: !userAvatar
+                          ? theme.palette.primary.main
+                          : undefined,
+                        color: !userAvatar ? "white" : undefined,
+                      }}
+                    >
+                      {!userAvatar && userInitial}
+                    </Avatar>
                   </IconButton>
-
-                  {/* ✅ Sidebar Component */}
-                  <Sidebar open={sidebarOpen} toggleSidebar={toggleSidebar} />
+                  <Sidebar
+                    open={sidebarOpen}
+                    toggleSidebar={toggleSidebar}
+                    userProfile={userProfile}
+                    onLogout={handleLogout}
+                  />
                 </>
               ) : (
                 <Button
@@ -216,7 +347,7 @@ const Navbar = () => {
                   to="/signup"
                   sx={{
                     my: 2,
-                    color: "black",
+                    color: theme.palette.text.primary,
                     display: { xs: "none", md: "flex" },
                   }}
                 >

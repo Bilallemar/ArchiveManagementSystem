@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -20,6 +21,8 @@ public class UserDetailsImpl implements UserDetails {
     private Long id;
     private String username;
     private String email;
+    private Management management;
+
 
     @JsonIgnore
     private String password;
@@ -41,15 +44,25 @@ public class UserDetailsImpl implements UserDetails {
     public static UserDetailsImpl build(User user) {
         GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole().getRoleName().name());
 
-        return new UserDetailsImpl(
-                user.getUserId(),
-                user.getUserName(),
-                user.getEmail(),
-                user.getPassword(),
-                user.isTwoFactorEnabled(),
-                List.of(authority) // Wrapping the single authority in a list
-        );
-    }
+    UserDetailsImpl userDetails = new UserDetailsImpl(
+            user.getUserId(),
+            user.getUserName(),
+            user.getEmail(),
+            user.getPassword(),
+            user.isTwoFactorEnabled(),
+            List.of(authority)
+    );
+
+    // management اضافه کول
+    userDetails.setManagement(user.getManagement());
+
+    return userDetails;
+} 
+
+public Management getManagement() {
+    return management;
+}
+
 
 
     @Override

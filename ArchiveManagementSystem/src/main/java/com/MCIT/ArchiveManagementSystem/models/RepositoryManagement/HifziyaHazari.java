@@ -1,0 +1,53 @@
+package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.Management;
+import com.MCIT.ArchiveManagementSystem.models.Org;
+import com.MCIT.ArchiveManagementSystem.models.SubType;
+import com.MCIT.ArchiveManagementSystem.models.Type;
+
+
+@Entity
+@Table(name = "hifziya_hazari")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class HifziyaHazari {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne
+    @JoinColumn(name = "type")
+    private Type type;
+
+    private Integer year;
+
+    @ManyToOne
+    @JoinColumn(name = "org")
+    private Org org;
+    @ManyToOne
+    @JoinColumn(name = "sub_type_id")
+    private SubType subType;
+  @ManyToOne
+    @JoinColumn(name = "management_id")
+    private Management management;
+    
+    private String description;
+    private Boolean isIndraj;
+
+    @OneToMany(mappedBy = "hifziyaHazari", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude          // ADD THIS
+    @EqualsAndHashCode.Exclude // ADD THIS
+    private List<FileEntity> files = new ArrayList<>();
+}

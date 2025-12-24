@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Drawer,
   Box,
@@ -21,19 +21,43 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useMyContext } from "../store/ContextApi";
+import { useTheme } from "@mui/material/styles";
+import api from "../services/api";
+// Import your axios instance
 
 const Sidebar = ({ open, toggleSidebar }) => {
   const navigate = useNavigate();
   const { currentUser, isAdmin, setToken, setCurrentUser, setIsAdmin } =
     useMyContext();
-
+  const theme = useTheme();
   const [adminOpen, setAdminOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  // Fetch user profile when sidebar opens
+  useEffect(() => {
+    if (open) {
+      fetchUserProfile();
+    }
+  }, [open]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get("/auth/profile");
+      setUserProfile(response.data);
+      setImageError(false);
+      console.log("✅ User profile fetched:", response.data);
+    } catch (error) {
+      console.error("❌ Error fetching user profile:", error);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
     setToken(null);
     setCurrentUser(null);
     setIsAdmin(false);
+    setUserProfile(null);
     toggleSidebar && toggleSidebar(false);
     navigate("/login");
   };
@@ -42,18 +66,39 @@ const Sidebar = ({ open, toggleSidebar }) => {
     setAdminOpen(!adminOpen);
   };
 
+  // Get profile image URL from backend
+  const getProfileImageUrl = () => {
+    if (userProfile?.profileImage && !imageError) {
+      const imagePath = userProfile.profileImage.startsWith("/")
+        ? userProfile.profileImage.substring(1)
+        : userProfile.profileImage;
+      return `${process.env.REACT_APP_API_URL}/${imagePath}`;
+    }
+    return null;
+  };
+
+  const handleImageError = () => {
+    console.error("❌ Failed to load profile image");
+    setImageError(true);
+  };
+
+  const profileImageUrl = getProfileImageUrl();
+  const userName = userProfile?.userName || currentUser?.name || "کاروونکی";
+  const userEmail = userProfile?.email || currentUser?.email || "";
+  const userInitial = userName.charAt(0).toUpperCase();
+
   return (
     <Drawer
       anchor="right"
       open={open}
-      onClose={() => toggleSidebar(false)} // ✅ دا د بندېدو لپاره مهم ده
+      onClose={() => toggleSidebar(false)}
       sx={{
         "& .MuiDrawer-paper": {
           width: 260,
           boxSizing: "border-box",
           direction: "rtl",
-          bgcolor: "#fff",
-          color: "#000",
+          bgcolor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
         },
       }}
     >
@@ -76,11 +121,24 @@ const Sidebar = ({ open, toggleSidebar }) => {
               mb: 3,
             }}
           >
-            <Avatar src="bilal.jpg" sx={{ width: 64, height: 64, mb: 1 }} />
-            <Typography variant="h6">
-              {currentUser?.name || "کاروونکی"}
-            </Typography>
-            <Typography variant="body2">{currentUser?.email}</Typography>
+            <Avatar
+              src={profileImageUrl}
+              imgProps={{
+                onError: handleImageError,
+              }}
+              sx={{
+                width: 64,
+                height: 64,
+                mb: 1,
+                bgcolor: !profileImageUrl
+                  ? theme.palette.primary.main
+                  : undefined,
+              }}
+            >
+              {!profileImageUrl && userInitial}
+            </Avatar>
+            <Typography variant="h6">{userName}</Typography>
+            <Typography variant="body2">{userEmail}</Typography>
           </Box>
 
           <Divider />
@@ -132,7 +190,6 @@ const Sidebar = ({ open, toggleSidebar }) => {
                   </ListItemButton>
                 </ListItem>
 
-                {/* ✅ فرعي مینوګان */}
                 <Collapse in={adminOpen} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding sx={{ pr: 3 }}>
                     <ListItem disablePadding>
@@ -176,6 +233,26 @@ const Sidebar = ({ open, toggleSidebar }) => {
                         />
                       </ListItemButton>
                     </ListItem>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          navigate("/admin/user-management");
+                          toggleSidebar(false);
+                        }}
+                        sx={{
+                          justifyContent: "flex-end",
+                          "&:hover": { bgcolor: "#f5f5f5" },
+                        }}
+                      >
+                        <ListItemText
+                          primary="د کاروونکو مدیریت"
+                          primaryTypographyProps={{
+                            textAlign: "right",
+                            color: "#9aa0ac",
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
                   </List>
                 </Collapse>
               </>
@@ -196,7 +273,7 @@ const Sidebar = ({ open, toggleSidebar }) => {
               fontWeight: "bold",
               borderRadius: 2,
               justifyContent: "center",
-              gap: 1.5, // ✅ د آیکن او ټکس ترمنځ فاصله
+              gap: 1.5,
               "&:hover": { bgcolor: "#e0bdb4" },
             }}
             startIcon={<LogoutIcon sx={{ color: "#ed5a57" }} />}

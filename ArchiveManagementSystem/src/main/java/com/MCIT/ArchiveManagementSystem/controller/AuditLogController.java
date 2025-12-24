@@ -25,8 +25,8 @@ public class AuditLogController {
 
     @GetMapping("/note/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public List<AuditLog> getNoteAuditLogs(@PathVariable Long id){
-        return auditLogService.getAuditLogsForNoteId(id);
+    public List<AuditLog> getAuditLogs(@PathVariable Long id){
+        return auditLogService.getAuditLogsForId(id);
     }
 
 }

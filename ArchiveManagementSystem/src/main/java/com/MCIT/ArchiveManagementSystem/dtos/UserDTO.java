@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 
 import com.MCIT.ArchiveManagementSystem.models.Role;
 
+import jakarta.persistence.Column;
+
 
 @Data
 @NoArgsConstructor
@@ -17,6 +19,8 @@ public class UserDTO {
     private Long userId;
     private String userName;
     private String email;
+private String profileImage;
+
     private boolean accountNonLocked;
     private boolean accountNonExpired;
     private boolean credentialsNonExpired;

@@ -1,4 +1,7 @@
+
+
 package com.MCIT.ArchiveManagementSystem.models;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -22,7 +25,7 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(columnNames = "username"),
                 @UniqueConstraint(columnNames = "email")
         })
-public class User{
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -38,6 +41,8 @@ public class User{
     @Email
     @Column(name = "email")
     private String email;
+    @Column(name = "profile_image")
+private String profileImage;
 
     @Size(max = 120)
     @Column(name = "password")
@@ -58,9 +63,15 @@ public class User{
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE})
     @JoinColumn(name = "role_id", referencedColumnName = "role_id")
-    @JsonBackReference
+    @JsonBackReference("role-user")  // FIXED: Added unique name
     @ToString.Exclude
     private Role role;
+    
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE})
+    @JoinColumn(name = "management_id", referencedColumnName = "management_id")
+    @JsonBackReference("management-user")  // FIXED: Added unique name
+    @ToString.Exclude
+    private Management management;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -79,7 +90,9 @@ public class User{
         this.userName = userName;
         this.email = email;
     }
-
+   @ManyToOne
+    @JoinColumn(name = "org") // ADD THIS if missing
+    private Org org;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -92,5 +105,3 @@ public class User{
         return getClass().hashCode();
     }
 }
-
-
