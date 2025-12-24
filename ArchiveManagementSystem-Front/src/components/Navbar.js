@@ -130,7 +130,7 @@ const Navbar = () => {
       const imagePath = userProfile.profileImage.startsWith("/")
         ? userProfile.profileImage.substring(1)
         : userProfile.profileImage;
-      return `http://localhost:8081/${imagePath}`;
+      return `${process.env.REACT_APP_API_URL}/${imagePath}`;
     }
     return null;
   };

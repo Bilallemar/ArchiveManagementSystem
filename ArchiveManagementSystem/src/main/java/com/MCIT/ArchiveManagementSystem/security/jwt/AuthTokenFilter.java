@@ -1,4 +1,5 @@
 package com.MCIT.ArchiveManagementSystem.security.jwt;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,34 +31,80 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        logger.debug("AuthTokenFilter called for URI: {}", request.getRequestURI());
+        
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+        
+        logger.info("========================================");
+        logger.info("🔍 Request: {} {}", method, requestURI);
+        logger.info("🌐 Origin: {}", request.getHeader("Origin"));
+        logger.info("🔑 Authorization Header: {}", request.getHeader("Authorization"));
+        
         try {
             String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                String username = jwtUtils.getUserNameFromJwtToken(jwt);
+            
+            if (jwt != null) {
+                logger.info("✅ JWT Token found: {}...", jwt.substring(0, Math.min(jwt.length(), 20)));
+                
+                if (jwtUtils.validateJwtToken(jwt)) {
+                    logger.info("✅ JWT Token is VALID");
+                    
+                    String username = jwtUtils.getUserNameFromJwtToken(jwt);
+                    logger.info("👤 Username from JWT: {}", username);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    logger.info("👥 User roles: {}", userDetails.getAuthorities());
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails,
-                                null,
-                                userDetails.getAuthorities());
-                logger.debug("Roles from JWT: {}", userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities());
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    
+                    logger.info("✅ Authentication set successfully for user: {}", username);
+                } else {
+                    logger.error("❌ JWT Token validation FAILED");
+                }
+            } else {
+                logger.warn("⚠️ No JWT Token found in request to {}", requestURI);
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication: {}", e);
+            logger.error("❌ Cannot set user authentication: {}", e.getMessage(), e);
         }
-
+        
+        logger.info("========================================");
         filterChain.doFilter(request, response);
     }
 
     private String parseJwt(HttpServletRequest request) {
         String jwt = jwtUtils.getJwtFromHeader(request);
-        logger.debug("AuthTokenFilter.java: {}", jwt);
+        
+        if (jwt != null) {
+            logger.debug("📋 Parsed JWT: {}...", jwt.substring(0, Math.min(jwt.length(), 30)));
+        } else {
+            logger.debug("📋 No JWT token to parse");
+        }
+        
         return jwt;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        
+        // Skip filter for public endpoints
+        boolean skip = path.startsWith("/api/auth/public/") ||
+                      path.startsWith("/uploads/") ||
+                      path.startsWith("/api/csrf-token") ||
+                      path.equals("/error");
+        
+        if (skip) {
+            logger.info("⏭️ Skipping filter for public endpoint: {}", path);
+        }
+        
+        return skip;
     }
 }
