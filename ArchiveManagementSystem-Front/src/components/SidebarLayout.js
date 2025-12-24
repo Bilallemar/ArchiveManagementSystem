@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Drawer,
@@ -32,7 +32,6 @@ import {
   Logout,
   Person,
   Archive,
-  Description,
   FolderSpecial,
   Folder,
   AdminPanelSettings,
@@ -43,6 +42,7 @@ import {
   getNavigationItems,
   clearUserManagement,
 } from "../utils/managementUtils";
+import api from "../services/api";
 
 const drawerWidth = 280;
 
@@ -68,7 +68,6 @@ const groupNavItems = (items, isAdmin) => {
     ) {
       grouped.makzan.push(item);
     }
-    // Exclude admin routes from main sidebar
   });
 
   const result = [
@@ -118,6 +117,8 @@ export default function SidebarLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenus, setOpenMenus] = useState({});
   const [anchorEl, setAnchorEl] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [imageError, setImageError] = useState(false);
 
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -136,6 +137,22 @@ export default function SidebarLayout({ children }) {
 
   const navigationItems = getNavigationItems();
   const groupedNav = groupNavItems(navigationItems, isAdmin);
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get("/auth/profile");
+      setUserProfile(response.data);
+      setImageError(false);
+      console.log("✅ User profile fetched:", response.data);
+    } catch (error) {
+      console.error("❌ Error fetching user profile:", error);
+    }
+  };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -162,8 +179,53 @@ export default function SidebarLayout({ children }) {
     setToken(null);
     setCurrentUser(null);
     setIsAdmin(false);
+    setUserProfile(null);
     navigate("/login");
   };
+
+  // Get profile image URL from backend
+  const getProfileImageUrl = () => {
+    if (userProfile?.profileImage && !imageError) {
+      const imagePath = userProfile.profileImage.startsWith("/")
+        ? userProfile.profileImage.substring(1)
+        : userProfile.profileImage;
+      return `${process.env.REACT_APP_API_URL}/${imagePath}`;
+    }
+    return null;
+  };
+
+  const handleImageError = () => {
+    console.error("❌ Failed to load profile image");
+    setImageError(true);
+  };
+
+  // Get user avatar - priority: profileImage from backend > existing fallbacks
+  const getUserAvatar = () => {
+    const backendImage = getProfileImageUrl();
+    if (backendImage) {
+      return backendImage;
+    }
+
+    if (currentUser?.profileImage) {
+      return currentUser.profileImage;
+    }
+    if (currentUser?.imageUrl) {
+      return currentUser.imageUrl;
+    }
+    if (currentUser?.avatar) {
+      return currentUser.avatar;
+    }
+    return null;
+  };
+
+  const userAvatar = getUserAvatar();
+  const userName =
+    userProfile?.userName ||
+    currentUser?.name ||
+    currentUser?.username ||
+    "کاروونکی";
+  const userEmail = userProfile?.email || currentUser?.email || "";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   const drawer = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -312,7 +374,7 @@ export default function SidebarLayout({ children }) {
         </List>
       </Box>
 
-      {/* User Section */}
+      {/* User Section - Dynamic Avatar with Backend Image */}
       <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "divider" }}>
         <Box
           sx={{
@@ -327,16 +389,28 @@ export default function SidebarLayout({ children }) {
           }}
           onClick={handleProfileMenuOpen}
         >
-          <Avatar sx={{ width: 36, height: 36 }} src="bilal.jpg" />
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              bgcolor: !userAvatar ? "primary.main" : undefined,
+            }}
+            src={userAvatar}
+            imgProps={{
+              onError: handleImageError,
+            }}
+          >
+            {!userAvatar && userInitial}
+          </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="body2"
               sx={{ fontWeight: 600, fontSize: "0.875rem" }}
             >
-              {currentUser?.name || "کاروونکی"}
+              {userName}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>
-              {currentUser?.email}
+              {userEmail}
             </Typography>
           </Box>
           <Settings fontSize="small" color="action" />
@@ -393,7 +467,19 @@ export default function SidebarLayout({ children }) {
           </IconButton>
 
           <IconButton onClick={handleProfileMenuOpen}>
-            <Avatar sx={{ width: 32, height: 32 }} src="bilal.jpg" />
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: !userAvatar ? "primary.main" : undefined,
+              }}
+              src={userAvatar}
+              imgProps={{
+                onError: handleImageError,
+              }}
+            >
+              {!userAvatar && userInitial}
+            </Avatar>
           </IconButton>
         </Toolbar>
       </AppBar>

@@ -2,6 +2,7 @@
 
 package com.MCIT.ArchiveManagementSystem.controller;
 
+import com.MCIT.ArchiveManagementSystem.dtos.UserDTO;
 import com.MCIT.ArchiveManagementSystem.models.AppRole;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Role;
@@ -23,6 +24,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -41,6 +43,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/api/auth")
 public class AuthController {
 
@@ -313,5 +316,35 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Invalid 2FA Code");
         }
+    }
+    @GetMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        UserDTO userDTO = convertToDto(user);
+        return ResponseEntity.ok(userDTO);
+    }
+
+    private UserDTO convertToDto(User user) {
+        return new UserDTO(
+                user.getUserId(),
+                user.getUserName(),
+                user.getEmail(),
+                user.getProfileImage(),
+                user.isAccountNonLocked(),
+                user.isAccountNonExpired(),
+                user.isCredentialsNonExpired(),
+                user.isEnabled(),
+                user.getCredentialsExpiryDate(),
+                user.getAccountExpiryDate(),
+                user.getTwoFactorSecret(),
+                user.isTwoFactorEnabled(),
+                user.getSignUpMethod(),
+                user.getRole(),
+                user.getCreatedDate(),
+                user.getUpdatedDate()
+        );
     }
 }

@@ -41,6 +41,8 @@ public class User {
     @Email
     @Column(name = "email")
     private String email;
+    @Column(name = "profile_image")
+private String profileImage;
 
     @Size(max = 120)
     @Column(name = "password")

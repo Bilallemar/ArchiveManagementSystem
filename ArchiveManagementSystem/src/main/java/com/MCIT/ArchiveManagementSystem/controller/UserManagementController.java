@@ -9,19 +9,34 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.apache.commons.io.FilenameUtils;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+
+import java.io.IOException;
+
+import java.nio.file.Path;
+
 @RestController
 @RequestMapping("/api/user-management")
 // @CrossOrigin(origins = "*", maxAge = 3600)
 public class UserManagementController {
+@Value("${spring.file.directory}")
+    private String uploadDir;
 
     @Autowired
     private UserRepository userRepository;
+
 
     @Autowired
     private ManagementRepository managementRepository;
@@ -165,4 +180,43 @@ public class UserManagementController {
         
         return ResponseEntity.ok(response);
     }
+     @PostMapping(value = "/{userId}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<?> uploadProfileImage(
+        @PathVariable Long userId,
+        @RequestParam("file") MultipartFile file
+) throws IOException {
+
+    if (file.isEmpty()) {
+        return ResponseEntity.badRequest()
+            .body(new MessageResponse("فایل خالي دی"));
+    }
+
+    // Validate file type
+    String ext = FilenameUtils.getExtension(file.getOriginalFilename());
+    if (!Arrays.asList("jpg", "jpeg", "png", "gif").contains(ext.toLowerCase())) {
+        return ResponseEntity.badRequest()
+            .body(new MessageResponse("فقط فایل های تصویری مجاز هستند"));
+    }
+
+    String fileName = "user_" + userId + "." + ext;
+
+    // Create profile-images subdirectory
+    Path profileImagesDir = Paths.get(uploadDir, "profile-images");
+    Files.createDirectories(profileImagesDir);
+    
+    Path filePath = profileImagesDir.resolve(fileName);
+    Files.write(filePath, file.getBytes());
+
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    user.setProfileImage("/uploads/profile-images/" + fileName);
+    userRepository.save(user);
+
+    Map<String, String> response = new HashMap<>();
+    response.put("message", "عکس پروفایل با موفقیت آپلود شد");
+    response.put("profileImageUrl", "/uploads/profile-images/" + fileName);
+    
+    return ResponseEntity.ok(response);
+}
 }

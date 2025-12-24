@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/public/**").permitAll()
                 .requestMatchers("/oauth2/**").permitAll()
                 .requestMatchers("/api/csrf-token").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/user-management/**").hasRole("ADMIN")
                 .requestMatchers("/api/archives/**").authenticated()
