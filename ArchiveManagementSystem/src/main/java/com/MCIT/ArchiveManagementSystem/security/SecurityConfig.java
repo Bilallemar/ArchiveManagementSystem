@@ -104,7 +104,10 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         
         // Allow all origins with credentials
-        config.setAllowedOriginPatterns(Arrays.asList("*"));
+            config.setAllowedOrigins(Arrays.asList(
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ));
         
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-XSRF-TOKEN", "X-Requested-With", "Accept", "Origin"));
