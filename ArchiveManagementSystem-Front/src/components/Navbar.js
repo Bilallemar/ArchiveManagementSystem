@@ -24,6 +24,7 @@ import {
   clearUserManagement,
 } from "../utils/managementUtils";
 import api from "../services/api";
+
 const Navbar = () => {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [headerToggle, setHeaderToggle] = useState(false);
@@ -59,7 +60,6 @@ const Navbar = () => {
       const response = await api.get("/auth/profile");
       setUserProfile(response.data);
       setImageError(false);
-      console.log("User profile fetched:", response.data);
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
@@ -123,21 +123,33 @@ const Navbar = () => {
     transition: "all 0.2s ease",
   });
 
-  // Get profile image URL from backend
+  // Get profile image URL from backend with better error handling
   const getProfileImageUrl = () => {
-    if (userProfile?.profileImage && !imageError) {
-      // Remove leading slash if present and construct full URL
+    if (!userProfile?.profileImage || imageError) {
+      return null;
+    }
+
+    try {
       const imagePath = userProfile.profileImage.startsWith("/")
         ? userProfile.profileImage.substring(1)
         : userProfile.profileImage;
-      return `${process.env.REACT_APP_API_URL}/${imagePath}`;
+
+      // Construct URL, ensure API URL doesn't end with slash
+      const apiUrl = process.env.REACT_APP_API_URL?.replace(/\/$/, "");
+      return `${apiUrl}/${imagePath}`;
+    } catch (error) {
+      console.error("Error constructing profile image URL:", error);
+      return null;
     }
-    return null;
   };
 
-  const handleImageError = () => {
-    console.error("Failed to load profile image");
-    setImageError(true);
+  const handleImageError = (e) => {
+    // Prevent infinite loop by checking if already errored
+    if (!imageError) {
+      setImageError(true);
+    }
+    // Prevent default broken image icon
+    e.target.style.display = "none";
   };
 
   // Get user avatar - priority: profileImage from backend > existing fallbacks
@@ -182,7 +194,7 @@ const Navbar = () => {
       >
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            {/* Logo */}
+            {/* Logo - Fixed with error handling */}
             <Link
               to="/"
               style={{
@@ -199,9 +211,13 @@ const Navbar = () => {
                 }}
               >
                 <img
-                  src="logo.png"
+                  src={`${process.env.PUBLIC_URL}/logo.png`}
                   alt="Logo"
                   className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    // Fallback if logo doesn't exist
+                    e.target.style.display = "none";
+                  }}
                 />
               </div>
               <Typography
@@ -313,14 +329,14 @@ const Navbar = () => {
                 ))}
             </Box>
 
-            {/* User Avatar - Dynamic with Backend Image */}
+            {/* User Avatar - Fixed with better error handling */}
             <Box sx={{ flexGrow: 0 }}>
               {token ? (
                 <>
                   <IconButton onClick={() => toggleSidebar(true)} sx={{ p: 0 }}>
                     <Avatar
                       alt={userName}
-                      src={userAvatar}
+                      src={userAvatar || undefined}
                       imgProps={{
                         onError: handleImageError,
                       }}
