@@ -32,6 +32,9 @@ import com.MCIT.ArchiveManagementSystem.repositories.UserRepository;
 import com.MCIT.ArchiveManagementSystem.security.jwt.AuthEntryPointJwt;
 import com.MCIT.ArchiveManagementSystem.security.jwt.AuthTokenFilter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 
@@ -40,15 +43,14 @@ import java.util.Arrays;
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
+
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
     @Autowired
     @Lazy
     private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-
-    @Autowired
-    private ManagementRepository managementRepository;
 
     @Autowired
     private AuthTokenFilter authTokenFilter;
@@ -62,35 +64,13 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/", "/health").permitAll()
                 .requestMatchers("/api/auth/public/**").permitAll()
                 .requestMatchers("/oauth2/**").permitAll()
                 .requestMatchers("/api/csrf-token").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/user-management/**").hasRole("ADMIN")
-                .requestMatchers("/api/archives/**").authenticated()
-                .requestMatchers("/api/sawanih/**").authenticated()
-                .requestMatchers("/api/hifziya-hazari/**").authenticated()
-                .requestMatchers("/api/hifziya-warada-sadera/**").authenticated()
-                .requestMatchers("/api/makzan-receipts/**").authenticated()
-                .requestMatchers("/api/makzan-annual-reports/**").authenticated()
-                .requestMatchers("/api/annual-reports-info/**").authenticated()
-                .requestMatchers("/api/managements/**").authenticated()
-                .requestMatchers("/api/receipts/**").authenticated()
-                .requestMatchers("/api/receipts/download/**").authenticated()
-                .requestMatchers("/api/files/**").authenticated()
-                .requestMatchers("/api/received-issued-books/**").authenticated()
-                .requestMatchers("/api/received-issued-books/download/**").authenticated()
-                .requestMatchers("/importDoc/**").authenticated()
-                .requestMatchers("/exportDoc/**").authenticated()
-                .requestMatchers("/annual-reports/**").authenticated()
-                .requestMatchers("/annual-reports_info/**").authenticated()
-                .requestMatchers("/api/attendanceBook/**").authenticated()
-                .requestMatchers("/api/fileOffices/**").authenticated()
-                .requestMatchers("/api/received-issued-books-repository/**").authenticated()
-                .requestMatchers("/api/type/**").authenticated()
-                .requestMatchers("/api/sub-type/**").authenticated()
-                .requestMatchers("/api/org/**").authenticated()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
@@ -103,15 +83,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         
-        // Allow all origins with credentials
-            config.setAllowedOrigins(Arrays.asList(
-        "http://localhost:3000",
-        "http://127.0.0.1:3000"
-    ));
+        config.setAllowedOrigins(Arrays.asList(
+            "http://localhost:3000",
+            "http://127.0.0.1:3000"
+        ));
         
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-XSRF-TOKEN", "X-Requested-With", "Accept", "Origin"));
-        config.setExposedHeaders(Arrays.asList("Authorization", "Access-Control-Allow-Origin"));
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setExposedHeaders(Arrays.asList("Authorization"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
@@ -130,77 +109,37 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-@Bean
-public CommandLineRunner initData(RoleRepository roleRepository,
-                                  UserRepository userRepository,
-                                  PasswordEncoder passwordEncoder,
-                                  ManagementRepository managementRepository) {
-    return args -> {
-        // ============================================
-        // 1. CREATE ALL 3 MANAGEMENTS
-        // ============================================
-        Management archiveManagement = managementRepository.findById(1L)
-                .orElseGet(() -> {
-                    Management m = new Management();
-                    m.setManagementName("Archive");
-                    return managementRepository.save(m);
-                });
-        
-        Management hifziyaManagement = managementRepository.findById(2L)
-                .orElseGet(() -> {
-                    Management m = new Management();
-                    m.setManagementName("Hifziya");
-                    return managementRepository.save(m);
-                });
-        
-        Management makhzanManagement = managementRepository.findById(3L)
-                .orElseGet(() -> {
-                    Management m = new Management();
-                    m.setManagementName("Makhzan");
-                    return managementRepository.save(m);
-                });
-        
-        System.out.println("✅ Managements created:");
-        System.out.println("   1. Archive (ID: " + archiveManagement.getManagementId() + ")");
-        System.out.println("   2. Hifziya (ID: " + hifziyaManagement.getManagementId() + ")");
-        System.out.println("   3. Makhzan (ID: " + makhzanManagement.getManagementId() + ")");
-        
-        // ============================================
-        // 2. CREATE ROLES
-        // ============================================
-        Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
-                .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_USER)));
-        
-        Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
-                .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
-        
-        System.out.println("✅ Roles created");
-        
-        // ============================================
-        // 3. CREATE DEFAULT USERS WITH CORRECT MANAGEMENT
-        // ============================================
-        
-        // Create user1 - no management initially
-        if (!userRepository.existsByUserName("user1")) {
-            User user1 = new User("user1", "user1@example.com",
-                    passwordEncoder.encode("password1"));
-            user1.setAccountNonLocked(true);
-            user1.setAccountNonExpired(true);
-            user1.setCredentialsNonExpired(true);
-            user1.setEnabled(true);
-            user1.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-            user1.setAccountExpiryDate(LocalDate.now().plusYears(1));
-            user1.setTwoFactorEnabled(false);
-            user1.setSignUpMethod("email");
-            user1.setRole(userRole);
-            userRepository.save(user1);
-            System.out.println("✅ Created user: user1 (no management)");
-        }
-        
-        // Create admin - Archive management (ID: 1)
-        if (!userRepository.existsByUserName("admin")) {
-            User admin = new User("admin", "admin@example.com",
-                    passwordEncoder.encode("adminPass"));
+    @Bean
+    public CommandLineRunner initData(RoleRepository roleRepository,
+                                      UserRepository userRepository,
+                                      PasswordEncoder passwordEncoder,
+                                      ManagementRepository managementRepository) {
+        return args -> {
+            logger.info("Starting database initialization...");
+            
+            // Create managements
+            Management archiveManagement = createManagementIfNotExists(managementRepository, 1L, "Archive");
+            Management hifziyaManagement = createManagementIfNotExists(managementRepository, 2L, "Hifziya");
+            Management makhzanManagement = createManagementIfNotExists(managementRepository, 3L, "Makhzan");
+            
+            logger.info("Managements initialized: Archive, Hifziya, Makhzan");
+            
+            // Create roles
+            Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+                    .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_USER)));
+            
+            Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
+                    .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
+            
+            logger.info("Roles initialized: ROLE_USER, ROLE_ADMIN");
+            
+            // Create or update admin user
+            User admin = userRepository.findByUserName("admin")
+                    .orElse(new User());
+            
+            admin.setUserName("admin");
+            admin.setEmail("admin@example.com");
+            admin.setPassword(passwordEncoder.encode("adminPass"));
             admin.setAccountNonLocked(true);
             admin.setAccountNonExpired(true);
             admin.setCredentialsNonExpired(true);
@@ -210,66 +149,53 @@ public CommandLineRunner initData(RoleRepository roleRepository,
             admin.setTwoFactorEnabled(false);
             admin.setSignUpMethod("email");
             admin.setRole(adminRole);
-            admin.setManagement(archiveManagement); // Admin → Archive
+            admin.setManagement(archiveManagement);
+            
             userRepository.save(admin);
-            System.out.println("✅ Created admin: admin (Archive management)");
+            logger.info("Admin user created/updated: username=admin, management=Archive");
+            
+            // Create test users
+            createUserIfNotExists(userRepository, passwordEncoder, "user1", "user1@example.com", 
+                                "password1", userRole, null);
+            createUserIfNotExists(userRepository, passwordEncoder, "archive_user", "archive@test.com", 
+                                "password123", userRole, archiveManagement);
+            createUserIfNotExists(userRepository, passwordEncoder, "tashkeel_user", "tashkeel@test.com", 
+                                "password123", userRole, hifziyaManagement);
+            createUserIfNotExists(userRepository, passwordEncoder, "makhzan_user", "makhzan@test.com", 
+                                "password123", userRole, makhzanManagement);
+            
+            logger.info("Database initialization complete!");
+            logger.info("Default credentials - Username: admin, Password: adminPass");
+        };
+    }
+    
+    private Management createManagementIfNotExists(ManagementRepository repository, Long id, String name) {
+        return repository.findById(id).orElseGet(() -> {
+            Management m = new Management();
+            m.setManagementName(name);
+            return repository.save(m);
+        });
+    }
+    
+    private void createUserIfNotExists(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                                      String username, String email, String password,
+                                      Role role, Management management) {
+        if (!userRepository.existsByUserName(username)) {
+            User user = new User(username, email, passwordEncoder.encode(password));
+            user.setAccountNonLocked(true);
+            user.setAccountNonExpired(true);
+            user.setCredentialsNonExpired(true);
+            user.setEnabled(true);
+            user.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
+            user.setAccountExpiryDate(LocalDate.now().plusYears(1));
+            user.setTwoFactorEnabled(false);
+            user.setSignUpMethod("email");
+            user.setRole(role);
+            user.setManagement(management);
+            userRepository.save(user);
+            
+            String mgmt = management != null ? management.getManagementName() : "none";
+            logger.info("Created user: {} (management: {})", username, mgmt);
         }
-        
-        // Create archive_user - Archive management (ID: 1)
-        if (!userRepository.existsByUserName("archive_user")) {
-            User archiveUser = new User("archive_user", "archive@test.com",
-                    passwordEncoder.encode("password123"));
-            archiveUser.setAccountNonLocked(true);
-            archiveUser.setAccountNonExpired(true);
-            archiveUser.setCredentialsNonExpired(true);
-            archiveUser.setEnabled(true);
-            archiveUser.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-            archiveUser.setAccountExpiryDate(LocalDate.now().plusYears(1));
-            archiveUser.setTwoFactorEnabled(false);
-            archiveUser.setSignUpMethod("email");
-            archiveUser.setRole(userRole);
-            archiveUser.setManagement(archiveManagement);
-            userRepository.save(archiveUser);
-            System.out.println("✅ Created user: archive_user (Archive management)");
-        }
-        
-        // Create tashkeel_user - Hifziya management (ID: 2)
-        if (!userRepository.existsByUserName("tashkeel_user")) {
-            User tashkeelUser = new User("tashkeel_user", "tashkeel@test.com",
-                    passwordEncoder.encode("password123"));
-            tashkeelUser.setAccountNonLocked(true);
-            tashkeelUser.setAccountNonExpired(true);
-            tashkeelUser.setCredentialsNonExpired(true);
-            tashkeelUser.setEnabled(true);
-            tashkeelUser.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-            tashkeelUser.setAccountExpiryDate(LocalDate.now().plusYears(1));
-            tashkeelUser.setTwoFactorEnabled(false);
-            tashkeelUser.setSignUpMethod("email");
-            tashkeelUser.setRole(userRole);
-            tashkeelUser.setManagement(hifziyaManagement); // Hifziya
-            userRepository.save(tashkeelUser);
-            System.out.println("✅ Created user: tashkeel_user (Hifziya management)");
-        }
-        
-        // Create makhzan_user - Makhzan management (ID: 3)
-        if (!userRepository.existsByUserName("makhzan_user")) {
-            User makhzanUser = new User("makhzan_user", "makhzan@test.com",
-                    passwordEncoder.encode("password123"));
-            makhzanUser.setAccountNonLocked(true);
-            makhzanUser.setAccountNonExpired(true);
-            makhzanUser.setCredentialsNonExpired(true);
-            makhzanUser.setEnabled(true);
-            makhzanUser.setCredentialsExpiryDate(LocalDate.now().plusYears(1));
-            makhzanUser.setAccountExpiryDate(LocalDate.now().plusYears(1));
-            makhzanUser.setTwoFactorEnabled(false);
-            makhzanUser.setSignUpMethod("email");
-            makhzanUser.setRole(userRole);
-            makhzanUser.setManagement(makhzanManagement); // Makhzan
-            userRepository.save(makhzanUser);
-            System.out.println("✅ Created user: makhzan_user (Makhzan management)");
-        }
-        
-        System.out.println("✅✅✅ Database initialization complete!");
-    };
-}
+    }
 }
