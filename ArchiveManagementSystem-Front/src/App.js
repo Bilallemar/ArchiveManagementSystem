@@ -28,13 +28,13 @@ import ResetPassword from "./components/Auth/ResetPassword";
 import UserManagementPanel from "./components/Admin/UserManagementPanel";
 import HazariList from "./components/Hifziya/HifziyaHazari/HazariList";
 import AddHazari from "./components/Hifziya/HifziyaHazari/AddHazari";
-import UpdateHazari from "./components/Hifziya/HifziyaHazari/UpdateHazari";
+import EditHazariDialog from "./components/Hifziya/HifziyaHazari/EditHazariDialog";
 import HifziyaWaradaSaderaList from "./components/Hifziya/HifziyaWaradaSadera/HifziyaWaradaSaderaList";
 import AddHifziyaWaradaSadera from "./components/Hifziya/HifziyaWaradaSadera/AddHifziyaWaradaSadera";
 import UpdateHifziyaWaradaSadera from "./components/Hifziya/HifziyaWaradaSadera/UpdateHifziyaWaradaSadera";
 import SawanihList from "./components/Hifziya/Sawanih/SawanihList";
 import AddSawanih from "./components/Hifziya/Sawanih/AddSawanih";
-import UpdateSawanih from "./components/Hifziya/Sawanih/UpdateSawanih";
+import EditSawanihDialog from "./components/Hifziya/Sawanih/EditSawanihDialog";
 import ArchiveList from "./components/ArchiveManagement/Archive/ArchiveList";
 import AddArchive from "./components/ArchiveManagement/Archive/AddArchive";
 import UpdateArchive from "./components/ArchiveManagement/Archive/UpdateArchive";
@@ -121,7 +121,7 @@ const App = () => {
               path="/sawanih/:id"
               element={
                 <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <UpdateSawanih />
+                  <EditSawanihDialog />
                 </ProtectedRoute>
               }
             />
@@ -169,7 +169,7 @@ const App = () => {
               path="/hifziya-hazari/:id"
               element={
                 <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <UpdateHazari />
+                  <EditHazariDialog />
                 </ProtectedRoute>
               }
             />
