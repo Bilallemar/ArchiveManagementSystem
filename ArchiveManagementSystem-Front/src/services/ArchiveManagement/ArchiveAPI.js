@@ -1,6 +1,6 @@
 import api from "../api";
 
-export const gitAllArchives = () => api.get("/archives");
+export const getAllArchives = () => api.get("/archives");
 
 export const getArchiveById = (id) => api.get(`/archives/${id}`);
 

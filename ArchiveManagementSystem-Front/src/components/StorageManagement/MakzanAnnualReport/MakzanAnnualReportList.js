@@ -6,6 +6,7 @@ import {
 import ViewMakzanAnnualReport from "./ViewMakzanAnnualReport";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import Filter from "../../Filter";
+import EditMakzanAnnualReportDialog from "./EditMakzanAnnualReportDialog";
 import {
   Table,
   TableBody,
@@ -51,6 +52,8 @@ export default function MakzanAnnualReportList() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+
   const [field, setField] = useState("address");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -99,8 +102,17 @@ export default function MakzanAnnualReportList() {
   };
 
   const handleEdit = () => {
-    navigate(`/makzan-annual-reports/${selectedReport.id}`);
+    setOpenEditDialog(true);
     handleClose();
+  };
+
+  const handleCloseEdit = () => {
+    setOpenEditDialog(false);
+    setSelectedReport(null);
+  };
+
+  const handleEditSuccess = () => {
+    loadReports();
   };
 
   const filteredReports = reports.filter((row) => {
@@ -317,7 +329,12 @@ export default function MakzanAnnualReportList() {
         onClose={handleCloseView}
         report={selectedReport}
       />
-
+      <EditMakzanAnnualReportDialog
+        open={openEditDialog}
+        onClose={handleCloseEdit}
+        report={selectedReport}
+        onSuccess={handleEditSuccess}
+      />
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}

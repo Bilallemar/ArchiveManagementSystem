@@ -1,12 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FormControl, InputLabel, Select } from "@mui/material";
 
 import { getAllHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
 import { deleteHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
 import ViewHifziyaWaradaSadera from "./ViewHifziyaWaradaSadera";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import Filter from "../../Filter";
+import EditHifziyaWaradaSaderaDialog from "./EditHifziyaWaradaSaderaDialog";
 import {
+  FormControl,
+  InputLabel,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -23,17 +26,18 @@ import {
   Button,
   Box,
   Typography,
+  IconButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import AddIcon from "@mui/icons-material/Add";
 
 const columns = [
   { id: "no", label: "نمبر", minWidth: 100 },
@@ -55,6 +59,8 @@ export default function HifziyaWaradaSaderaList() {
     useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+
   const [field, setField] = useState("bookNumber");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -112,8 +118,17 @@ export default function HifziyaWaradaSaderaList() {
   };
 
   const handleEdit = () => {
-    navigate(`/hifziya-warada-sadera/${selectedHifziyaWaradaSadera.id}`);
+    setOpenEditDialog(true);
     handleClose();
+  };
+
+  const handleCloseEdit = () => {
+    setOpenEditDialog(false);
+    setSelectedHifziyaWaradaSadera(null);
+  };
+
+  const handleEditSuccess = () => {
+    lodadHifziyaWaradaSadera();
   };
   const filteredReport = hifziyaWaradaSadera.filter((row) => {
     if (filterType === "all") return true;
@@ -370,6 +385,13 @@ export default function HifziyaWaradaSaderaList() {
         onClose={handleCloseView}
         report={selectedHifziyaWaradaSadera}
       />
+      {/* Edit Dialog */}
+      <EditHifziyaWaradaSaderaDialog
+        open={openEditDialog}
+        onClose={handleCloseEdit}
+        waradaSadara={selectedHifziyaWaradaSadera}
+        onSuccess={handleEditSuccess}
+      />
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={openDeleteDialog}
@@ -377,17 +399,16 @@ export default function HifziyaWaradaSaderaList() {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{"Delete Receipt?"}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">{"د ریکارډ حذف؟"}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete this receipt? This action cannot be
-            undone.
+            آیا تاسو مطمئن یاست چې غواړئ دا ریکارډ حذف کړئ؟ دا عمل بیرته نه شی.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenDeleteDialog(false)}>لغوه</Button>
           <Button onClick={handleDelete} color="error" autoFocus>
-            Delete
+            حذف
           </Button>
         </DialogActions>
       </Dialog>

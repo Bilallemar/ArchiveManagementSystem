@@ -31,22 +31,22 @@ import AddHazari from "./components/Hifziya/HifziyaHazari/AddHazari";
 import EditHazariDialog from "./components/Hifziya/HifziyaHazari/EditHazariDialog";
 import HifziyaWaradaSaderaList from "./components/Hifziya/HifziyaWaradaSadera/HifziyaWaradaSaderaList";
 import AddHifziyaWaradaSadera from "./components/Hifziya/HifziyaWaradaSadera/AddHifziyaWaradaSadera";
-import UpdateHifziyaWaradaSadera from "./components/Hifziya/HifziyaWaradaSadera/UpdateHifziyaWaradaSadera";
+import EditHifziyaWaradaSaderaDialog from "./components/Hifziya/HifziyaWaradaSadera/EditHifziyaWaradaSaderaDialog";
 import SawanihList from "./components/Hifziya/Sawanih/SawanihList";
 import AddSawanih from "./components/Hifziya/Sawanih/AddSawanih";
 import EditSawanihDialog from "./components/Hifziya/Sawanih/EditSawanihDialog";
 import ArchiveList from "./components/ArchiveManagement/Archive/ArchiveList";
 import AddArchive from "./components/ArchiveManagement/Archive/AddArchive";
-import UpdateArchive from "./components/ArchiveManagement/Archive/UpdateArchive";
+import EditArchiveDialog from "./components/ArchiveManagement/Archive/EditArchiveDialog";
 import MakzanSubmissionReportList from "./components/StorageManagement/MakzanSubmissionReport/MakzanSubmissionReportList";
 import AddMakzanSubmissionReport from "./components/StorageManagement/MakzanSubmissionReport/AddMakzanSubmissionReport";
-import UpdateMakzanSubmissionReport from "./components/StorageManagement/MakzanSubmissionReport/UpdateMakzanSubmissionReport";
+import EditMakzanSubmissionReportDialog from "./components/StorageManagement/MakzanSubmissionReport/EditMakzanSubmissionReportDialog";
 import MakzanReceiptList from "./components/StorageManagement/MakzanReceipt/MakzanReceiptList";
 import AddMakzanReceipt from "./components/StorageManagement/MakzanReceipt/AddMakzanReceipt";
-import UpdateMakzanReceipt from "./components/StorageManagement/MakzanReceipt/UpdateMakzanReceipt";
+import EditReceiptDialog from "./components/StorageManagement/MakzanReceipt/EditReceiptDialog";
 import MakzanAnnualReportList from "./components/StorageManagement/MakzanAnnualReport/MakzanAnnualReportList";
 import AddMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/AddMakzanAnnualReport";
-import UpdateMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/UpdateMakzanAnnualReport";
+import EditMakzanAnnualReportDialog from "./components/StorageManagement/MakzanAnnualReport/EditMakzanAnnualReportDialog";
 import { useMyContext } from "./store/ContextApi";
 import SidebarLayout from "./components/SidebarLayout";
 const App = () => {
@@ -145,7 +145,7 @@ const App = () => {
               path="/hifziya-warada-sadera/:id"
               element={
                 <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <UpdateHifziyaWaradaSadera />
+                  <EditHifziyaWaradaSaderaDialog />
                 </ProtectedRoute>
               }
             />
@@ -226,7 +226,7 @@ const App = () => {
               path="/annual-reports-info/:id"
               element={
                 <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <UpdateMakzanSubmissionReport />
+                  <EditMakzanSubmissionReportDialog />
                 </ProtectedRoute>
               }
             />
@@ -250,7 +250,7 @@ const App = () => {
               path="/makzan-receipts/:id"
               element={
                 <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <UpdateMakzanReceipt />
+                  <EditReceiptDialog />
                 </ProtectedRoute>
               }
             />
@@ -274,7 +274,7 @@ const App = () => {
               path="/makzan-annual-reports/:id"
               element={
                 <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <UpdateMakzanAnnualReport />
+                  <EditMakzanAnnualReportDialog />
                 </ProtectedRoute>
               }
             />
@@ -298,7 +298,7 @@ const App = () => {
               path="/archive/:id"
               element={
                 <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
-                  <UpdateArchive />
+                  <EditArchiveDialog />
                 </ProtectedRoute>
               }
             />

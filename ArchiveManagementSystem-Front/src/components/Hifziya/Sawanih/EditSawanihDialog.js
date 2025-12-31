@@ -14,10 +14,14 @@ import {
   CircularProgress,
   Box,
   IconButton,
-  Alert,
+  Chip,
+  Typography,
+  Stack,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
 import { updateSawanih } from "../../../services/RepositoryManagement/SawanihAPI";
 import api from "../../../services/api";
@@ -37,26 +41,17 @@ export default function EditSawanihDialog({
     org: "",
     description: "",
     pageQuantity: "",
+    newFiles: [],
   });
 
   const [orgs, setOrgs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingFiles, setExistingFiles] = useState([]);
 
-  // Load organizations
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const orgsRes = await api.get("/org");
-        setOrgs(orgsRes.data);
-      } catch (error) {
-        console.error("Failed to load orgs", error);
-        toast.error("د معلوماتو لوډولو کې ستونزه");
-      }
-    };
-    loadData();
+    api.get("/org").then((res) => setOrgs(res.data));
   }, []);
 
-  // Populate form when sawanih changes
   useEffect(() => {
     if (sawanih) {
       setFormData({
@@ -68,15 +63,28 @@ export default function EditSawanihDialog({
         org: sawanih.org?.id || "",
         description: sawanih.description || "",
         pageQuantity: sawanih.pageQuantity || "",
+        newFiles: [],
       });
+      setExistingFiles(sawanih.files || []);
     }
   }, [sawanih]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
+    setFormData((p) => ({ ...p, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    setFormData((p) => ({
+      ...p,
+      newFiles: [...p.newFiles, ...Array.from(e.target.files)],
+    }));
+  };
+
+  const handleRemoveNewFile = (index) => {
+    setFormData((p) => ({
+      ...p,
+      newFiles: p.newFiles.filter((_, i) => i !== index),
     }));
   };
 
@@ -84,18 +92,9 @@ export default function EditSawanihDialog({
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["name", "org"];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const formDataToSend = new FormData();
-
-      const sawanihData = {
+      const fd = new FormData();
+      const payload = {
         name: formData.name,
         fatherName: formData.fatherName,
         qaidWarida: formData.qaidWarida,
@@ -108,190 +107,155 @@ export default function EditSawanihDialog({
           : null,
       };
 
-      formDataToSend.append("Sawanih", JSON.stringify(sawanihData));
+      fd.append("Sawanih", JSON.stringify(payload));
+      formData.newFiles.forEach((f) => fd.append("fileURL", f));
 
-      await updateSawanih(sawanih.id, formDataToSend);
+      await updateSawanih(sawanih.id, fd);
       toast.success("ریکارډ په بریالیتوب سره تازه شو");
-      onSuccess(); // Refresh the list
-      onClose(); // Close dialog
+      onSuccess();
+      onClose();
     } catch (error) {
-      console.error("Failed to update record", error);
-      toast.error(
-        "تازه کول ناکام شو: " + (error.response?.data?.message || error.message)
-      );
+      toast.error("تازه کول ناکام شو");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          maxHeight: "90vh",
-        },
-      }}
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          pb: 2,
-          borderBottom: "1px solid #e0e0e0",
         }}
       >
-        <Box sx={{ fontFamily: "B Nazanin", fontWeight: "bold", fontSize: 20 }}>
-          ویرایش سوانح
+        <Box>
+          <Box
+            sx={{ fontFamily: "B Nazanin", fontWeight: "bold", fontSize: 20 }}
+          >
+            ویرایش سوانح
+          </Box>
+          {sawanih && (
+            <Chip
+              label={`ID: ${sawanih.id}`}
+              size="small"
+              sx={{ mt: 1 }}
+              color="primary"
+              variant="outlined"
+            />
+          )}
         </Box>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 3 }}>
-        {sawanih && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            د ریکارډ شمیره: {sawanih.id}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={handleSubmit} noValidate>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="name"
-                label="نوم"
-                variant="outlined"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                error={!formData.name}
-                helperText={!formData.name ? "این فیلد ضروری است" : ""}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="fatherName"
-                label="د پلار نوم"
-                variant="outlined"
-                value={formData.fatherName}
-                onChange={handleInputChange}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="qaidWarida"
-                label="قید واریده"
-                variant="outlined"
-                value={formData.qaidWarida}
-                onChange={handleInputChange}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={!formData.org}>
-                <InputLabel>اداره</InputLabel>
-                <Select
-                  name="org"
-                  value={formData.org}
+      <DialogContent dividers sx={{ py: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={8}>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="نوم"
+                  name="name"
+                  value={formData.name}
                   onChange={handleInputChange}
-                  label="اداره"
-                >
-                  {orgs.length === 0 ? (
-                    <MenuItem disabled>Loading...</MenuItem>
-                  ) : (
-                    orgs.map((org) => (
-                      <MenuItem key={org.id} value={org.id}>
-                        {org.name}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="د پلار نوم"
+                  name="fatherName"
+                  value={formData.fatherName}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="قید واریده"
+                  name="qaidWarida"
+                  value={formData.qaidWarida}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required>
+                  <InputLabel>اداره</InputLabel>
+                  <Select
+                    name="org"
+                    value={formData.org}
+                    onChange={handleInputChange}
+                  >
+                    {orgs.map((o) => (
+                      <MenuItem key={o.id} value={o.id}>
+                        {o.name}
                       </MenuItem>
-                    ))
-                  )}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="incommingDate"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                label="تاریخ وارده"
-                variant="outlined"
-                value={formData.incommingDate}
-                onChange={handleInputChange}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="outgoingDate"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                label="تاریخ صادره"
-                variant="outlined"
-                value={formData.outgoingDate}
-                onChange={handleInputChange}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="pageQuantity"
-                type="number"
-                label="تعداد صفحات"
-                variant="outlined"
-                value={formData.pageQuantity}
-                onChange={handleInputChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                name="description"
-                label="ملاحظات"
-                variant="outlined"
-                multiline
-                rows={3}
-                value={formData.description}
-                onChange={handleInputChange}
-              />
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  name="incommingDate"
+                  label="تاریخ وارده"
+                  InputLabelProps={{ shrink: true }}
+                  value={formData.incommingDate}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  name="outgoingDate"
+                  label="تاریخ صادره"
+                  InputLabelProps={{ shrink: true }}
+                  value={formData.outgoingDate}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="تعداد صفحات"
+                  name="pageQuantity"
+                  value={formData.pageQuantity}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  multiline
+                  rows={3}
+                  label="ملاحظات"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                />
+              </Grid>
             </Grid>
           </Grid>
-        </Box>
+        </Grid>
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          px: 3,
-          py: 2,
-          borderTop: "1px solid #e0e0e0",
-          gap: 1,
-        }}
-      >
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          disabled={isSubmitting}
-          sx={{
-            borderRadius: "8px",
-            textTransform: "none",
-          }}
-        >
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button onClick={onClose} variant="outlined" disabled={isSubmitting}>
           لغوه
         </Button>
         <Button
@@ -299,19 +263,11 @@ export default function EditSawanihDialog({
           variant="contained"
           disabled={isSubmitting}
           startIcon={
-            isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />
+            isSubmitting ? <CircularProgress size={18} /> : <SaveIcon />
           }
-          sx={{
-            backgroundColor: "black",
-            color: "white",
-            borderRadius: "8px",
-            "&:hover": {
-              backgroundColor: "#1d252e",
-            },
-            textTransform: "none",
-          }}
+          sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
         >
-          {isSubmitting ? "در حال ذخیره..." : "ذخیره تغییرات"}
+          {isSubmitting ? "ذخیره کیږي..." : "ذخیره تغییرات"}
         </Button>
       </DialogActions>
     </Dialog>

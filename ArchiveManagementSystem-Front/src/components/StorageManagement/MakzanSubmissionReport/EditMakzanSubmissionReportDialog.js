@@ -1,22 +1,30 @@
 import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   TextField,
-  Box,
-  Grid,
   Button,
+  Grid,
   CircularProgress,
-  Typography,
-  Card,
-  CardContent,
+  Box,
+  IconButton,
+  Chip,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { createMakzanSubmissionReport } from "../../../services/StorageManagement/MakzanSubmissionReportAPI";
-import React, { useState } from "react";
+import { updateMakzanSubmissionReport } from "../../../services/StorageManagement/MakzanSubmissionReportAPI";
+import React, { useState, useEffect } from "react";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import SaveIcon from "@mui/icons-material/Save";
+import CloseIcon from "@mui/icons-material/Close";
 
-export default function AddMakzanSubmissionReport() {
+export default function EditMakzanSubmissionReportDialog({
+  open,
+  onClose,
+  report,
+  onSuccess,
+}) {
   const [formData, setFormData] = useState({
     address: "",
     year: "",
@@ -26,7 +34,19 @@ export default function AddMakzanSubmissionReport() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (report) {
+      setFormData({
+        address: report.address || "",
+        year: report.year || "",
+        docType: report.docType || "",
+        summaryWaseqa: report.summaryWaseqa || "",
+        description: report.description || "",
+      });
+    }
+  }, [report]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -44,7 +64,7 @@ export default function AddMakzanSubmissionReport() {
     }
 
     try {
-      const reportData = {
+      const payload = {
         address: formData.address,
         year: parseInt(formData.year),
         docType: formData.docType,
@@ -52,45 +72,54 @@ export default function AddMakzanSubmissionReport() {
         description: formData.description,
       };
 
-      await createMakzanSubmissionReport(reportData);
-      toast.success("راپور په بریالیتوب سره ثبت شو");
-      navigate("/annual-reports-info");
+      await updateMakzanSubmissionReport(report.id, payload);
+      toast.success("راپور په بریالیتوب سره تازه شو");
+      onSuccess?.();
+      onClose();
     } catch (error) {
-      toast.error("ثبت ناکام شو");
+      toast.error(
+        "تازه کول ناکام شو: " + (error.response?.data?.message || error.message)
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/makzan-annual-reports")}
-          sx={{ color: "text.secondary" }}
-        >
-          بیرته
-        </Button>
-        <Typography
-          variant="h4"
-          sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
-        >
-          د مخزن تسلیمی راپور اضافه کول
-        </Typography>
-      </Box>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box>
+          تازه کول
+          {report && (
+            <Chip
+              label={`ID: ${report.id}`}
+              size="small"
+              sx={{ ml: 1 }}
+              color="primary"
+              variant="outlined"
+            />
+          )}
+        </Box>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-      <Box sx={{ mb: 2 }}>
-        <PageBreadcrumbs />
-      </Box>
-
-      {/* Form Card */}
-      <Card sx={{ maxWidth: 800, mx: "auto" }}>
-        <CardContent sx={{ p: 4 }}>
+      <DialogContent dividers>
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
           <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   size="small"
@@ -103,12 +132,12 @@ export default function AddMakzanSubmissionReport() {
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   size="small"
-                  name="year"
                   type="number"
+                  name="year"
                   label="سال"
                   value={formData.year}
                   onChange={handleInputChange}
@@ -117,7 +146,7 @@ export default function AddMakzanSubmissionReport() {
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   size="small"
@@ -128,7 +157,7 @@ export default function AddMakzanSubmissionReport() {
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   size="small"
@@ -146,52 +175,32 @@ export default function AddMakzanSubmissionReport() {
                   name="description"
                   label="ملاحظات"
                   multiline
-                  rows={4}
+                  rows={3}
                   value={formData.description}
                   onChange={handleInputChange}
                 />
               </Grid>
-
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 2,
-                    mt: 2,
-                  }}
-                >
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate("/makzan-annual-reports")}
-                    disabled={isSubmitting}
-                  >
-                    لغوه
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={isSubmitting}
-                    endIcon={
-                      isSubmitting ? (
-                        <CircularProgress size={20} />
-                      ) : (
-                        <SaveIcon />
-                      )
-                    }
-                    sx={{
-                      bgcolor: "black",
-                      "&:hover": { bgcolor: "#1d252e" },
-                    }}
-                  >
-                    {isSubmitting ? "ذخیره کیږي..." : "ذخیره کړئ"}
-                  </Button>
-                </Box>
-              </Grid>
             </Grid>
           </Box>
-        </CardContent>
-      </Card>
-    </Box>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        <Button onClick={onClose} variant="outlined" disabled={isSubmitting}>
+          لغوه
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={isSubmitting}
+          startIcon={
+            isSubmitting ? <CircularProgress size={18} /> : <SaveIcon />
+          }
+          sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+        >
+          {isSubmitting ? "ذخیره کیږي..." : "ذخیره تغییرات"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
