@@ -64,7 +64,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/", "/health").permitAll()
+                 .requestMatchers("/", "/health", "/error").permitAll()
+                 .requestMatchers("/favicon.*").permitAll()
+
                 .requestMatchers("/api/auth/public/**").permitAll()
                 .requestMatchers("/oauth2/**").permitAll()
                 .requestMatchers("/api/csrf-token").permitAll()

@@ -231,12 +231,12 @@ export default function AddMakzanReceipt() {
                   )}
 
                   <Typography variant="caption" color="text.secondary">
-                    اجازه شوي فایلونه: *.jpeg, *.jpg, *.png, *.pdf
-                    <br />د هر فایل اعظمي اندازه: 5 MB
+                    Allowed *.jpeg, *.jpg, *.png, *.pdf
+                    <br />
+                    max size of 5 MB each
                   </Typography>
                 </Box>
               </Grid>
-
               {/* RIGHT SIDE - Form Fields */}
               <Grid item xs={12} md={8}>
                 <Grid container spacing={3}>

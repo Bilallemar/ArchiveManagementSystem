@@ -53,6 +53,7 @@ const groupNavItems = (items, isAdmin) => {
     archive: [],
     hifziya: [],
     makzan: [],
+    settings: [],
   };
 
   items.forEach((item) => {
@@ -67,6 +68,8 @@ const groupNavItems = (items, isAdmin) => {
       item.path.includes("annual-reports")
     ) {
       grouped.makzan.push(item);
+    } else if (item.path.includes("master-data")) {
+      grouped.settings.push(item);
     }
   });
 
@@ -109,7 +112,15 @@ const groupNavItems = (items, isAdmin) => {
       color: "#FF5630",
     });
   }
-
+  if (grouped.settings.length > 0) {
+    result.push({
+      group: "settings",
+      label: "تنظیمات",
+      items: grouped.settings,
+      icon: <Settings />,
+      color: "#10B981",
+    });
+  }
   return result;
 };
 

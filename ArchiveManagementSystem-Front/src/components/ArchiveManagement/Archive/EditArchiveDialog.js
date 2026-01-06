@@ -74,7 +74,13 @@ export default function EditArchiveDialog({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear outgoing date when switching to incoming
+    if (name === "isIncoming" && value === true) {
+      setFormData((prev) => ({ ...prev, [name]: value, outgoingDate: "" }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -167,18 +173,21 @@ export default function EditArchiveDialog({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="outgoingDate"
-                type="date"
-                label="تاریخ صادره"
-                value={formData.outgoingDate}
-                onChange={handleInputChange}
-                disabled={isSubmitting}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
+            {/* Only show outgoing date for صادره (outgoing) documents */}
+            {!formData.isIncoming && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  name="outgoingDate"
+                  type="date"
+                  label="تاریخ صادره"
+                  value={formData.outgoingDate}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            )}
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required error={!formData.org}>

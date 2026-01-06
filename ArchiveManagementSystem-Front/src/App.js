@@ -47,6 +47,8 @@ import EditReceiptDialog from "./components/StorageManagement/MakzanReceipt/Edit
 import MakzanAnnualReportList from "./components/StorageManagement/MakzanAnnualReport/MakzanAnnualReportList";
 import AddMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/AddMakzanAnnualReport";
 import EditMakzanAnnualReportDialog from "./components/StorageManagement/MakzanAnnualReport/EditMakzanAnnualReportDialog";
+import MasterDataManagement from "./components/MasterData/MasterDataManagement";
+
 import { useMyContext } from "./store/ContextApi";
 import SidebarLayout from "./components/SidebarLayout";
 const App = () => {
@@ -116,7 +118,7 @@ const App = () => {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-
+            <Route path="/master-data" element={<MasterDataManagement />} />
             <Route
               path="/sawanih/:id"
               element={

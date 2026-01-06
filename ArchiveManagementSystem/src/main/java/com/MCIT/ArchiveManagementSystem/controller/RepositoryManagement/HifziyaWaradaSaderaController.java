@@ -65,7 +65,7 @@ public ResponseEntity<HifziyaWaradaSadera>getHifziyaWaradaSaderaById(@PathVariab
 @PostMapping(consumes = {"multipart/form-data"})
 public HifziyaWaradaSadera createHifziyaWaradaSadera(
         @RequestPart("hifziyaWaradaSadera") String hifziyaWaradaSadera,
-    @RequestPart(value = "fileURL", required = true) MultipartFile fileUR
+    @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
        
 ) throws IOException {
             managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
@@ -75,7 +75,7 @@ public HifziyaWaradaSadera createHifziyaWaradaSadera(
     mapper.registerModule(new JavaTimeModule());
     HifziyaWaradaSadera recivedrHifziyaWaradaSadera = mapper.readValue(hifziyaWaradaSadera, HifziyaWaradaSadera.class);
 
-    return hifziyaWaradaSaderaService.createHifziyaWaradaSadera(recivedrHifziyaWaradaSadera, fileUR);
+    return hifziyaWaradaSaderaService.createHifziyaWaradaSadera(recivedrHifziyaWaradaSadera, fileURL);
 }
 
 

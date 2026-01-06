@@ -229,7 +229,7 @@ export default function SawanihList() {
         </Box>
 
         <Paper
-          sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
+          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
         >
           <div
             style={{

@@ -612,7 +612,7 @@ export default function HazariList() {
         </Box>
 
         <Paper
-          sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
+          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
         >
           <Box sx={{ marginTop: "10px", padding: "10px" }}>
             <Filter

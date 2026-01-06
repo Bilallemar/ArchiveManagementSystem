@@ -75,10 +75,10 @@ public class MakzanReceiptController {
 
 
 
-@PostMapping(consumes = {"multipart/form-data"})
+@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public MakzanReceipt createReceipt(
         @RequestPart("receipts") String receipts,
-    @RequestPart(value = "fileURL", required = true) MultipartFile fileUR
+    @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
        
 ) throws IOException {
                     managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
@@ -88,7 +88,7 @@ public MakzanReceipt createReceipt(
     mapper.registerModule(new JavaTimeModule());
     MakzanReceipt recivedrMakzanReceipt = mapper.readValue(receipts, MakzanReceipt.class);
 
-    return receiptsService.createReceipt(recivedrMakzanReceipt, fileUR);
+    return receiptsService.createReceipt(recivedrMakzanReceipt, fileURL);
 }
 
 

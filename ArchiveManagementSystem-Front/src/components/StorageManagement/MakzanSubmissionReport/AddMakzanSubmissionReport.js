@@ -51,9 +51,10 @@ export default function AddMakzanSubmissionReport() {
         summaryWaseqa: formData.summaryWaseqa,
         description: formData.description,
       };
-
+      console.log("hhh", reportData);
       await createMakzanSubmissionReport(reportData);
       toast.success("راپور په بریالیتوب سره ثبت شو");
+      console.log("hhh", reportData);
       navigate("/annual-reports-info");
     } catch (error) {
       toast.error("ثبت ناکام شو");

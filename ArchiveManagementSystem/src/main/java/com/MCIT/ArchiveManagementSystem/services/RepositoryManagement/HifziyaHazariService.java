@@ -11,6 +11,7 @@ import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazar
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.RepositoryManagement.HifziyaHazariRepository;
 import com.MCIT.ArchiveManagementSystem.services.FileService;
+import com.MCIT.ArchiveManagementSystem.util.AuditLogHelper;
 
 import jakarta.transaction.Transactional;
 
@@ -21,13 +22,18 @@ public class HifziyaHazariService {
     private final HifziyaHazariRepository hifziyaHazariRepository;
     private final FileService fileService;
     private final FileRepository fileRepository;
+    private static final String TABLE_NAME = "hifziya_hazari";
+    private final AuditLogHelper auditLogHelper;
+
+
     
     public HifziyaHazariService(HifziyaHazariRepository hifziyaHazariRepository, 
                                 FileService fileService, 
-                                FileRepository fileRepository) {
+                                FileRepository fileRepository,AuditLogHelper auditLogHelper) {
         this.hifziyaHazariRepository = hifziyaHazariRepository;
         this.fileService = fileService;
         this.fileRepository = fileRepository;
+        this.auditLogHelper = auditLogHelper;
     }
 
     public List<HifziyaHazari> getAllHifziyaHazaris() {
@@ -71,7 +77,8 @@ public class HifziyaHazariService {
         } else {
             System.out.println("No files to save in Service");
         }
-
+auditLogHelper.logCreate(TABLE_NAME, hifziyaHazari.getId().longValue(), 
+            hifziyaHazari.getDescription());
         return hifziyaHazari;
     }
 
@@ -133,7 +140,8 @@ if (existingDoc.getFiles() == null) {
 }
 existingDoc.getFiles().clear();
 existingDoc.getFiles().addAll(newAttachments);        }
-        
+        auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(), existingDoc.getDescription());
+
         return hifziyaHazariRepository.save(existingDoc);
     }
     
@@ -147,7 +155,8 @@ existingDoc.getFiles().addAll(newAttachments);        }
                 fileService.deleteFile(file.getFilePath());
             }
         }
-        
+            auditLogHelper.logDelete(TABLE_NAME, id.longValue(), hifziyaHazari.getDescription());
+
         hifziyaHazariRepository.delete(hifziyaHazari);
     }
 }

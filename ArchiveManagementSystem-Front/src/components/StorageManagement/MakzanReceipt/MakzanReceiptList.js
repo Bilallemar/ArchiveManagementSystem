@@ -221,7 +221,7 @@ export default function MakzanReceiptList() {
         </Box>
 
         <Paper
-          sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
+          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
         >
           <div style={{ marginTop: "10px", padding: "10px" }}>
             <Filter

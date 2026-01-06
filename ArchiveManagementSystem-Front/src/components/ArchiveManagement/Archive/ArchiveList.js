@@ -921,6 +921,7 @@ export default function ArchiveList() {
               color: "white",
               borderRadius: "10px",
               "&:hover": { backgroundColor: "#1d252e" },
+              marginLeft: "-30px",
             }}
             endIcon={<AddIcon />}
           >
@@ -933,6 +934,7 @@ export default function ArchiveList() {
               flexDirection: "column",
               alignItems: "flex-end",
               textAlign: "right",
+              marginRight: "-30px",
             }}
           >
             <Typography
@@ -946,7 +948,7 @@ export default function ArchiveList() {
         </Box>
 
         <Paper
-          sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
+          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
         >
           <div style={{ marginTop: 10, padding: 10 }}>
             <Filter
