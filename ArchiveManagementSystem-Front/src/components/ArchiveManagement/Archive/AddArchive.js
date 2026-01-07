@@ -1,27 +1,38 @@
+import React, { useState, useEffect } from "react";
 import {
-  TextField,
   Box,
   Grid,
-  Button,
-  CircularProgress,
   Typography,
   Card,
   CardContent,
+  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Button,
+  CircularProgress,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SaveIcon from "@mui/icons-material/Save";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+
 import { createArchive } from "../../../services/ArchiveManagement/ArchiveAPI";
-import React, { useState, useEffect } from "react";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-import SaveIcon from "@mui/icons-material/Save";
 import api from "../../../services/api";
+import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+
+import getarchiveTexts from "./archiveTexts";
 
 export default function AddArchive() {
+  const { t } = useTranslation("archive");
+  console.log("translate files", t);
+
+  // 🔹 Just call getarchiveTexts inside render, returns updated strings
+  const texts = getarchiveTexts(t);
+  console.log("texts should be shown here", texts);
+
   const [formData, setFormData] = useState({
     docNo: "",
     incommingDate: "",
@@ -37,10 +48,26 @@ export default function AddArchive() {
   const [orgs, setOrgs] = useState([]);
   const [docTypes, setDocTypes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
+
+  const loadOrgs = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/org");
+      setOrgs(res.data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error(texts.loadError); // plain string
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
+    loadOrgs();
   }, []);
 
   const loadData = async () => {
@@ -66,16 +93,15 @@ export default function AddArchive() {
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["docNo", "org"];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
+    if (!formData.docNo || !formData.org) {
+      toast.error(texts.required);
       setIsSubmitting(false);
       return;
     }
@@ -94,13 +120,15 @@ export default function AddArchive() {
       };
 
       await createArchive(archiveData);
-      toast.success("آرشیف په بریالیتوب سره ثبت شو");
+      toast.success(texts.success);
       navigate("/archive");
     } catch (error) {
       console.error("Failed to create archive", error);
       toast.error(
         "ثبت ناکام شو: " + (error.response?.data?.message || error.message)
       );
+      console.error(error);
+      toast.error(texts.error);
     } finally {
       setIsSubmitting(false);
     }
