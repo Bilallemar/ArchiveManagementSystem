@@ -1,0 +1,26 @@
+{
+  "logoShort": "⚖️",
+  "logoTitle": "ستره محکمه",
+  "logoSubtitle": "امارت اسلامی افغانستان",
+  "dashboard": "داشبورد",
+  "archiveManagement": "مدیریت آرشیف",
+  "hifziyaManagement": "مدیریت حفظیه",
+  "makzanManagement": "مدیریت مخزن",
+  "profile": "پروفایل",
+  "settings": "تنظیمات",
+  "users": "کاربران",
+  "auditLogs": "ثبت‌های بازرسی",
+  "userManagement": "مدیریت کاربران",
+  "logout": "خروج",
+  "notifications": "اعلان‌ها",
+  "language": "زبان",
+  "pashtho": "پشتو",
+  "dari": "دری",
+  "english": "English",
+  "navigation": {
+    "dashboardItem": "داشبورد",
+    "archiveItem": "آرشیف",
+    "hifziyaItem": "حفظیه",
+    "makzanItem": "مخزن"
+  }
+}

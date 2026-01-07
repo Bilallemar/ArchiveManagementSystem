@@ -1,0 +1,26 @@
+{
+  "logoShort": "⚖️",
+  "logoTitle": "Supreme Court",
+  "logoSubtitle": "Islamic Emirate of Afghanistan",
+  "dashboard": "Dashboard",
+  "archiveManagement": "Archive Management",
+  "hifziyaManagement": "Hifziya Management",
+  "makzanManagement": "Makzan Management",
+  "profile": "Profile",
+  "settings": "Settings",
+  "users": "Users",
+  "auditLogs": "Audit Logs",
+  "userManagement": "User Management",
+  "logout": "Logout",
+  "notifications": "Notifications",
+  "language": "Language",
+  "pashtho": "Pashto",
+  "dari": "Dari",
+  "english": "English",
+  "navigation": {
+    "dashboardItem": "Dashboard",
+    "archiveItem": "Archive",
+    "hifziyaItem": "Hifziya",
+    "makzanItem": "Makzan"
+  }
+}
