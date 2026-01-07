@@ -118,9 +118,7 @@ export const getNavigationItems = () => {
         management: MANAGEMENTS.HIFZIYA,
       },
       { path: "/sawanih", label: "سوانح", management: MANAGEMENTS.HIFZIYA },
-
       { path: "/archive", label: "آرشیف", management: MANAGEMENTS.ARCHIVE },
-
       {
         path: "/makzan-annual-reports",
         label: "راپور سال تمام",
@@ -136,6 +134,8 @@ export const getNavigationItems = () => {
         label: "ارایه معلومات راپور",
         management: MANAGEMENTS.MAKHZAN,
       },
+      // ✅ ADD THIS LINE - Master Data Management (Admin Only)
+      { path: "/master-data", label: "اساسی معلومات" },
     ];
   }
 

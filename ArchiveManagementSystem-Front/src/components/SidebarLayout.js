@@ -53,6 +53,7 @@ const groupNavItems = (items, isAdmin) => {
     archive: [],
     hifziya: [],
     makzan: [],
+    settings: [],
   };
 
   items.forEach((item) => {
@@ -67,6 +68,8 @@ const groupNavItems = (items, isAdmin) => {
       item.path.includes("annual-reports")
     ) {
       grouped.makzan.push(item);
+    } else if (item.path.includes("master-data")) {
+      grouped.settings.push(item);
     }
   });
 
@@ -109,7 +112,15 @@ const groupNavItems = (items, isAdmin) => {
       color: "#FF5630",
     });
   }
-
+  if (grouped.settings.length > 0) {
+    result.push({
+      group: "settings",
+      label: "تنظیمات",
+      items: grouped.settings,
+      icon: <Settings />,
+      color: "#10B981",
+    });
+  }
   return result;
 };
 
@@ -184,14 +195,24 @@ export default function SidebarLayout({ children }) {
   };
 
   // Get profile image URL from backend
-  const getProfileImageUrl = () => {
-    if (userProfile?.profileImage && !imageError) {
+  const getProfileImageUrl = (userProfile, imageError) => {
+    if (!userProfile?.profileImage || imageError) {
+      return null;
+    }
+
+    try {
       const imagePath = userProfile.profileImage.startsWith("/")
         ? userProfile.profileImage.substring(1)
         : userProfile.profileImage;
-      return `${process.env.REACT_APP_API_URL}/${imagePath}`;
+
+      const apiUrl =
+        process.env.REACT_APP_API_URL?.replace(/\/$/, "") ||
+        "http://localhost:8080";
+      return `${apiUrl}/${imagePath}`;
+    } catch (error) {
+      console.error("Error constructing profile image URL:", error);
+      return null;
     }
-    return null;
   };
 
   const handleImageError = () => {

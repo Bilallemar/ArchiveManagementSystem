@@ -67,14 +67,24 @@ const Sidebar = ({ open, toggleSidebar }) => {
   };
 
   // Get profile image URL from backend
-  const getProfileImageUrl = () => {
-    if (userProfile?.profileImage && !imageError) {
+  const getProfileImageUrl = (userProfile, imageError) => {
+    if (!userProfile?.profileImage || imageError) {
+      return null;
+    }
+
+    try {
       const imagePath = userProfile.profileImage.startsWith("/")
         ? userProfile.profileImage.substring(1)
         : userProfile.profileImage;
-      return `${process.env.REACT_APP_API_URL}/${imagePath}`;
+
+      const apiUrl =
+        process.env.REACT_APP_API_URL?.replace(/\/$/, "") ||
+        "http://localhost:8080";
+      return `${apiUrl}/${imagePath}`;
+    } catch (error) {
+      console.error("Error constructing profile image URL:", error);
+      return null;
     }
-    return null;
   };
 
   const handleImageError = () => {

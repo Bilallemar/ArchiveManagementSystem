@@ -21,6 +21,9 @@ import com.MCIT.ArchiveManagementSystem.services.UserService;
 import com.MCIT.ArchiveManagementSystem.util.AuthUtil;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +49,7 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/api/auth")
 public class AuthController {
+    private static final Logger logger = LoggerFactory.getLogger(FileController.class);
 
     @Autowired
     JwtUtils jwtUtils;
@@ -317,15 +321,26 @@ public class AuthController {
                     .body("Invalid 2FA Code");
         }
     }
-    @GetMapping("/profile")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository.findByUserName(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        UserDTO userDTO = convertToDto(user);
-        return ResponseEntity.ok(userDTO);
+  @GetMapping("/profile")
+@PreAuthorize("isAuthenticated()")
+public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+    logger.info("📋 /api/auth/profile called");
+    logger.info("👤 UserDetails: {}", userDetails != null ? userDetails.getUsername() : "null");
+    
+    if (userDetails == null) {
+        logger.error("❌ UserDetails is null - user not authenticated!");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Not authenticated"));
     }
+    
+    User user = userRepository.findByUserName(userDetails.getUsername())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+    
+    logger.info("✅ User found: {}", user.getUserName());
+    
+    UserDTO userDTO = convertToDto(user);
+    return ResponseEntity.ok(userDTO);
+}
 
     private UserDTO convertToDto(User user) {
         return new UserDTO(

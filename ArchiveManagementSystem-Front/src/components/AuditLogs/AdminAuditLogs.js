@@ -112,6 +112,7 @@ const AdminAuditLogs = () => {
     id: item.id,
     action: item.action,
     username: item.username,
+    tableName: item.tableName,
     recordId: item.recordId,
     recordContent: item.recordContent,
     timestamp: moment(item.timestamp).format("MMMM DD, YYYY, hh:mm A"),

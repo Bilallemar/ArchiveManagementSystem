@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih;
 import com.MCIT.ArchiveManagementSystem.repositories.RepositoryManagement.SawanihRepository;
+import com.MCIT.ArchiveManagementSystem.util.AuditLogHelper;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,10 +15,15 @@ import org.springframework.web.multipart.MultipartFile;
 public class SawanihService {
 
     private final SawanihRepository sawanihRepository;
+    private final AuditLogHelper auditLogHelper;
+     private static final String TABLE_NAME = "sawanih";
+
+
 
     public SawanihService(
-            SawanihRepository sawanihRepository) {
+            SawanihRepository sawanihRepository,AuditLogHelper auditLogHelper) {
         this.sawanihRepository = sawanihRepository;
+        this.auditLogHelper = auditLogHelper;
     
     }
 
@@ -36,7 +42,8 @@ public class SawanihService {
         // fileEntity.setFilePath(fileService.savefile(fileURL, book));
         // fileEntity.setSawanih(book);
         // fileRepository.save(fileEntity);
-
+auditLogHelper.logCreate(TABLE_NAME, book.getId().longValue(), 
+            book.getDescription());
         return book;
     }
 
@@ -52,6 +59,7 @@ public class SawanihService {
         book.setOrg(bookDetails.getOrg());
         book.setPageQuantity(bookDetails.getPageQuantity());
         book.setDescription(bookDetails.getDescription());
+auditLogHelper.logUpdate(TABLE_NAME, bookDetails.getId().longValue(), bookDetails.getDescription());
 
         return sawanihRepository.save(book);
     }
@@ -59,6 +67,8 @@ public class SawanihService {
     public void deleteSawanih(Integer id) {
         Sawanih book = sawanihRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Book not found with id: " + id));
+        auditLogHelper.logDelete(TABLE_NAME, id.longValue(), book.getDescription());
+
         sawanihRepository.delete(book);
     }
 

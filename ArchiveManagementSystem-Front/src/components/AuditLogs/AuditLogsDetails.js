@@ -36,6 +36,7 @@ const AuditLogsDetails = () => {
     recordId: item.recordId,
     action: item.action,
     username: item.username,
+    tableName: item.tableName,
     recordContent: item.recordContent,
     timestamp: moment(item.timestamp).format("MMMM DD, YYYY, hh:mm A"),
   }));

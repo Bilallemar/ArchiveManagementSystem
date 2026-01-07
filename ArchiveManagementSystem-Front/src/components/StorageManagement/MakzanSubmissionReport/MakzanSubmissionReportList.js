@@ -6,6 +6,7 @@ import {
 import ViewMakzanSubmissionReport from "./ViewMakzanSubmissionReport";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import Filter from "../../Filter";
+import EditMakzanSubmissionReportDialog from "./EditMakzanSubmissionReportDialog";
 import {
   Table,
   TableBody,
@@ -51,6 +52,8 @@ export default function MakzanSubmissionReportList() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+
   const [field, setField] = useState("address");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -99,8 +102,17 @@ export default function MakzanSubmissionReportList() {
   };
 
   const handleEdit = () => {
-    navigate(`/annual-reports-info/${selectedReport.id}`);
+    setOpenEditDialog(true);
     handleClose();
+  };
+
+  const handleCloseEdit = () => {
+    setOpenEditDialog(false);
+    setSelectedReport(null);
+  };
+
+  const handleEditSuccess = () => {
+    loadReports();
   };
 
   const filteredReports = reports.filter((row) => {
@@ -206,7 +218,7 @@ export default function MakzanSubmissionReportList() {
         </Box>
 
         <Paper
-          sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
+          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
         >
           <div style={{ marginTop: "10px", padding: "10px" }}>
             <Filter
@@ -317,7 +329,12 @@ export default function MakzanSubmissionReportList() {
         onClose={handleCloseView}
         report={selectedReport}
       />
-
+      <EditMakzanSubmissionReportDialog
+        open={openEditDialog}
+        onClose={handleCloseEdit}
+        report={selectedReport}
+        onSuccess={handleEditSuccess}
+      />
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}

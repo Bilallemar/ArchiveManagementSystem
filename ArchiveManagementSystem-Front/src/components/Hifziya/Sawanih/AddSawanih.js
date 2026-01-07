@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Box,
@@ -8,13 +9,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Typography,
+  Card,
+  CardContent,
+  Stack,
+  Chip,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { createSawanih } from "../../../services/RepositoryManagement/SawanihAPI";
-import React, { useState, useEffect } from "react";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import SaveIcon from "@mui/icons-material/Save";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import DeleteIcon from "@mui/icons-material/Delete";
 import api from "../../../services/api";
 
 export default function AddSawanih() {
@@ -27,6 +34,7 @@ export default function AddSawanih() {
     org: "",
     description: "",
     pageQuantity: "",
+    files: [],
   });
 
   const [orgs, setOrgs] = useState([]);
@@ -34,23 +42,25 @@ export default function AddSawanih() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const orgsRes = await api.get("/org");
-        setOrgs(orgsRes.data);
-      } catch (error) {
-        console.error("Failed to load orgs", error);
-        toast.error("د معلوماتو لوډولو کې ستونزه");
-      }
-    };
-    loadData();
+    api.get("/org").then((res) => setOrgs(res.data));
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
+    setFormData((p) => ({ ...p, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    setFormData((p) => ({
+      ...p,
+      files: [...p.files, ...Array.from(e.target.files)],
+    }));
+  };
+
+  const handleRemoveFile = (index) => {
+    setFormData((p) => ({
+      ...p,
+      files: p.files.filter((_, i) => i !== index),
     }));
   };
 
@@ -58,18 +68,9 @@ export default function AddSawanih() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["name", "org"];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const formDataToSend = new FormData();
-
-      const sawanihData = {
+      const fd = new FormData();
+      const payload = {
         name: formData.name,
         fatherName: formData.fatherName,
         qaidWarida: formData.qaidWarida,
@@ -81,213 +82,174 @@ export default function AddSawanih() {
           ? parseInt(formData.pageQuantity)
           : null,
       };
-      formDataToSend.append("Sawanih", JSON.stringify(sawanihData));
 
-      await createSawanih(formDataToSend);
+      fd.append("Sawanih", JSON.stringify(payload));
+      formData.files.forEach((f) => fd.append("fileURL", f));
+
+      await createSawanih(fd);
       toast.success("ریکارډ په بریالیتوب سره ثبت شو");
       navigate("/sawanih");
-    } catch (error) {
-      console.error("Failed to create record", error);
-      console.error("Error response:", error.response?.data);
-      toast.error(
-        "ثبت ناکام شو: " + (error.response?.data?.message || error.message)
-      );
+    } catch (e) {
+      toast.error("ثبت ناکام شو");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-        padding: { xs: 1, sm: 2 },
-      }}
-    >
-      <Box
-        component="form"
-        noValidate
-        autoComplete="off"
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 4,
-          p: { xs: 2, sm: 3, md: 4 },
-          bgcolor: "#fff",
-          borderRadius: 3,
-          boxShadow: 3,
-          width: { xs: "100%", sm: "90%", md: "80%", lg: "70%" },
-          position: "relative",
-          marginTop: { xs: "70px", sm: "80px", md: "90px", lg: "100px" },
-        }}
-        onSubmit={handleSubmit}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: -40, sm: -50, md: -80 },
-            right: 20,
-            fontFamily: "B nazanin",
-            fontWeight: "bold",
-            fontSize: { xs: 20, sm: 22, md: 24 },
-          }}
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/sawanih")}
+          sx={{ color: "text.secondary" }}
         >
-          افزودن سوانح
-        </Box>
-
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: -20, sm: -25, md: -30 },
-            right: 20,
-          }}
+          بیرته
+        </Button>
+        <Typography
+          variant="h4"
+          sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
         >
-          <PageBreadcrumbs />
-        </Box>
-
-        <Grid container spacing={2} sx={{ flex: 1 }}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="name"
-              InputLabelProps={{ shrink: true }}
-              label="نوم"
-              variant="outlined"
-              value={formData.name}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.name}
-              helperText={!formData.name ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="fatherName"
-              InputLabelProps={{ shrink: true }}
-              label="د پلار نوم"
-              variant="outlined"
-              value={formData.fatherName}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="qaidWarida"
-              InputLabelProps={{ shrink: true }}
-              label="قید واریده"
-              variant="outlined"
-              value={formData.qaidWarida}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required error={!formData.org}>
-              <InputLabel>اداره</InputLabel>
-              <Select
-                name="org"
-                value={formData.org}
-                onChange={handleInputChange}
-                label="اداره"
-                sx={{ height: 60 }}
-              >
-                {orgs.length === 0 ? (
-                  <MenuItem disabled>Loading...</MenuItem>
-                ) : (
-                  orgs.map((org) => (
-                    <MenuItem key={org.id} value={org.id}>
-                      {org.name}
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="incommingDate"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              label="تاریخ وارده"
-              variant="outlined"
-              value={formData.incommingDate}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="outgoingDate"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              label="تاریخ صادره"
-              variant="outlined"
-              value={formData.outgoingDate}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="pageQuantity"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              label="تعداد صفحات"
-              variant="outlined"
-              value={formData.pageQuantity}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              name="description"
-              label="ملاحظات"
-              variant="outlined"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleInputChange}
-            />
-          </Grid>
-
-          <Grid item xs={12} sx={{ textAlign: "right", mt: 2 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                backgroundColor: "black",
-                color: "white",
-                borderRadius: "10px",
-                "&:hover": { backgroundColor: "#1d252e" },
-                width: { xs: "100%", sm: "auto" },
-                px: 4,
-              }}
-              endIcon={<SaveIcon />}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <CircularProgress size={24} /> : "ذخیره کردن"}
-            </Button>
-          </Grid>
-        </Grid>
+          د نوي سوانح اضافه کول
+        </Typography>
       </Box>
+
+      <Card sx={{ maxWidth: 1200, mx: "auto" }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={8}>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="نوم"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="د پلار نوم"
+                      name="fatherName"
+                      value={formData.fatherName}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="قید واریده"
+                      name="qaidWarida"
+                      value={formData.qaidWarida}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth required>
+                      <InputLabel>اداره</InputLabel>
+                      <Select
+                        name="org"
+                        value={formData.org}
+                        onChange={handleInputChange}
+                      >
+                        {orgs.map((o) => (
+                          <MenuItem key={o.id} value={o.id}>
+                            {o.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      name="incommingDate"
+                      label="تاریخ وارده"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.incommingDate}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      name="outgoingDate"
+                      label="تاریخ صادره"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.outgoingDate}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="تعداد صفحات"
+                      name="pageQuantity"
+                      value={formData.pageQuantity}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="ملاحظات"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        justifyContent: "flex-end",
+                        mt: 2,
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        onClick={() => navigate("/sawanih")}
+                        disabled={isSubmitting}
+                      >
+                        لغوه
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        endIcon={
+                          isSubmitting ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <SaveIcon />
+                          )
+                        }
+                        disabled={isSubmitting}
+                        sx={{
+                          bgcolor: "black",
+                          "&:hover": { bgcolor: "#1d252e" },
+                        }}
+                      >
+                        {isSubmitting ? "ذخیره کیږي..." : "ذخیره کړئ"}
+                      </Button>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 }

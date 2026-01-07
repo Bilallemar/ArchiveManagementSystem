@@ -1,5 +1,6 @@
 package com.MCIT.ArchiveManagementSystem.models.StorageManagement;
 
+import com.MCIT.ArchiveManagementSystem.models.DocType;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 
 import jakarta.persistence.Entity;
@@ -28,7 +29,9 @@ public class MakzanSubmissionReport {
     private Management management;
     private String address;
     private Integer year;
-    private String docType;
+  @ManyToOne
+    @JoinColumn(name = "doc_type_id")
+    private DocType docType;
     private String summaryWaseqa;
     private String description;
 }

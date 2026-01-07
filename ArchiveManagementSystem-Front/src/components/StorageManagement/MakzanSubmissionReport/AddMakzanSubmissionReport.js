@@ -1,4 +1,14 @@
-import { TextField, Box, Grid, Button, CircularProgress } from "@mui/material";
+import {
+  TextField,
+  Box,
+  Grid,
+  Button,
+  CircularProgress,
+  Typography,
+  Card,
+  CardContent,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { createMakzanSubmissionReport } from "../../../services/StorageManagement/MakzanSubmissionReportAPI";
@@ -20,20 +30,15 @@ export default function AddMakzanSubmissionReport() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["address", "year"];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
+    if (!formData.address || !formData.year) {
+      toast.error("لطفاً فیلدهای ضروری را پر کنید");
       setIsSubmitting(false);
       return;
     }
@@ -46,163 +51,148 @@ export default function AddMakzanSubmissionReport() {
         summaryWaseqa: formData.summaryWaseqa,
         description: formData.description,
       };
-
+      console.log("hhh", reportData);
       await createMakzanSubmissionReport(reportData);
       toast.success("راپور په بریالیتوب سره ثبت شو");
+      console.log("hhh", reportData);
       navigate("/annual-reports-info");
     } catch (error) {
-      console.error("Failed to create report", error);
-      toast.error(
-        "ثبت ناکام شو: " + (error.response?.data?.message || error.message)
-      );
+      toast.error("ثبت ناکام شو");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-        padding: { xs: 1, sm: 2 },
-      }}
-    >
-      <Box
-        component="form"
-        noValidate
-        autoComplete="off"
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 4,
-          p: { xs: 2, sm: 3, md: 4 },
-          bgcolor: "#fff",
-          borderRadius: 3,
-          boxShadow: 3,
-          width: { xs: "100%", sm: "90%", md: "80%", lg: "70%" },
-          position: "relative",
-          marginTop: { xs: "70px", sm: "80px", md: "90px", lg: "100px" },
-        }}
-        onSubmit={handleSubmit}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: -40, sm: -50, md: -80 },
-            right: 20,
-            fontFamily: "B nazanin",
-            fontWeight: "bold",
-            fontSize: { xs: 20, sm: 22, md: 24 },
-          }}
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/makzan-annual-reports")}
+          sx={{ color: "text.secondary" }}
+        >
+          بیرته
+        </Button>
+        <Typography
+          variant="h4"
+          sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
         >
           د مخزن تسلیمی راپور اضافه کول
-        </Box>
-
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: -20, sm: -25, md: -30 },
-            right: 20,
-          }}
-        >
-          <PageBreadcrumbs />
-        </Box>
-
-        <Grid container spacing={2} sx={{ flex: 1 }}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="address"
-              InputLabelProps={{ shrink: true }}
-              label="آدرس"
-              variant="outlined"
-              value={formData.address}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.address}
-              helperText={!formData.address ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="year"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              label="سال"
-              variant="outlined"
-              value={formData.year}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.year}
-              helperText={!formData.year ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="docType"
-              InputLabelProps={{ shrink: true }}
-              label="نوع سند"
-              variant="outlined"
-              value={formData.docType}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="summaryWaseqa"
-              InputLabelProps={{ shrink: true }}
-              label="خلاصه وثیقه"
-              variant="outlined"
-              value={formData.summaryWaseqa}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              name="description"
-              label="ملاحظات"
-              variant="outlined"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleInputChange}
-            />
-          </Grid>
-
-          <Grid item xs={12} sx={{ textAlign: "right", mt: 2 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                backgroundColor: "black",
-                color: "white",
-                borderRadius: "10px",
-                "&:hover": { backgroundColor: "#1d252e" },
-                width: { xs: "100%", sm: "auto" },
-                px: 4,
-              }}
-              endIcon={<SaveIcon />}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <CircularProgress size={24} /> : "ذخیره کردن"}
-            </Button>
-          </Grid>
-        </Grid>
+        </Typography>
       </Box>
+
+      <Box sx={{ mb: 2 }}>
+        <PageBreadcrumbs />
+      </Box>
+
+      {/* Form Card */}
+      <Card sx={{ maxWidth: 800, mx: "auto" }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="address"
+                  label="آدرس"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  required
+                  error={!formData.address}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="year"
+                  type="number"
+                  label="سال"
+                  value={formData.year}
+                  onChange={handleInputChange}
+                  required
+                  error={!formData.year}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="docType"
+                  label="نوع سند"
+                  value={formData.docType}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="summaryWaseqa"
+                  label="خلاصه وثیقه"
+                  value={formData.summaryWaseqa}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="description"
+                  label="ملاحظات"
+                  multiline
+                  rows={4}
+                  value={formData.description}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 2,
+                    mt: 2,
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate("/makzan-annual-reports")}
+                    disabled={isSubmitting}
+                  >
+                    لغوه
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={isSubmitting}
+                    endIcon={
+                      isSubmitting ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        <SaveIcon />
+                      )
+                    }
+                    sx={{
+                      bgcolor: "black",
+                      "&:hover": { bgcolor: "#1d252e" },
+                    }}
+                  >
+                    {isSubmitting ? "ذخیره کیږي..." : "ذخیره کړئ"}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 }

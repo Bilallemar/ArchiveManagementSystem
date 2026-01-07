@@ -15,5 +15,8 @@ public class Department {
     private Integer id;
 
     private String name;
+     @ManyToOne
+    @JoinColumn(name = "org_id")
+    private Org org; 
 }
 

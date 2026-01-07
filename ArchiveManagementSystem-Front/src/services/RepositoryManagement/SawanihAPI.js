@@ -5,7 +5,6 @@ export const getAllSawanih = () => api.get("/sawanih");
 export const getSawanihById = (id) => api.get(`/sawanih/${id}`);
 
 export const createSawanih = (formDataToSend) => {
-  // ✅ Don't set headers - browser handles FormData automatically
   return api.post("/sawanih", formDataToSend);
 };
 

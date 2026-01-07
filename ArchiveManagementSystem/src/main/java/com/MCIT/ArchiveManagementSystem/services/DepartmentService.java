@@ -33,6 +33,7 @@ public class DepartmentService {
                 .orElseThrow(() -> new RuntimeException("Department not found with id: " + id));
 
         existing.setName(details.getName());
+            existing.setOrg(details.getOrg());
         return departmentRepository.save(existing);
     }
 

@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useCallback } from "react";
-
-import { getAllSawanih } from "../../../services/RepositoryManagement/SawanihAPI";
-import { deleteSawanih } from "../../../services/RepositoryManagement/SawanihAPI";
+// import React, { useEffect, useState, useCallback } from "react";
+import {
+  getAllSawanih,
+  deleteSawanih,
+} from "../../../services/RepositoryManagement/SawanihAPI";
 import ViewSawanih from "./ViewSawanih";
+import EditSawanihDialog from "./EditSawanihDialog";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import Filter from "../../Filter";
 import {
@@ -22,18 +24,19 @@ import {
   Button,
   Box,
   Typography,
+  IconButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
+import React, { useEffect, useState, useCallback } from "react";
 import { red } from "@mui/material/colors";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import AddIcon from "@mui/icons-material/Add";
-
 const columns = [
   { id: "name", label: "نوم", minWidth: 120 },
   { id: "fatherName", label: "د پلار نوم", minWidth: 120 },
@@ -54,6 +57,7 @@ export default function SawanihList() {
   const [selectedSawanih, setSelectedSawanih] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [field, setField] = useState("name");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -75,18 +79,17 @@ export default function SawanihList() {
     loadSawanih();
   }, [loadSawanih]);
 
-  //  د سرچ ارزښت بدلول
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
-  //  د فلټر فیلډ بدلول
+
   const handleFieldChange = (e) => {
     setField(e.target.value);
   };
 
   const handleView = () => {
     setOpenViewDialog(true);
-    handleClose(); // د مینو بندول
+    handleClose();
   };
 
   const handleCloseView = () => {
@@ -104,8 +107,17 @@ export default function SawanihList() {
   };
 
   const handleEdit = () => {
-    navigate(`/sawanih/${selectedSawanih.id}`);
+    setOpenEditDialog(true);
     handleClose();
+  };
+
+  const handleCloseEdit = () => {
+    setOpenEditDialog(false);
+    setSelectedSawanih(null);
+  };
+
+  const handleEditSuccess = () => {
+    loadSawanih(); // Refresh the list
   };
 
   // Filter based on search
@@ -169,7 +181,7 @@ export default function SawanihList() {
           width: "100%",
         }}
       >
-        {/* 🔹 Header */}
+        {/* Header */}
         <Box
           sx={{
             width: "80%",
@@ -179,7 +191,6 @@ export default function SawanihList() {
             marginBottom: 2,
           }}
         >
-          {/* کیڼ طرف: بټن */}
           <Button
             variant="contained"
             onClick={handleNewReport}
@@ -196,7 +207,6 @@ export default function SawanihList() {
             ریکارډ جدید
           </Button>
 
-          {/* ښي طرف: سرلیک + Breadcrumbs */}
           <Box
             sx={{
               display: "flex",
@@ -219,7 +229,7 @@ export default function SawanihList() {
         </Box>
 
         <Paper
-          sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
+          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
         >
           <div
             style={{
@@ -272,46 +282,30 @@ export default function SawanihList() {
                         tabIndex={-1}
                         key={row.id}
                       >
-                        {/* نوم */}
                         <TableCell align="center">
                           {row.name || "N/A"}
                         </TableCell>
-
-                        {/* د پلار نوم */}
                         <TableCell align="center">
                           {row.fatherName || "N/A"}
                         </TableCell>
-
-                        {/* قید واریده */}
                         <TableCell align="center">
                           {row.qaidWarida || "N/A"}
                         </TableCell>
-
-                        {/* اداره */}
                         <TableCell align="center">
                           {row.org?.name || "N/A"}
                         </TableCell>
-
-                        {/* تاریخ وارده */}
                         <TableCell align="center">
                           {row.incommingDate || "N/A"}
                         </TableCell>
-
-                        {/* تاریخ صادره */}
                         <TableCell align="center">
                           {row.outgoingDate || "N/A"}
                         </TableCell>
-
-                        {/* تعداد صفحات */}
                         <TableCell align="center">
                           {row.pageQuantity || "N/A"}
                         </TableCell>
-
-                        {/* ملاحظات */}
                         <TableCell align="center">
                           {row.description || "N/A"}
                         </TableCell>
-
                         <TableCell align="center">
                           <IconButton onClick={(e) => handleClick(e, row)}>
                             <MoreVertIcon />
@@ -328,7 +322,6 @@ export default function SawanihList() {
                               />
                               View
                             </MenuItem>
-
                             <MenuItem onClick={handleEdit}>
                               <EditIcon
                                 fontSize="small"
@@ -336,7 +329,6 @@ export default function SawanihList() {
                               />
                               Edit
                             </MenuItem>
-
                             <MenuItem
                               onClick={handleDeleteClick}
                               style={{ color: red[500] }}
@@ -367,11 +359,21 @@ export default function SawanihList() {
         </Paper>
       </Box>
 
+      {/* View Dialog */}
       <ViewSawanih
         open={openViewDialog}
         onClose={handleCloseView}
         report={selectedSawanih}
       />
+
+      {/* Edit Dialog */}
+      <EditSawanihDialog
+        open={openEditDialog}
+        onClose={handleCloseEdit}
+        sawanih={selectedSawanih}
+        onSuccess={handleEditSuccess}
+      />
+
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={openDeleteDialog}

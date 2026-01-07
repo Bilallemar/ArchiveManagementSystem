@@ -32,7 +32,7 @@ public class OrgService {
                 .orElseThrow(() -> new RuntimeException("Org not found with id: " + id));
 
         existing.setName(orgDetails.getName());
-        existing.setDepartment(orgDetails.getDepartment());
+        // existing.setDepartment(orgDetails.getDepartment());
 
         return orgRepository.save(existing);
     }

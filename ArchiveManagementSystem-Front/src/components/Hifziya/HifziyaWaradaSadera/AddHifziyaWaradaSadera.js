@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Box,
@@ -9,14 +10,18 @@ import {
   Select,
   MenuItem,
   Typography,
+  Card,
+  CardContent,
+  Stack,
+  Chip,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { createHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
-import React, { useState, useEffect } from "react";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import SaveIcon from "@mui/icons-material/Save";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import DeleteIcon from "@mui/icons-material/Delete";
 import api from "../../../services/api";
 
 export default function AddHifziyaWaradaSadera() {
@@ -29,46 +34,33 @@ export default function AddHifziyaWaradaSadera() {
     summary: "",
     description: "",
     isHifziya: true,
-    fileURL: null,
+    files: [],
   });
 
   const [orgs, setOrgs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Load Types and Orgs on component mount
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        console.log("Loading types and orgs...");
-
-        const [orgsRes] = await Promise.all([
-          api.get("/org"), // ✅ Changed from /orgs to /org
-        ]);
-
-        console.log("Orgs:", orgsRes.data);
-
-        setOrgs(orgsRes.data);
-      } catch (error) {
-        console.error("Failed to load orgs", error);
-        toast.error("Failed to load form data");
-      }
-    };
-    loadData();
+    api.get("/org").then((res) => setOrgs(res.data));
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
   const handleFileChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      fileURL: e.target.files[0],
+    setFormData((p) => ({
+      ...p,
+      files: [...p.files, ...Array.from(e.target.files)],
+    }));
+  };
+
+  const handleRemoveFile = (index) => {
+    setFormData((p) => ({
+      ...p,
+      files: p.files.filter((_, i) => i !== index),
     }));
   };
 
@@ -76,18 +68,9 @@ export default function AddHifziyaWaradaSadera() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["org"];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      const formDataToSend = new FormData();
-
-      const waradaAndSadaraData = {
+      const fd = new FormData();
+      const payload = {
         no: formData.no,
         org: { id: formData.org },
         letterNumber: formData.letterNumber,
@@ -98,259 +81,256 @@ export default function AddHifziyaWaradaSadera() {
         isHifziya: formData.isHifziya,
       };
 
-      formDataToSend.append(
-        "hifziyaWaradaSadera",
-        JSON.stringify(waradaAndSadaraData)
-      );
+      fd.append("hifziyaWaradaSadera", JSON.stringify(payload));
+      formData.files.forEach((f) => fd.append("fileURL", f));
 
-      if (formData.fileURL) {
-        formDataToSend.append("fileURL", formData.fileURL);
-      }
-
-      await createHifziyaWaradaSadera(formDataToSend);
+      await createHifziyaWaradaSadera(fd);
       toast.success("ریکارډ په بریالیتوب سره ثبت شو");
       navigate("/hifziya-warada-sadera");
-    } catch (error) {
-      console.error("Failed to create report", error);
-      toast.error(
-        "ثبت ناکام شو: " + (error.response?.data?.message || error.message)
-      );
+    } catch (e) {
+      toast.error("ثبت ناکام شو");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-        padding: { xs: 1, sm: 2 },
-      }}
-    >
-      <Box
-        component="form"
-        noValidate
-        autoComplete="off"
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 4,
-          p: { xs: 2, sm: 3, md: 4 },
-          bgcolor: "#fff",
-          borderRadius: 3,
-          boxShadow: 3,
-          width: { xs: "100%", sm: "90%", md: "80%", lg: "70%" },
-          position: "relative",
-          marginTop: { xs: "70px", sm: "80px", md: "90px", lg: "100px" },
-        }}
-        onSubmit={handleSubmit}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: -40, sm: -50, md: -80 },
-            right: 20,
-            fontFamily: "B nazanin",
-            fontWeight: "bold",
-            fontSize: { xs: 20, sm: 22, md: 24 },
-          }}
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/hifziya-warada-sadera")}
+          sx={{ color: "text.secondary" }}
         >
-          افزودن حاضری
-        </Box>
-
-        <Box
-          sx={{
-            position: "absolute",
-            top: { xs: -20, sm: -25, md: -30 },
-            right: 20,
-          }}
+          بیرته
+        </Button>
+        <Typography
+          variant="h4"
+          sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
         >
-          <PageBreadcrumbs />
-        </Box>
-
-        <Grid container spacing={2} sx={{ flex: 1 }}>
-          {/* Record Type */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>د ریکارډ ډول</InputLabel>
-              <Select
-                name="isHifziya"
-                value={formData.isHifziya}
-                onChange={handleInputChange}
-                label="د ریکارډ ډول"
-                sx={{ height: 60 }}
-              >
-                <MenuItem value={true}>حفظیه</MenuItem>
-                <MenuItem value={false}>مخزن</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="no"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              label="تمبر"
-              variant="outlined"
-              value={formData.no}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.no}
-              helperText={!formData.no ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-          {/* Org Dropdown */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required error={!formData.org}>
-              <InputLabel>اداره</InputLabel>
-              <Select
-                name="org"
-                value={formData.org}
-                onChange={handleInputChange}
-                label="اداره"
-                sx={{ height: 60 }}
-              >
-                {orgs.length === 0 ? (
-                  <MenuItem disabled>Loading...</MenuItem>
-                ) : (
-                  orgs.map((org) => (
-                    <MenuItem key={org.id} value={org.id}>
-                      {org.name}
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-            </FormControl>
-          </Grid>
-          {/* Year */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="letterNumber"
-              InputLabelProps={{ shrink: true }}
-              label="شماره مکتوب"
-              variant="outlined"
-              value={formData.letterNumber}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.letterNumber}
-              helperText={!formData.letterNumber ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="incommingDate"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              label="تاریخ مرسل"
-              variant="outlined"
-              value={formData.incommingDate}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.incommingDate}
-              helperText={!formData.incommingDate ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="outgoingDate"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              label="تاریخ مرسل الیه"
-              variant="outlined"
-              value={formData.outgoingDate}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.outgoingDate}
-              helperText={!formData.outgoingDate ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              name="summary"
-              InputLabelProps={{ shrink: true }}
-              label=" خلص مطلب"
-              variant="outlined"
-              value={formData.summary}
-              onChange={handleInputChange}
-              InputProps={{ sx: { height: 60 } }}
-              required
-              error={!formData.summary}
-              helperText={!formData.summary ? "این فیلد ضروری است" : ""}
-            />
-          </Grid>
-          {/* Description */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              name="description"
-              label="ملاحظات"
-              variant="outlined"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleInputChange}
-            />
-          </Grid>
-
-          {/* File Upload */}
-          <Grid item xs={12}>
-            <Button
-              variant="outlined"
-              component="label"
-              fullWidth
-              startIcon={<AttachFileIcon />}
-              sx={{ height: 60 }}
-            >
-              فایل انتخاب کړئ
-              <input
-                type="file"
-                hidden
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              />
-            </Button>
-            {formData.fileURL && (
-              <Typography
-                variant="caption"
-                sx={{ mt: 1, display: "block", color: "green" }}
-              >
-                ✓ {formData.fileURL.name}
-              </Typography>
-            )}
-          </Grid>
-
-          {/* Submit Button */}
-          <Grid item xs={12} sx={{ textAlign: "right", mt: 2 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                backgroundColor: "black",
-                color: "white",
-                borderRadius: "10px",
-                "&:hover": { backgroundColor: "#1d252e" },
-                width: { xs: "100%", sm: "auto" },
-                px: 4,
-              }}
-              endIcon={<SaveIcon />}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <CircularProgress size={24} /> : "ذخیره کردن"}
-            </Button>
-          </Grid>
-        </Grid>
+          د نوي حاضری اضافه کول
+        </Typography>
       </Box>
+
+      <Card sx={{ maxWidth: 1200, mx: "auto" }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              {/* File upload */}
+              <Grid item xs={12} md={4}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
+                  {/* File Upload Area */}
+                  <Box
+                    sx={{
+                      width: 200,
+                      height: 200,
+                      borderRadius: "50%",
+                      border: "1px dashed",
+                      borderColor: "divider",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: "background.neutral",
+                      cursor: "pointer",
+                      position: "relative",
+                      "&:hover": {
+                        bgcolor: "action.hover",
+                      },
+                    }}
+                    component="label"
+                  >
+                    <AttachFileIcon
+                      sx={{ fontSize: 40, color: "text.secondary" }}
+                    />
+                    <Box sx={{ mt: 1, color: "text.secondary", fontSize: 14 }}>
+                      فایلونه پورته کړئ
+                    </Box>
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        color: "primary.main",
+                        fontSize: 12,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {formData.files.length} فایل غوره شوي
+                    </Box>
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    />
+                  </Box>
+
+                  {/* Selected Files List */}
+                  {formData.files.length > 0 && (
+                    <Box
+                      sx={{ width: "100%", maxHeight: 250, overflowY: "auto" }}
+                    >
+                      <Stack spacing={1}>
+                        {formData.files.map((file, index) => (
+                          <Chip
+                            key={index}
+                            label={file.name}
+                            onDelete={() => handleRemoveFile(index)}
+                            deleteIcon={<DeleteIcon />}
+                            size="small"
+                            sx={{
+                              justifyContent: "space-between",
+                              "& .MuiChip-label": {
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                maxWidth: 150,
+                              },
+                            }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  <Typography variant="caption" color="text.secondary">
+                    Allowed *.jpeg, *.jpg, *.png, *.pdf
+                    <br />
+                    max size of 5 MB each
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* Fields */}
+              <Grid item xs={12} md={8}>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="نمبر"
+                      name="no"
+                      value={formData.no}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>اداره</InputLabel>
+                      <Select
+                        name="org"
+                        value={formData.org}
+                        onChange={handleInputChange}
+                      >
+                        {orgs.map((o) => (
+                          <MenuItem key={o.id} value={o.id}>
+                            {o.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="شماره مکتوب"
+                      name="letterNumber"
+                      value={formData.letterNumber}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      name="incommingDate"
+                      label="تاریخ مرسل"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.incommingDate}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      name="outgoingDate"
+                      label="تاریخ مرسل الیه"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.outgoingDate}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="خلص مطلب"
+                      name="summary"
+                      value={formData.summary}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="ملاحظات"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        justifyContent: "flex-end",
+                        mt: 2,
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        onClick={() => navigate("/hifziya-warada-sadera")}
+                        disabled={isSubmitting}
+                      >
+                        لغوه
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        endIcon={
+                          isSubmitting ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <SaveIcon />
+                          )
+                        }
+                        disabled={isSubmitting}
+                        sx={{
+                          bgcolor: "black",
+                          "&:hover": { bgcolor: "#1d252e" },
+                        }}
+                      >
+                        {isSubmitting ? "ذخیره کیږي..." : "ذخیره کړئ"}
+                      </Button>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 }

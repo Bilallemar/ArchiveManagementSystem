@@ -14,6 +14,15 @@ export const auditLogcolumns = [
   {
     field: "username",
     headerName: "UserName",
+    width: 150,
+    headerAlign: "center",
+    align: "center",
+    headerClassName: "text-black font-semibold border",
+    cellClassName: "text-slate-700 font-normal border",
+  },
+  {
+    field: "tableName",
+    headerName: "Table/Model",
     width: 180,
     headerAlign: "center",
     align: "center",

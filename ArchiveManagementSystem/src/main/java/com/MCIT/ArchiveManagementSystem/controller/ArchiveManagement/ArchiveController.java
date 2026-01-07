@@ -36,7 +36,7 @@ private final ArchiveService archiveService;
     }
 
     @GetMapping
- public  List<Archive> gitAllArchives() {
+ public  List<Archive> getAllArchives() {
      managementSecurity.validateManagementAccess(ARCHIVE_MANAGEMENT_ID);
         return  archiveService.getAllArchives(); 
         
