@@ -12,6 +12,8 @@ import { MANAGEMENTS } from "./utils/managementUtils";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { useMemo, useState } from "react";
 import { createAppTheme } from "./theme";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 // import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./components/LandingPage";
@@ -51,7 +53,16 @@ import MasterDataManagement from "./components/MasterData/MasterDataManagement";
 
 import { useMyContext } from "./store/ContextApi";
 import SidebarLayout from "./components/SidebarLayout";
+
 const App = () => {
+  const { i18n } = useTranslation();
+  useEffect(() => {
+    // Set Pashto as default only once
+    if (!i18n.language) {
+      i18n.changeLanguage("ps");
+    }
+  }, [i18n]);
+
   const location = useLocation();
   const hideNavbarRoutes = [
     "/login",

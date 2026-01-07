@@ -1,0 +1,22 @@
+const getarchiveTexts = (t) => ({
+  title: t("title"),
+  type: t("type"),
+  incoming: t("incoming"),
+  outgoing: t("outgoing"),
+  docNo: t("docNo"),
+  incomingDate: t("incomingDate"),
+  outgoingDate: t("outgoingDate"),
+  org: t("org"),
+  submittedDate: t("submittedDate"),
+  docType: t("docType"),
+  year: t("year"),
+  description: t("description"),
+  save: t("save"),
+  loading: t("loading"),
+  required: t("required"),
+  loadError: t("loadError"),
+  success: t("success"),
+  error: t("error"),
+});
+
+export default getarchiveTexts;
