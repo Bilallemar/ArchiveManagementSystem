@@ -29,27 +29,33 @@ export default function AddArchive() {
     org: "",
     submitedDate: "",
     description: "",
-    docType: "",
+    docTypeId: "",
     year: "",
     isIncoming: true,
   });
 
   const [orgs, setOrgs] = useState([]);
+  const [docTypes, setDocTypes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const orgsRes = await api.get("/org");
-        setOrgs(orgsRes.data);
-      } catch (error) {
-        console.error("Failed to load orgs", error);
-        toast.error("د معلوماتو لوډولو کې ستونزه");
-      }
-    };
     loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      const [orgsRes, docTypesRes] = await Promise.all([
+        api.get("/org"),
+        api.get("/doc-type/active"), // ✅ Load only active doc types
+      ]);
+      setOrgs(orgsRes.data);
+      setDocTypes(docTypesRes.data);
+    } catch (error) {
+      console.error("Failed to load data", error);
+      toast.error("د معلوماتو لوډولو کې ستونزه");
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -82,7 +88,7 @@ export default function AddArchive() {
         org: { id: formData.org },
         submitedDate: formData.submitedDate,
         description: formData.description,
-        docType: formData.docType,
+        docType: formData.docTypeId ? { id: formData.docTypeId } : null,
         year: formData.year ? parseInt(formData.year) : null,
         isIncoming: formData.isIncoming,
       };
@@ -221,17 +227,25 @@ export default function AddArchive() {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  name="docType"
-                  InputLabelProps={{ shrink: true }}
-                  label="نوع سند"
-                  variant="outlined"
-                  value={formData.docType}
-                  onChange={handleInputChange}
-                />
+                <FormControl fullWidth>
+                  <InputLabel>نوع سند</InputLabel>
+                  <Select
+                    name="docTypeId"
+                    value={formData.docTypeId}
+                    onChange={handleInputChange}
+                    label="نوع سند"
+                  >
+                    <MenuItem value="">
+                      <em>انتخاب نکړئ</em>
+                    </MenuItem>
+                    {docTypes.map((docType) => (
+                      <MenuItem key={docType.id} value={docType.id}>
+                        {docType.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth

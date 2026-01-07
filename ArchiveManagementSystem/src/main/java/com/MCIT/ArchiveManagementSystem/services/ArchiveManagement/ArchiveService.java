@@ -33,9 +33,14 @@ public Optional<Archive> getArchiveById(Integer id) {
 }
 
 public Archive createExportDoc(Archive exportDoc) {
-            auditLogHelper.logCreate(TABLE_NAME, exportDoc.getId().longValue(), 
-            exportDoc.getDescription());
-    return exportDocRepository.save(exportDoc);
+    // Save FIRST to generate the ID
+    Archive savedArchive = exportDocRepository.save(exportDoc);
+    
+    // THEN log with the generated ID
+    auditLogHelper.logCreate(TABLE_NAME, savedArchive.getId().longValue(), 
+        savedArchive.getDescription());
+    
+    return savedArchive;
 }
 
 public Archive updateArchive(Integer id, Archive exportDocDetails) {
