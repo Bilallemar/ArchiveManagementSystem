@@ -69,4 +69,6 @@ ArchiveManagementSystem-Front/.env.production.local
 # Windows files
 Thumbs.db
 ehthumbs.db
+application.properties
+
 
