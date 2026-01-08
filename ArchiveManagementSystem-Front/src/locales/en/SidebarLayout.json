@@ -1,26 +1,19 @@
 {
-  "logoShort": "⚖️",
-  "logoTitle": "Supreme Court",
-  "logoSubtitle": "Islamic Emirate of Afghanistan",
+  "appName": "Supreme Court",
+  "appSubTitle": "Islamic Emirate of Afghanistan",
   "dashboard": "Dashboard",
-  "archiveManagement": "Archive Management",
-  "hifziyaManagement": "Hifziya Management",
-  "makzanManagement": "Makzan Management",
-  "profile": "Profile",
+  "archive": "Archive Management",
+  "hifziya": "Hifziya Management",
+  "makzan": "Makzan Management",
   "settings": "Settings",
+  "profile": "Profile",
   "users": "Users",
   "auditLogs": "Audit Logs",
   "userManagement": "User Management",
   "logout": "Logout",
   "notifications": "Notifications",
-  "language": "Language",
-  "pashtho": "Pashto",
-  "dari": "Dari",
-  "english": "English",
-  "navigation": {
-    "dashboardItem": "Dashboard",
-    "archiveItem": "Archive",
-    "hifziyaItem": "Hifziya",
-    "makzanItem": "Makzan"
-  }
+  "languagePashto": "Pashto",
+  "languageDari": "Dari",
+  "languageEnglish": "English",
+  "user": "User"
 }

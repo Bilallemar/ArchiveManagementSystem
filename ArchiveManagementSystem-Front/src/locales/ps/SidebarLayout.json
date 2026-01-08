@@ -1,26 +1,19 @@
 {
-  "logoShort": "⚖️",
-  "logoTitle": "سترہ محکمه",
-  "logoSubtitle": "د افغانستان اسلامي امارت",
+  "appName": "ستره محکمه",
+  "appSubTitle": "د افغانستان اسلامي امارت",
   "dashboard": "ډشبورډ",
-  "archiveManagement": "آرشیف مدیریت",
-  "hifziyaManagement": "حفظیه مدیریت",
-  "makzanManagement": "مخزن مدیریت",
-  "profile": "پروفایل",
+  "archive": "آرشیف مدیریت",
+  "hifziya": "حفظیه مدیریت",
+  "makzan": "مخزن مدیریت",
   "settings": "تنظیمات",
+  "profile": "پروفایل",
   "users": "کاروونکي",
   "auditLogs": "تفتیشي ثبتونه",
-  "userManagement": "کاروونکو مدیریت",
+  "userManagement": "د کاروونکو مدیریت",
   "logout": "وتل",
   "notifications": "خبرتیاوې",
-  "language": "ژبه",
-  "pashtho": "پښتو",
-  "dari": "دری",
-  "english": "EN",
-  "navigation": {
-    "dashboardItem": "ډشبورډ",
-    "archiveItem": "آرشیف",
-    "hifziyaItem": "حفظیه",
-    "makzanItem": "مخزن"
-  }
+  "languagePashto": "پښتو",
+  "languageDari": "دری",
+  "languageEnglish": "انګلیسي",
+  "user": "کاروونکی"
 }
