@@ -18,5 +18,4 @@ const getarchiveTexts = (t) => ({
   success: t("success"),
   error: t("error"),
 });
-
 export default getarchiveTexts;
