@@ -1,0 +1,26 @@
+const getArchiveListTexts = (t) => ({
+  docNo: t("docNo"),
+  incommingDate: t("incommingDate"),
+  outgoingDate: t("outgoingDate"),
+  org: t("org"),
+  submitedDate: t("submitedDate"),
+  docType: t("docType"),
+  year: t("year"),
+  description: t("description"),
+  actions: t("actions"),
+  view: t("view"),
+  edit: t("edit"),
+  delete: t("delete"),
+  newArchive: t("newArchive"),
+  archives: t("archives"),
+  deleteConfirmTitle: t("deleteConfirmTitle"),
+  deleteConfirmMessage: t("deleteConfirmMessage"),
+  cancel: t("cancel"),
+  deleteSuccess: t("deleteSuccess"),
+  deleteError: t("deleteError"),
+  search: t("search"),
+  filterBy: t("filterBy"),
+  loading: t("loading"),
+});
+
+export default getArchiveListTexts;

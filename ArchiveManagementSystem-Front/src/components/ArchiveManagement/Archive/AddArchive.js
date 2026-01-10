@@ -673,7 +673,8 @@ import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import getarchiveTexts from "./archiveTexts";
 export default function AddArchive() {
   const { t } = useTranslation("archive");
-  const texts = React.useMemo(() => getarchiveTexts(t), [t]);
+  const texts = getarchiveTexts(t);
+  // const texts = React.useMemo(() => getarchiveTexts(t), [t]);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
