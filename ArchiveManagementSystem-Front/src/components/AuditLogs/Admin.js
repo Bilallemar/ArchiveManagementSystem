@@ -8,7 +8,7 @@ import AuditLogsDetails from "./AuditLogsDetails";
 import AdminAuditLogs from "./AdminAuditLogs";
 
 const Admin = () => {
-  // Access the openSidebar hook using the useMyContext hook from the ContextProvider
+  // Access the openSidebar hook using the useMyContext hook from the ContextProvider is
   const { openSidebar } = useMyContext();
   return (
     <div className="flex">
