@@ -1,5 +1,4 @@
 // import React, { useEffect, useState, useCallback } from "react";
-// import { FormControl, InputLabel, Select } from "@mui/material";
 // import {
 //   getAllArchives,
 //   deleteArchive,
@@ -7,6 +6,7 @@
 // import ViewArchive from "./ViewArchive";
 // import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 // import Filter from "../../Filter";
+// import EditArchiveDialog from "./EditArchiveDialog";
 // import {
 //   Table,
 //   TableBody,
@@ -55,6 +55,7 @@
 //   const [selectedArchive, setSelectedArchive] = useState(null);
 //   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 //   const [openViewDialog, setOpenViewDialog] = useState(false);
+//   const [openEditDialog, setOpenEditDialog] = useState(false);
 //   const [field, setField] = useState("docNo");
 //   const [searchTerm, setSearchTerm] = useState("");
 //   const [filterType, setFilterType] = useState("all");
@@ -66,6 +67,7 @@
 //     try {
 //       const response = await getAllArchives();
 //       setArchives(response.data);
+//       console.log("Archives loaded:", response.data);
 //     } catch (error) {
 //       console.error(error);
 //       toast.error("د معلوماتو لوډولو کې ستونزه");
@@ -76,19 +78,13 @@
 //     loadArchives();
 //   }, [loadArchives]);
 
-//   const handleSearch = (e) => {
-//     setSearchTerm(e.target.value);
-//   };
-
-//   const handleFieldChange = (e) => {
-//     setField(e.target.value);
-//   };
+//   const handleSearch = (e) => setSearchTerm(e.target.value);
+//   const handleFieldChange = (e) => setField(e.target.value);
 
 //   const handleView = () => {
 //     setOpenViewDialog(true);
 //     handleClose();
 //   };
-
 //   const handleCloseView = () => {
 //     setOpenViewDialog(false);
 //     setSelectedArchive(null);
@@ -98,23 +94,20 @@
 //     setAnchorEl(event.currentTarget);
 //     setSelectedArchive(archive);
 //   };
-
-//   const handleClose = () => {
-//     setAnchorEl(null);
-//   };
+//   const handleClose = () => setAnchorEl(null);
 
 //   const handleEdit = () => {
-//     navigate(`/archive/${selectedArchive.id}`);
+//     setOpenEditDialog(true);
 //     handleClose();
 //   };
+//   const handleCloseEdit = () => {
+//     setOpenEditDialog(false);
+//     setSelectedArchive(null);
+//   };
+//   const handleEditSuccess = () => loadArchives();
 
 //   const filteredArchives = archives.filter((row) => {
-//     // Filter by isIncoming
-//     if (filterType !== "all" && row.isIncoming !== filterType) {
-//       return false;
-//     }
-
-//     // Filter by search
+//     if (filterType !== "all" && row.isIncoming !== filterType) return false;
 //     if (!searchTerm) return true;
 //     const searchValue = searchTerm.toLowerCase();
 //     switch (field) {
@@ -136,9 +129,7 @@
 //     handleClose();
 //   };
 
-//   const handleNewArchive = () => {
-//     navigate("/archive/add");
-//   };
+//   const handleNewArchive = () => navigate("/archive/add");
 
 //   const handleDelete = async () => {
 //     try {
@@ -146,17 +137,14 @@
 //       loadArchives();
 //       toast.success("آرشیف په بریالیتوب سره حذف شو");
 //     } catch (error) {
-//       console.error("Failed to delete archive", error);
+//       console.error(error);
 //       toast.error("د حذف کولو کې ستونزه");
 //     } finally {
 //       setOpenDeleteDialog(false);
 //     }
 //   };
 
-//   const handleChangePage = (event, newPage) => {
-//     setPage(newPage);
-//   };
-
+//   const handleChangePage = (event, newPage) => setPage(newPage);
 //   const handleChangeRowsPerPage = (event) => {
 //     setRowsPerPage(+event.target.value);
 //     setPage(0);
@@ -188,9 +176,8 @@
 //               backgroundColor: "black",
 //               color: "white",
 //               borderRadius: "10px",
-//               "&:hover": {
-//                 backgroundColor: "#1d252e",
-//               },
+//               "&:hover": { backgroundColor: "#1d252e" },
+//               marginLeft: "-30px",
 //             }}
 //             endIcon={<AddIcon />}
 //           >
@@ -203,13 +190,12 @@
 //               flexDirection: "column",
 //               alignItems: "flex-end",
 //               textAlign: "right",
+//               marginRight: "-30px",
 //             }}
 //           >
 //             <Typography
 //               variant="h5"
-//               sx={{
-//                 fontWeight: "bold",
-//               }}
+//               sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
 //             >
 //               آرشیف
 //             </Typography>
@@ -218,9 +204,9 @@
 //         </Box>
 
 //         <Paper
-//           sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
+//           sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
 //         >
-//           <div style={{ marginTop: "10px", padding: "10px" }}>
+//           <div style={{ marginTop: 10, padding: 10 }}>
 //             <Filter
 //               value={searchTerm}
 //               onChange={handleSearch}
@@ -233,19 +219,8 @@
 //                 { value: "docType", label: "نوع سند" },
 //               ]}
 //             />
-//             <FormControl sx={{ minWidth: 200, ml: 2 }}>
-//               <InputLabel>ډول</InputLabel>
-//               <Select
-//                 value={filterType}
-//                 onChange={(e) => setFilterType(e.target.value)}
-//                 label="ډول"
-//               >
-//                 <MenuItem value="all">ټول</MenuItem>
-//                 <MenuItem value={true}>وارده</MenuItem>
-//                 <MenuItem value={false}>صادره</MenuItem>
-//               </Select>
-//             </FormControl>
 //           </div>
+
 //           <TableContainer sx={{ maxHeight: 440, textAlign: "center" }}>
 //             <Table stickyHeader>
 //               <TableHead>
@@ -332,6 +307,7 @@
 //               </TableBody>
 //             </Table>
 //           </TableContainer>
+
 //           <TablePagination
 //             rowsPerPageOptions={[10, 25, 50]}
 //             component="div"
@@ -348,6 +324,12 @@
 //         open={openViewDialog}
 //         onClose={handleCloseView}
 //         archive={selectedArchive}
+//       />
+//       <EditArchiveDialog
+//         open={openEditDialog}
+//         onClose={handleCloseEdit}
+//         archive={selectedArchive}
+//         onSuccess={handleEditSuccess}
 //       />
 
 //       <Dialog
@@ -370,379 +352,8 @@
 //     </>
 //   );
 // }
-// import React, { useEffect, useState, useCallback } from "react";
-// import { FormControl, InputLabel, Select } from "@mui/material";
-// import {
-//   gitAllArchives,
-//   deleteArchive,
-// } from "../../../services/ArchiveManagement/ArchiveAPI";
-// import ViewArchive from "./ViewArchive";
-// import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-// import Filter from "../../Filter";
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableContainer,
-//   TableHead,
-//   TableRow,
-//   Paper,
-//   TablePagination,
-//   Dialog,
-//   DialogTitle,
-//   DialogContent,
-//   DialogContentText,
-//   DialogActions,
-//   Button,
-//   Box,
-//   Typography,
-// } from "@mui/material";
-// import { red } from "@mui/material/colors";
-// import VisibilityIcon from "@mui/icons-material/Visibility";
-// import EditIcon from "@mui/icons-material/Edit";
-// import DeleteIcon from "@mui/icons-material/Delete";
-// import { IconButton, Menu, MenuItem } from "@mui/material";
-// import MoreVertIcon from "@mui/icons-material/MoreVert";
-// import { useNavigate } from "react-router-dom";
-// import { toast } from "react-hot-toast";
-// import AddIcon from "@mui/icons-material/Add";
 
-// const columns = [
-//   { id: "docNo", label: "نمبر سند", minWidth: 120 },
-//   { id: "incommingDate", label: "تاریخ وارده", minWidth: 120 },
-//   { id: "outgoingDate", label: "تاریخ صادره", minWidth: 120 },
-//   { id: "org", label: "اداره", minWidth: 120 },
-//   { id: "submitedDate", label: "تاریخ تسلیمی", minWidth: 120 },
-//   { id: "docType", label: "نوع سند", minWidth: 120 },
-//   { id: "year", label: "سال", minWidth: 100 },
-//   { id: "description", label: "ملاحظات", minWidth: 150 },
-//   { id: "actions", label: "عملیات", minWidth: 120 },
-// ];
-
-// export default function ArchiveList() {
-//   const [archives, setArchives] = useState([]);
-//   const [page, setPage] = useState(0);
-//   const [rowsPerPage, setRowsPerPage] = useState(10);
-//   const [anchorEl, setAnchorEl] = useState(null);
-//   const [selectedArchive, setSelectedArchive] = useState(null);
-//   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-//   const [openViewDialog, setOpenViewDialog] = useState(false);
-//   const [field, setField] = useState("docNo");
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [filterType, setFilterType] = useState("all");
-
-//   const open = Boolean(anchorEl);
-//   const navigate = useNavigate();
-
-//   const loadArchives = useCallback(async () => {
-//     try {
-//       const response = await gitAllArchives();
-//       setArchives(response.data);
-//     } catch (error) {
-//       console.error(error);
-//       toast.error("د معلوماتو لوډولو کې ستونزه");
-//     }
-//   }, []);
-
-//   useEffect(() => {
-//     loadArchives();
-//   }, [loadArchives]);
-
-//   const handleSearch = (e) => {
-//     setSearchTerm(e.target.value);
-//   };
-
-//   const handleFieldChange = (e) => {
-//     setField(e.target.value);
-//   };
-
-//   const handleView = () => {
-//     setOpenViewDialog(true);
-//     handleClose();
-//   };
-
-//   const handleCloseView = () => {
-//     setOpenViewDialog(false);
-//     setSelectedArchive(null);
-//   };
-
-//   const handleClick = (event, archive) => {
-//     setAnchorEl(event.currentTarget);
-//     setSelectedArchive(archive);
-//   };
-
-//   const handleClose = () => {
-//     setAnchorEl(null);
-//   };
-
-//   const handleEdit = () => {
-//     navigate(`/archive/${selectedArchive.id}`);
-//     handleClose();
-//   };
-
-//   const filteredArchives = archives.filter((row) => {
-//     // Filter by isIncoming
-//     if (filterType !== "all" && row.isIncoming !== filterType) {
-//       return false;
-//     }
-
-//     // Filter by search
-//     if (!searchTerm) return true;
-//     const searchValue = searchTerm.toLowerCase();
-//     switch (field) {
-//       case "docNo":
-//         return row.docNo?.toLowerCase().includes(searchValue);
-//       case "org":
-//         return row.org?.name?.toLowerCase().includes(searchValue);
-//       case "year":
-//         return row.year?.toString().includes(searchValue);
-//       case "docType":
-//         return row.docType?.toLowerCase().includes(searchValue);
-//       default:
-//         return true;
-//     }
-//   });
-
-//   const handleDeleteClick = () => {
-//     setOpenDeleteDialog(true);
-//     handleClose();
-//   };
-
-//   const handleNewArchive = () => {
-//     navigate("/archive/add");
-//   };
-
-//   const handleDelete = async () => {
-//     try {
-//       await deleteArchive(selectedArchive.id);
-//       loadArchives();
-//       toast.success("آرشیف په بریالیتوب سره حذف شو");
-//     } catch (error) {
-//       console.error("Failed to delete archive", error);
-//       toast.error("د حذف کولو کې ستونزه");
-//     } finally {
-//       setOpenDeleteDialog(false);
-//     }
-//   };
-
-//   const handleChangePage = (event, newPage) => {
-//     setPage(newPage);
-//   };
-
-//   const handleChangeRowsPerPage = (event) => {
-//     setRowsPerPage(+event.target.value);
-//     setPage(0);
-//   };
-
-//   return (
-//     <>
-//       <Box
-//         sx={{
-//           display: "flex",
-//           flexDirection: "column",
-//           alignItems: "center",
-//           width: "100%",
-//         }}
-//       >
-//         <Box
-//           sx={{
-//             width: "80%",
-//             display: "flex",
-//             justifyContent: "space-between",
-//             alignItems: "center",
-//             marginBottom: 2,
-//           }}
-//         >
-//           <Button
-//             variant="contained"
-//             onClick={handleNewArchive}
-//             sx={{
-//               backgroundColor: "black",
-//               color: "white",
-//               borderRadius: "10px",
-//               "&:hover": {
-//                 backgroundColor: "#1d252e",
-//               },
-//             }}
-//             endIcon={<AddIcon />}
-//           >
-//             آرشیف جدید
-//           </Button>
-
-//           <Box
-//             sx={{
-//               display: "flex",
-//               flexDirection: "column",
-//               alignItems: "flex-end",
-//               textAlign: "right",
-//             }}
-//           >
-//             <Typography
-//               variant="h5"
-//               sx={{
-//                 fontWeight: "bold",
-//               }}
-//             >
-//               آرشیف
-//             </Typography>
-//             <PageBreadcrumbs />
-//           </Box>
-//         </Box>
-
-//         <Paper
-//           sx={{ width: "80%", overflow: "hidden", justifyContent: "center" }}
-//         >
-//           <div style={{ marginTop: "10px", padding: "10px" }}>
-//             <Filter
-//               value={searchTerm}
-//               onChange={handleSearch}
-//               field={field}
-//               onFieldChange={handleFieldChange}
-//               fields={[
-//                 { value: "docNo", label: "نمبر سند" },
-//                 { value: "org", label: "اداره" },
-//                 { value: "year", label: "سال" },
-//                 { value: "docType", label: "نوع سند" },
-//               ]}
-//             />
-//             <FormControl sx={{ minWidth: 200, ml: 2 }}>
-//               <InputLabel>ډول</InputLabel>
-//               <Select
-//                 value={filterType}
-//                 onChange={(e) => setFilterType(e.target.value)}
-//                 label="ډول"
-//               >
-//                 <MenuItem value="all">ټول</MenuItem>
-//                 <MenuItem value={true}>وارده</MenuItem>
-//                 <MenuItem value={false}>صادره</MenuItem>
-//               </Select>
-//             </FormControl>
-//           </div>
-//           <TableContainer sx={{ maxHeight: 440, textAlign: "center" }}>
-//             <Table stickyHeader>
-//               <TableHead>
-//                 <TableRow>
-//                   {columns.map((column) => (
-//                     <TableCell
-//                       key={column.id}
-//                       align="center"
-//                       style={{
-//                         minWidth: column.minWidth,
-//                         backgroundColor: "#f4f6f8",
-//                         color: "#637381",
-//                         fontWeight: "bold",
-//                         fontSize: "0.875rem",
-//                       }}
-//                     >
-//                       {column.label}
-//                     </TableCell>
-//                   ))}
-//                 </TableRow>
-//               </TableHead>
-//               <TableBody>
-//                 {filteredArchives
-//                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-//                   .map((row) => (
-//                     <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-//                       <TableCell align="center">{row.docNo || "N/A"}</TableCell>
-//                       <TableCell align="center">
-//                         {row.incommingDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.outgoingDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.org?.name || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.submitedDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.docType || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">{row.year || "N/A"}</TableCell>
-//                       <TableCell align="center">
-//                         {row.description || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         <IconButton onClick={(e) => handleClick(e, row)}>
-//                           <MoreVertIcon />
-//                         </IconButton>
-//                         <Menu
-//                           anchorEl={anchorEl}
-//                           open={open}
-//                           onClose={handleClose}
-//                         >
-//                           <MenuItem onClick={handleView}>
-//                             <VisibilityIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8 }}
-//                             />
-//                             View
-//                           </MenuItem>
-//                           <MenuItem onClick={handleEdit}>
-//                             <EditIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8 }}
-//                             />
-//                             Edit
-//                           </MenuItem>
-//                           <MenuItem
-//                             onClick={handleDeleteClick}
-//                             style={{ color: red[500] }}
-//                           >
-//                             <DeleteIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8, color: red[500] }}
-//                             />
-//                             Delete
-//                           </MenuItem>
-//                         </Menu>
-//                       </TableCell>
-//                     </TableRow>
-//                   ))}
-//               </TableBody>
-//             </Table>
-//           </TableContainer>
-//           <TablePagination
-//             rowsPerPageOptions={[10, 25, 50]}
-//             component="div"
-//             count={filteredArchives.length}
-//             rowsPerPage={rowsPerPage}
-//             page={page}
-//             onPageChange={handleChangePage}
-//             onRowsPerPageChange={handleChangeRowsPerPage}
-//           />
-//         </Paper>
-//       </Box>
-
-//       <ViewArchive
-//         open={openViewDialog}
-//         onClose={handleCloseView}
-//         archive={selectedArchive}
-//       />
-
-//       <Dialog
-//         open={openDeleteDialog}
-//         onClose={() => setOpenDeleteDialog(false)}
-//       >
-//         <DialogTitle>د آرشیف حذف؟</DialogTitle>
-//         <DialogContent>
-//           <DialogContentText>
-//             آیا تاسو مطمئن یاست چې غواړئ دا آرشیف حذف کړئ؟
-//           </DialogContentText>
-//         </DialogContent>
-//         <DialogActions>
-//           <Button onClick={() => setOpenDeleteDialog(false)}>لغوه</Button>
-//           <Button onClick={handleDelete} color="error" autoFocus>
-//             حذف
-//           </Button>
-//         </DialogActions>
-//       </Dialog>
-//     </>
-//   );
-// }
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   getAllArchives,
   deleteArchive,
@@ -768,30 +379,29 @@ import {
   Button,
   Box,
   Typography,
+  IconButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import AddIcon from "@mui/icons-material/Add";
+import { useTranslation } from "react-i18next";
 
-const columns = [
-  { id: "docNo", label: "نمبر سند", minWidth: 120 },
-  { id: "incommingDate", label: "تاریخ وارده", minWidth: 120 },
-  { id: "outgoingDate", label: "تاریخ صادره", minWidth: 120 },
-  { id: "org", label: "اداره", minWidth: 120 },
-  { id: "submitedDate", label: "تاریخ تسلیمی", minWidth: 120 },
-  { id: "docType", label: "نوع سند", minWidth: 120 },
-  { id: "year", label: "سال", minWidth: 100 },
-  { id: "description", label: "ملاحظات", minWidth: 150 },
-  { id: "actions", label: "عملیات", minWidth: 120 },
-];
+import getArchiveListTexts from "./archivelistTexts";
 
 export default function ArchiveList() {
+  const { t } = useTranslation("archivelist");
+
+  // ✅ Memoize texts to prevent infinite loop
+  const texts = useMemo(() => getArchiveListTexts(t), [t]);
+
+  // ✅ Component state
   const [archives, setArchives] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -807,23 +417,47 @@ export default function ArchiveList() {
   const open = Boolean(anchorEl);
   const navigate = useNavigate();
 
+  // ✅ Memoize columns so they update only when texts change
+  const columns = useMemo(
+    () => [
+      { id: "docNo", label: texts.docNo, minWidth: 120 },
+      { id: "incomingDate", label: texts.incomingDate, minWidth: 120 },
+      { id: "outgoingDate", label: texts.outgoingDate, minWidth: 120 },
+      { id: "org", label: texts.org, minWidth: 120 },
+      { id: "submittedDate", label: texts.submittedDate, minWidth: 120 },
+      { id: "docType", label: texts.docType, minWidth: 120 },
+      { id: "year", label: texts.year, minWidth: 100 },
+      { id: "description", label: texts.description, minWidth: 150 },
+      { id: "actions", label: texts.actions, minWidth: 120 },
+    ],
+    [texts]
+  );
+
+  // ✅ Load archives
   const loadArchives = useCallback(async () => {
     try {
       const response = await getAllArchives();
       setArchives(response.data);
-      console.log("Archives loaded:", response.data);
     } catch (error) {
       console.error(error);
-      toast.error("د معلوماتو لوډولو کې ستونزه");
+      toast.error(t("loadError"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadArchives();
   }, [loadArchives]);
 
+  // ✅ Search & filter
   const handleSearch = (e) => setSearchTerm(e.target.value);
   const handleFieldChange = (e) => setField(e.target.value);
+
+  // ✅ Menu & dialog handlers
+  const handleClick = (event, archive) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedArchive(archive);
+  };
+  const handleClose = () => setAnchorEl(null);
 
   const handleView = () => {
     setOpenViewDialog(true);
@@ -833,12 +467,6 @@ export default function ArchiveList() {
     setOpenViewDialog(false);
     setSelectedArchive(null);
   };
-
-  const handleClick = (event, archive) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedArchive(archive);
-  };
-  const handleClose = () => setAnchorEl(null);
 
   const handleEdit = () => {
     setOpenEditDialog(true);
@@ -850,6 +478,33 @@ export default function ArchiveList() {
   };
   const handleEditSuccess = () => loadArchives();
 
+  const handleDeleteClick = () => {
+    setOpenDeleteDialog(true);
+    handleClose();
+  };
+
+  const handleNewArchive = () => navigate("/archive/add");
+
+  const handleDelete = async () => {
+    try {
+      await deleteArchive(selectedArchive.id);
+      loadArchives();
+      toast.success(texts.deleteSuccess);
+    } catch (error) {
+      console.error(error);
+      toast.error(texts.deleteError);
+    } finally {
+      setOpenDeleteDialog(false);
+    }
+  };
+
+  const handleChangePage = (event, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(+event.target.value);
+    setPage(0);
+  };
+
+  // ✅ Filter archives
   const filteredArchives = archives.filter((row) => {
     if (filterType !== "all" && row.isIncoming !== filterType) return false;
     if (!searchTerm) return true;
@@ -868,32 +523,6 @@ export default function ArchiveList() {
     }
   });
 
-  const handleDeleteClick = () => {
-    setOpenDeleteDialog(true);
-    handleClose();
-  };
-
-  const handleNewArchive = () => navigate("/archive/add");
-
-  const handleDelete = async () => {
-    try {
-      await deleteArchive(selectedArchive.id);
-      loadArchives();
-      toast.success("آرشیف په بریالیتوب سره حذف شو");
-    } catch (error) {
-      console.error(error);
-      toast.error("د حذف کولو کې ستونزه");
-    } finally {
-      setOpenDeleteDialog(false);
-    }
-  };
-
-  const handleChangePage = (event, newPage) => setPage(newPage);
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
-
   return (
     <>
       <Box
@@ -904,6 +533,7 @@ export default function ArchiveList() {
           width: "100%",
         }}
       >
+        {/* Header */}
         <Box
           sx={{
             width: "80%",
@@ -921,11 +551,10 @@ export default function ArchiveList() {
               color: "white",
               borderRadius: "10px",
               "&:hover": { backgroundColor: "#1d252e" },
-              marginLeft: "-30px",
             }}
             endIcon={<AddIcon />}
           >
-            آرشیف جدید
+            {texts.newArchive}
           </Button>
 
           <Box
@@ -934,22 +563,17 @@ export default function ArchiveList() {
               flexDirection: "column",
               alignItems: "flex-end",
               textAlign: "right",
-              marginRight: "-30px",
             }}
           >
-            <Typography
-              variant="h5"
-              sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
-            >
-              آرشیف
+            <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+              {texts.title}
             </Typography>
             <PageBreadcrumbs />
           </Box>
         </Box>
 
-        <Paper
-          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
-        >
+        {/* Filter */}
+        <Paper sx={{ width: "100%", overflow: "hidden" }}>
           <div style={{ marginTop: 10, padding: 10 }}>
             <Filter
               value={searchTerm}
@@ -957,14 +581,15 @@ export default function ArchiveList() {
               field={field}
               onFieldChange={handleFieldChange}
               fields={[
-                { value: "docNo", label: "نمبر سند" },
-                { value: "org", label: "اداره" },
-                { value: "year", label: "سال" },
-                { value: "docType", label: "نوع سند" },
+                { value: "docNo", label: texts.docNo },
+                { value: "org", label: texts.org },
+                { value: "year", label: texts.year },
+                { value: "docType", label: texts.docType },
               ]}
             />
           </div>
 
+          {/* Table */}
           <TableContainer sx={{ maxHeight: 440, textAlign: "center" }}>
             <Table stickyHeader>
               <TableHead>
@@ -993,7 +618,7 @@ export default function ArchiveList() {
                     <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
                       <TableCell align="center">{row.docNo || "N/A"}</TableCell>
                       <TableCell align="center">
-                        {row.incommingDate || "N/A"}
+                        {row.incomingDate || "N/A"}
                       </TableCell>
                       <TableCell align="center">
                         {row.outgoingDate || "N/A"}
@@ -1002,7 +627,7 @@ export default function ArchiveList() {
                         {row.org?.name || "N/A"}
                       </TableCell>
                       <TableCell align="center">
-                        {row.submitedDate || "N/A"}
+                        {row.submittedDate || "N/A"}
                       </TableCell>
                       <TableCell align="center">
                         {row.docType || "N/A"}
@@ -1025,14 +650,14 @@ export default function ArchiveList() {
                               fontSize="small"
                               style={{ marginRight: 8 }}
                             />
-                            View
+                            {texts.view}
                           </MenuItem>
                           <MenuItem onClick={handleEdit}>
                             <EditIcon
                               fontSize="small"
                               style={{ marginRight: 8 }}
                             />
-                            Edit
+                            {texts.edit}
                           </MenuItem>
                           <MenuItem
                             onClick={handleDeleteClick}
@@ -1042,7 +667,7 @@ export default function ArchiveList() {
                               fontSize="small"
                               style={{ marginRight: 8, color: red[500] }}
                             />
-                            Delete
+                            {texts.delete}
                           </MenuItem>
                         </Menu>
                       </TableCell>
@@ -1052,6 +677,7 @@ export default function ArchiveList() {
             </Table>
           </TableContainer>
 
+          {/* Pagination */}
           <TablePagination
             rowsPerPageOptions={[10, 25, 50]}
             component="div"
@@ -1064,6 +690,7 @@ export default function ArchiveList() {
         </Paper>
       </Box>
 
+      {/* Dialogs */}
       <ViewArchive
         open={openViewDialog}
         onClose={handleCloseView}
@@ -1080,16 +707,16 @@ export default function ArchiveList() {
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
       >
-        <DialogTitle>د آرشیف حذف؟</DialogTitle>
+        <DialogTitle>{texts.deleteDialogTitle}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            آیا تاسو مطمئن یاست چې غواړئ دا آرشیف حذف کړئ؟
-          </DialogContentText>
+          <DialogContentText>{texts.deleteDialogText}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>لغوه</Button>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {texts.cancel}
+          </Button>
           <Button onClick={handleDelete} color="error" autoFocus>
-            حذف
+            {texts.delete}
           </Button>
         </DialogActions>
       </Dialog>
