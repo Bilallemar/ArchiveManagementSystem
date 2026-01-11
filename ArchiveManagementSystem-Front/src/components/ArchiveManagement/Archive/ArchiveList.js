@@ -393,15 +393,15 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 
-// You can keep your helper or define inline
 import getArchiveListTexts from "./archivelistTexts";
 
 export default function ArchiveList() {
   const { t } = useTranslation("archivelist");
 
-  // ✅ Memoize texts to prevent infinite re-renders
+  // ✅ Memoize texts to prevent infinite loop
   const texts = useMemo(() => getArchiveListTexts(t), [t]);
 
+  // ✅ Component state
   const [archives, setArchives] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -417,13 +417,14 @@ export default function ArchiveList() {
   const open = Boolean(anchorEl);
   const navigate = useNavigate();
 
+  // ✅ Memoize columns so they update only when texts change
   const columns = useMemo(
     () => [
       { id: "docNo", label: texts.docNo, minWidth: 120 },
-      { id: "incommingDate", label: texts.incommingDate, minWidth: 120 },
+      { id: "incomingDate", label: texts.incomingDate, minWidth: 120 },
       { id: "outgoingDate", label: texts.outgoingDate, minWidth: 120 },
       { id: "org", label: texts.org, minWidth: 120 },
-      { id: "submitedDate", label: texts.submitedDate, minWidth: 120 },
+      { id: "submittedDate", label: texts.submittedDate, minWidth: 120 },
       { id: "docType", label: texts.docType, minWidth: 120 },
       { id: "year", label: texts.year, minWidth: 100 },
       { id: "description", label: texts.description, minWidth: 150 },
@@ -439,15 +440,15 @@ export default function ArchiveList() {
       setArchives(response.data);
     } catch (error) {
       console.error(error);
-      toast.error(texts.loadError);
+      toast.error(t("loadError"));
     }
-  }, [texts]);
+  }, [t]);
 
   useEffect(() => {
     loadArchives();
   }, [loadArchives]);
 
-  // ✅ Search & Filter
+  // ✅ Search & filter
   const handleSearch = (e) => setSearchTerm(e.target.value);
   const handleFieldChange = (e) => setField(e.target.value);
 
@@ -503,6 +504,7 @@ export default function ArchiveList() {
     setPage(0);
   };
 
+  // ✅ Filter archives
   const filteredArchives = archives.filter((row) => {
     if (filterType !== "all" && row.isIncoming !== filterType) return false;
     if (!searchTerm) return true;
@@ -675,6 +677,7 @@ export default function ArchiveList() {
             </Table>
           </TableContainer>
 
+          {/* Pagination */}
           <TablePagination
             rowsPerPageOptions={[10, 25, 50]}
             component="div"
@@ -720,374 +723,3 @@ export default function ArchiveList() {
     </>
   );
 }
-
-// import React, { useEffect, useState, useCallback, useMemo } from "react";
-// import {
-//   getAllArchives,
-//   deleteArchive,
-// } from "../../../services/ArchiveManagement/ArchiveAPI";
-// import ViewArchive from "./ViewArchive";
-// import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-// import Filter from "../../Filter";
-// import EditArchiveDialog from "./EditArchiveDialog";
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableContainer,
-//   TableHead,
-//   TableRow,
-//   Paper,
-//   TablePagination,
-//   Dialog,
-//   DialogTitle,
-//   DialogContent,
-//   DialogContentText,
-//   DialogActions,
-//   Button,
-//   Box,
-//   Typography,
-//   IconButton,
-//   Menu,
-//   MenuItem,
-// } from "@mui/material";
-// import { red } from "@mui/material/colors";
-// import VisibilityIcon from "@mui/icons-material/Visibility";
-// import EditIcon from "@mui/icons-material/Edit";
-// import DeleteIcon from "@mui/icons-material/Delete";
-// import MoreVertIcon from "@mui/icons-material/MoreVert";
-// import AddIcon from "@mui/icons-material/Add";
-// import { useNavigate } from "react-router-dom";
-// import { toast } from "react-hot-toast";
-// import { useTranslation } from "react-i18next";
-
-// import getArchiveListTexts from "./archivelistTexts";
-
-// export default function ArchiveList() {
-//   const { t } = useTranslation("archivelist");
-
-//   // ✅ Memoize texts to prevent infinite loop
-//   const texts = useMemo(() => getArchiveListTexts(t), [t]);
-
-//   // ✅ Component state
-//   const [archives, setArchives] = useState([]);
-//   const [page, setPage] = useState(0);
-//   const [rowsPerPage, setRowsPerPage] = useState(10);
-//   const [anchorEl, setAnchorEl] = useState(null);
-//   const [selectedArchive, setSelectedArchive] = useState(null);
-//   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-//   const [openViewDialog, setOpenViewDialog] = useState(false);
-//   const [openEditDialog, setOpenEditDialog] = useState(false);
-//   const [field, setField] = useState("docNo");
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [filterType, setFilterType] = useState("all");
-
-//   const open = Boolean(anchorEl);
-//   const navigate = useNavigate();
-
-//   // ✅ Memoize columns so they update only when texts change
-//   const columns = useMemo(
-//     () => [
-//       { id: "docNo", label: texts.docNo, minWidth: 120 },
-//       { id: "incomingDate", label: texts.incomingDate, minWidth: 120 },
-//       { id: "outgoingDate", label: texts.outgoingDate, minWidth: 120 },
-//       { id: "org", label: texts.org, minWidth: 120 },
-//       { id: "submittedDate", label: texts.submittedDate, minWidth: 120 },
-//       { id: "docType", label: texts.docType, minWidth: 120 },
-//       { id: "year", label: texts.year, minWidth: 100 },
-//       { id: "description", label: texts.description, minWidth: 150 },
-//       { id: "actions", label: texts.actions, minWidth: 120 },
-//     ],
-//     [texts]
-//   );
-
-//   // ✅ Load archives
-//   const loadArchives = useCallback(async () => {
-//     try {
-//       const response = await getAllArchives();
-//       setArchives(response.data);
-//     } catch (error) {
-//       console.error(error);
-//       toast.error(t("loadError"));
-//     }
-//   }, [t]);
-
-//   useEffect(() => {
-//     loadArchives();
-//   }, [loadArchives]);
-
-//   // ✅ Search & filter
-//   const handleSearch = (e) => setSearchTerm(e.target.value);
-//   const handleFieldChange = (e) => setField(e.target.value);
-
-//   // ✅ Menu & dialog handlers
-//   const handleClick = (event, archive) => {
-//     setAnchorEl(event.currentTarget);
-//     setSelectedArchive(archive);
-//   };
-//   const handleClose = () => setAnchorEl(null);
-
-//   const handleView = () => {
-//     setOpenViewDialog(true);
-//     handleClose();
-//   };
-//   const handleCloseView = () => {
-//     setOpenViewDialog(false);
-//     setSelectedArchive(null);
-//   };
-
-//   const handleEdit = () => {
-//     setOpenEditDialog(true);
-//     handleClose();
-//   };
-//   const handleCloseEdit = () => {
-//     setOpenEditDialog(false);
-//     setSelectedArchive(null);
-//   };
-//   const handleEditSuccess = () => loadArchives();
-
-//   const handleDeleteClick = () => {
-//     setOpenDeleteDialog(true);
-//     handleClose();
-//   };
-
-//   const handleNewArchive = () => navigate("/archive/add");
-
-//   const handleDelete = async () => {
-//     try {
-//       await deleteArchive(selectedArchive.id);
-//       loadArchives();
-//       toast.success(texts.deleteSuccess);
-//     } catch (error) {
-//       console.error(error);
-//       toast.error(texts.deleteError);
-//     } finally {
-//       setOpenDeleteDialog(false);
-//     }
-//   };
-
-//   const handleChangePage = (event, newPage) => setPage(newPage);
-//   const handleChangeRowsPerPage = (event) => {
-//     setRowsPerPage(+event.target.value);
-//     setPage(0);
-//   };
-
-//   // ✅ Filter archives
-//   const filteredArchives = archives.filter((row) => {
-//     if (filterType !== "all" && row.isIncoming !== filterType) return false;
-//     if (!searchTerm) return true;
-//     const searchValue = searchTerm.toLowerCase();
-//     switch (field) {
-//       case "docNo":
-//         return row.docNo?.toLowerCase().includes(searchValue);
-//       case "org":
-//         return row.org?.name?.toLowerCase().includes(searchValue);
-//       case "year":
-//         return row.year?.toString().includes(searchValue);
-//       case "docType":
-//         return row.docType?.toLowerCase().includes(searchValue);
-//       default:
-//         return true;
-//     }
-//   });
-
-//   return (
-//     <>
-//       <Box
-//         sx={{
-//           display: "flex",
-//           flexDirection: "column",
-//           alignItems: "center",
-//           width: "100%",
-//         }}
-//       >
-//         {/* Header */}
-//         <Box
-//           sx={{
-//             width: "80%",
-//             display: "flex",
-//             justifyContent: "space-between",
-//             alignItems: "center",
-//             marginBottom: 2,
-//           }}
-//         >
-//           <Button
-//             variant="contained"
-//             onClick={handleNewArchive}
-//             sx={{
-//               backgroundColor: "black",
-//               color: "white",
-//               borderRadius: "10px",
-//               "&:hover": { backgroundColor: "#1d252e" },
-//             }}
-//             endIcon={<AddIcon />}
-//           >
-//             {texts.newArchive}
-//           </Button>
-
-//           <Box
-//             sx={{
-//               display: "flex",
-//               flexDirection: "column",
-//               alignItems: "flex-end",
-//               textAlign: "right",
-//             }}
-//           >
-//             <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-//               {texts.title}
-//             </Typography>
-//             <PageBreadcrumbs />
-//           </Box>
-//         </Box>
-
-//         {/* Filter */}
-//         <Paper sx={{ width: "100%", overflow: "hidden" }}>
-//           <div style={{ marginTop: 10, padding: 10 }}>
-//             <Filter
-//               value={searchTerm}
-//               onChange={handleSearch}
-//               field={field}
-//               onFieldChange={handleFieldChange}
-//               fields={[
-//                 { value: "docNo", label: texts.docNo },
-//                 { value: "org", label: texts.org },
-//                 { value: "year", label: texts.year },
-//                 { value: "docType", label: texts.docType },
-//               ]}
-//             />
-//           </div>
-
-//           {/* Table */}
-//           <TableContainer sx={{ maxHeight: 440, textAlign: "center" }}>
-//             <Table stickyHeader>
-//               <TableHead>
-//                 <TableRow>
-//                   {columns.map((column) => (
-//                     <TableCell
-//                       key={column.id}
-//                       align="center"
-//                       style={{
-//                         minWidth: column.minWidth,
-//                         backgroundColor: "#f4f6f8",
-//                         color: "#637381",
-//                         fontWeight: "bold",
-//                         fontSize: "0.875rem",
-//                       }}
-//                     >
-//                       {column.label}
-//                     </TableCell>
-//                   ))}
-//                 </TableRow>
-//               </TableHead>
-//               <TableBody>
-//                 {filteredArchives
-//                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-//                   .map((row) => (
-//                     <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-//                       <TableCell align="center">{row.docNo || "N/A"}</TableCell>
-//                       <TableCell align="center">
-//                         {row.incomingDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.outgoingDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.org?.name || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.submittedDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.docType || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">{row.year || "N/A"}</TableCell>
-//                       <TableCell align="center">
-//                         {row.description || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         <IconButton onClick={(e) => handleClick(e, row)}>
-//                           <MoreVertIcon />
-//                         </IconButton>
-//                         <Menu
-//                           anchorEl={anchorEl}
-//                           open={open}
-//                           onClose={handleClose}
-//                         >
-//                           <MenuItem onClick={handleView}>
-//                             <VisibilityIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8 }}
-//                             />
-//                             {texts.view}
-//                           </MenuItem>
-//                           <MenuItem onClick={handleEdit}>
-//                             <EditIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8 }}
-//                             />
-//                             {texts.edit}
-//                           </MenuItem>
-//                           <MenuItem
-//                             onClick={handleDeleteClick}
-//                             style={{ color: red[500] }}
-//                           >
-//                             <DeleteIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8, color: red[500] }}
-//                             />
-//                             {texts.delete}
-//                           </MenuItem>
-//                         </Menu>
-//                       </TableCell>
-//                     </TableRow>
-//                   ))}
-//               </TableBody>
-//             </Table>
-//           </TableContainer>
-
-//           {/* Pagination */}
-//           <TablePagination
-//             rowsPerPageOptions={[10, 25, 50]}
-//             component="div"
-//             count={filteredArchives.length}
-//             rowsPerPage={rowsPerPage}
-//             page={page}
-//             onPageChange={handleChangePage}
-//             onRowsPerPageChange={handleChangeRowsPerPage}
-//           />
-//         </Paper>
-//       </Box>
-
-//       {/* Dialogs */}
-//       <ViewArchive
-//         open={openViewDialog}
-//         onClose={handleCloseView}
-//         archive={selectedArchive}
-//       />
-//       <EditArchiveDialog
-//         open={openEditDialog}
-//         onClose={handleCloseEdit}
-//         archive={selectedArchive}
-//         onSuccess={handleEditSuccess}
-//       />
-
-//       <Dialog
-//         open={openDeleteDialog}
-//         onClose={() => setOpenDeleteDialog(false)}
-//       >
-//         <DialogTitle>{texts.deleteDialogTitle}</DialogTitle>
-//         <DialogContent>
-//           <DialogContentText>{texts.deleteDialogText}</DialogContentText>
-//         </DialogContent>
-//         <DialogActions>
-//           <Button onClick={() => setOpenDeleteDialog(false)}>
-//             {texts.cancel}
-//           </Button>
-//           <Button onClick={handleDelete} color="error" autoFocus>
-//             {texts.delete}
-//           </Button>
-//         </DialogActions>
-//       </Dialog>
-//     </>
-//   );
-// }

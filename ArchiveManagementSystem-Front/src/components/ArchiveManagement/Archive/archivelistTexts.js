@@ -1,4 +1,21 @@
 const getArchiveListTexts = (t) => ({
+  // ===== Page =====
+  title: t("title"),
+  newArchive: t("newArchive"),
+
+  // ===== Actions =====
+  view: t("view"),
+  edit: t("edit"),
+  delete: t("delete"),
+  cancel: t("cancel"),
+
+  // ===== Delete Dialog =====
+  deleteDialogTitle: t("deleteDialogTitle"),
+  deleteDialogText: t("deleteDialogText"),
+  deleteSuccess: t("deleteSuccess"),
+  deleteError: t("deleteError"),
+
+  // ===== Table Headers =====
   docNo: t("docNo"),
   incommingDate: t("incommingDate"),
   outgoingDate: t("outgoingDate"),
@@ -8,19 +25,20 @@ const getArchiveListTexts = (t) => ({
   year: t("year"),
   description: t("description"),
   actions: t("actions"),
-  view: t("view"),
-  edit: t("edit"),
-  delete: t("delete"),
-  newArchive: t("newArchive"),
-  archives: t("archives"),
-  deleteConfirmTitle: t("deleteConfirmTitle"),
-  deleteConfirmMessage: t("deleteConfirmMessage"),
-  cancel: t("cancel"),
-  deleteSuccess: t("deleteSuccess"),
-  deleteError: t("deleteError"),
+
+  // ===== Filters & Search =====
   search: t("search"),
-  filterBy: t("filterBy"),
+  fieldDocNo: t("fieldDocNo"),
+  fieldOrg: t("fieldOrg"),
+  fieldYear: t("fieldYear"),
+  fieldDocType: t("fieldDocType"),
+
+  // ===== Pagination =====
+  rowsPerPage: t("rowsPerPage"),
+
+  // ===== States =====
   loading: t("loading"),
+  noData: t("noData"),
 });
 
 export default getArchiveListTexts;
