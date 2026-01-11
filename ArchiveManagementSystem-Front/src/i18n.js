@@ -15,6 +15,7 @@ import psArchive from "./locales/ps/archive.json";
 import psArchiveList from "./locales/ps/archivelist.json";
 import psEditArchiveDialog from "./locales/ps/EditArchiveDialog.json"; // ✅ new
 import psViewArchive from "./locales/ps/ViewArchive.json";
+import psAddHazari from "./locales/ps/AddHazari.json";
 
 // ================== Dari ==================
 import faLogin from "./locales/fa/login.json";
@@ -30,6 +31,7 @@ import faArchive from "./locales/fa/archive.json";
 import faArchiveList from "./locales/fa/archivelist.json";
 import faEditArchiveDialog from "./locales/fa/EditArchiveDialog.json"; // ✅ new
 import faViewArchive from "./locales/fa/ViewArchive.json";
+import faAddHazari from "./locales/fa/AddHazari.json";
 
 // ================== English ==================
 import enLogin from "./locales/en/login.json";
@@ -45,6 +47,7 @@ import enArchive from "./locales/en/archive.json";
 import enArchiveList from "./locales/en/archivelist.json";
 import enEditArchiveDialog from "./locales/en/EditArchiveDialog.json"; // ✅ new
 import enViewArchive from "./locales/en/ViewArchive.json";
+import enAddHazari from "./locales/en/AddHazari.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -62,6 +65,7 @@ i18n.use(initReactI18next).init({
       archivelist: psArchiveList, // ✅ added
       editArchiveDialog: psEditArchiveDialog, // ✅ added
       ViewArchive: psViewArchive, // ✅ added
+      AddHazari: psAddHazari, // ✅ added
     },
 
     fa: {
@@ -78,6 +82,7 @@ i18n.use(initReactI18next).init({
       archivelist: faArchiveList,
       editArchiveDialog: faEditArchiveDialog, // ✅ added
       ViewArchive: faViewArchive, // ✅ added
+      AddHazari: faAddHazari, // ✅ added
     },
 
     en: {
@@ -94,6 +99,7 @@ i18n.use(initReactI18next).init({
       archivelist: enArchiveList,
       editArchiveDialog: enEditArchiveDialog, // ✅ added
       ViewArchive: enViewArchive, // ✅ added
+      AddHazari: enAddHazari, // ✅ added
     },
   },
 
@@ -119,6 +125,7 @@ i18n.use(initReactI18next).init({
     "archivelist",
     "editArchiveDialog", // ✅ added
     "ViewArchive", // ✅ added
+    "AddHazari",
   ],
 
   defaultNS: "login",
