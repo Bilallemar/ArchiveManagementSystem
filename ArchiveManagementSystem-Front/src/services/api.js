@@ -1,149 +1,47 @@
-// import axios from "axios";
-// import toast from "react-hot-toast";
-
-// console.log("API URL:", process.env.REACT_APP_API_URL);
-
-// // Axios instance
-// const api = axios.create({
-//   baseURL: `${process.env.REACT_APP_API_URL}/api`,
-//   headers: {
-//     Accept: "application/json",
-//   },
-//   withCredentials: true,
-// });
-
-// // Request interceptor
-// api.interceptors.request.use(
-//   async (config) => {
-//     const token = localStorage.getItem("JWT_TOKEN");
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-
-//     let csrfToken = localStorage.getItem("CSRF_TOKEN");
-//     if (!csrfToken) {
-//       try {
-//         const response = await axios.get(
-//           `${process.env.REACT_APP_API_URL}/api/csrf-token`,
-//           { withCredentials: true }
-//         );
-//         csrfToken = response.data.token;
-//         localStorage.setItem("CSRF_TOKEN", csrfToken);
-//       } catch (error) {
-//         console.error("Failed to fetch CSRF token", error);
-//       }
-//     }
-
-//     if (csrfToken) {
-//       config.headers["X-XSRF-TOKEN"] = csrfToken;
-//     }
-
-//     return config;
-//   },
-//   (error) => Promise.reject(error)
-// );
-
-// // Response interceptor
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
-
-//     // 🧠 که 401 د verify-2fa API لپاره وي، logout مه کوه
-//     if (
-//       error.response?.status === 401 &&
-//       originalRequest?.url?.includes("/verify-2fa")
-//     ) {
-//       return Promise.reject(error); // یواځې خطا بېرته ورکړه، نه redirect
-//     }
-
-//     // نور عادي 401 حالتونه – لکه session expiry
-//     if (error.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
-
-//       try {
-//         const refreshResponse = await axios.post(
-//           `${process.env.REACT_APP_API_URL}/api/refresh-token`,
-//           {},
-//           { withCredentials: true }
-//         );
-
-//         const newToken = refreshResponse.data.accessToken;
-//         if (newToken) {
-//           localStorage.setItem("JWT_TOKEN", newToken);
-//           toast.success("Session refreshed");
-
-//           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-//           return api(originalRequest);
-//         }
-//       } catch (refreshError) {
-//         console.error("Token refresh failed", refreshError);
-//         toast.error("Session expired, please login again");
-
-//         localStorage.clear();
-//         window.location.href = "/login";
-//         return Promise.reject(refreshError);
-//       }
-//     }
-
-//     return Promise.reject(error);
-//   }
-// );
-
-// export default api;
 import axios from "axios";
 import toast from "react-hot-toast";
 
-console.log("API URL:", process.env.REACT_APP_API_URL);
+const API_URL = process.env.REACT_APP_API_URL;
 
-// Axios instance
+if (!API_URL) {
+  console.error("CRITICAL: REACT_APP_API_URL is not defined!");
+  console.error(
+    "Please create a .env file with: REACT_APP_API_URL=http://localhost:8080"
+  );
+  toast.error("Configuration error! API URL is missing.");
+}
+
 const api = axios.create({
-  baseURL: `${process.env.REACT_APP_API_URL}/api`,
+  baseURL: `${API_URL}/api`,
   headers: {
     Accept: "application/json",
   },
   withCredentials: true,
+  timeout: 10000,
 });
 
 // Request interceptor
 api.interceptors.request.use(
   async (config) => {
-    console.log("🚀 REQUEST:", config.method.toUpperCase(), config.url);
-
     const token = localStorage.getItem("JWT_TOKEN");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("🔑 JWT Token attached");
+      console.log(`🔐 Request to ${config.url} with token`);
     } else {
-      console.log("⚠️ No JWT Token found");
+      console.warn(`⚠️  Request to ${config.url} WITHOUT token!`);
     }
 
-    let csrfToken = localStorage.getItem("CSRF_TOKEN");
-    if (!csrfToken) {
-      console.log("⚠️ No CSRF Token in localStorage, fetching...");
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/csrf-token`,
-          { withCredentials: true }
-        );
-        csrfToken = response.data.token;
-        localStorage.setItem("CSRF_TOKEN", csrfToken);
-        console.log("✅ CSRF Token fetched and stored");
-      } catch (error) {
-        console.error("❌ Failed to fetch CSRF token", error);
-      }
-    } else {
-      console.log("✅ CSRF Token found in localStorage");
-    }
-
-    if (csrfToken) {
-      config.headers["X-XSRF-TOKEN"] = csrfToken;
+    // Don't set Content-Type for FormData - let browser handle it
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+      console.log(`📦 FormData request detected`);
     }
 
     return config;
   },
   (error) => {
-    console.error("❌ Request Interceptor Error:", error);
+    console.error("Request error:", error);
     return Promise.reject(error);
   }
 );
@@ -151,66 +49,117 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log("✅ RESPONSE SUCCESS:", response.status, response.config.url);
     return response;
   },
   async (error) => {
-    console.log("🔴 RESPONSE ERROR INTERCEPTOR TRIGGERED");
-    console.log("🔴 Error Status:", error.response?.status);
-    console.log("🔴 Error URL:", error.config?.url);
-    console.log("🔴 Error Data:", error.response?.data);
-
-    const originalRequest = error.config;
-
-    // 🧠 که 401 د verify-2fa API لپاره وي، logout مه کوه
-    if (
-      error.response?.status === 401 &&
-      originalRequest?.url?.includes("/verify-2fa")
-    ) {
-      console.log("⚠️ 401 on verify-2fa - not logging out");
+    // Network error
+    if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+      console.error("Network error: Backend is not reachable at", API_URL);
+      toast.error(
+        "Cannot connect to server. Please check if backend is running."
+      );
       return Promise.reject(error);
     }
 
-    // نور عادي 401 حالتونه – لکه session expiry
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log("🔄 Attempting token refresh...");
-      originalRequest._retry = true;
-
-      try {
-        const refreshResponse = await axios.post(
-          `${process.env.REACT_APP_API_URL}/api/refresh-token`,
-          {},
-          { withCredentials: true }
-        );
-
-        const newToken = refreshResponse.data.accessToken;
-        if (newToken) {
-          localStorage.setItem("JWT_TOKEN", newToken);
-          toast.success("Session refreshed");
-          console.log("✅ Token refreshed successfully");
-
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        console.error("❌ Token refresh failed:", refreshError);
-        toast.error("Session expired, please login again");
-        localStorage.clear();
-        console.log("🚪 Redirecting to login...");
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-      }
+    // Timeout error
+    if (error.code === "ECONNABORTED") {
+      console.error("Request timeout");
+      toast.error("Request timed out. Please try again.");
+      return Promise.reject(error);
     }
 
-    // Handle 419 CSRF token mismatch
-    if (error.response?.status === 419) {
-      console.log("⚠️ CSRF Token Mismatch - clearing and retrying");
-      localStorage.removeItem("CSRF_TOKEN");
-      toast.error("Security token expired. Please try again.");
+    const originalRequest = error.config;
+    const status = error.response?.status;
+    const url = originalRequest?.url;
+    const errorData = error.response?.data;
+
+    // Handle 401 Unauthorized
+    if (status === 401) {
+      const hasToken = localStorage.getItem("JWT_TOKEN");
+
+      // Login/signup errors - never logout
+      if (
+        url?.includes("/signin") ||
+        url?.includes("/login") ||
+        url?.includes("/signup")
+      ) {
+        const message = errorData?.message || "Invalid credentials";
+        toast.error(message);
+        return Promise.reject(error);
+      }
+
+      // 2FA errors - never logout
+      if (url?.includes("/verify-2fa") || url?.includes("/2fa")) {
+        const message = errorData?.message || "Invalid verification code";
+        toast.error(message);
+        return Promise.reject(error);
+      }
+
+      // Token expired on protected routes
+      if (hasToken && !originalRequest._retry) {
+        const errorMsg = errorData?.message?.toLowerCase() || "";
+        const isTokenError =
+          errorMsg.includes("token") ||
+          errorMsg.includes("expired") ||
+          errorMsg.includes("jwt") ||
+          errorMsg.includes("unauthorized");
+
+        if (isTokenError) {
+          console.error("Token expired - logging out");
+          originalRequest._retry = true;
+          toast.error("Your session has expired. Please login again.");
+
+          localStorage.clear();
+
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1500);
+
+          return Promise.reject(error);
+        }
+      }
+
+      // Generic 401
+      const message = errorData?.message || "Authentication required";
+      toast.error(message);
+      return Promise.reject(error);
+    }
+
+    // Handle other status codes
+    const errorMessages = {
+      400: errorData?.message || "Invalid request data",
+      403: errorData?.message || "You don't have permission for this action",
+      404: errorData?.message || "Resource not found",
+      409: errorData?.message || "Conflict with existing data",
+      422: errorData?.message || "Validation failed",
+      500: errorData?.message || "Server error. Please try again later",
+      503: errorData?.message || "Service temporarily unavailable",
+    };
+
+    if (errorMessages[status]) {
+      console.error(`HTTP ${status}:`, errorMessages[status]);
+      toast.error(errorMessages[status]);
+    } else if (status) {
+      const defaultMsg =
+        errorData?.message || `Request failed with status ${status}`;
+      console.error(`HTTP ${status}:`, defaultMsg);
+      toast.error(defaultMsg);
     }
 
     return Promise.reject(error);
   }
 );
+
+// Test backend connection
+export const testBackendConnection = async () => {
+  try {
+    await axios.get(`${API_URL}/api/csrf-token`, { timeout: 5000 });
+    console.log("Backend connection successful");
+    return true;
+  } catch (error) {
+    console.error("Backend connection failed:", error.message);
+    return false;
+  }
+};
 
 export default api;

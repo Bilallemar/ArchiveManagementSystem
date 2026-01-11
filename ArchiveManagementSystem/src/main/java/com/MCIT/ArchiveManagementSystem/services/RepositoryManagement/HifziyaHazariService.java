@@ -11,6 +11,7 @@ import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazar
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.RepositoryManagement.HifziyaHazariRepository;
 import com.MCIT.ArchiveManagementSystem.services.FileService;
+import com.MCIT.ArchiveManagementSystem.util.AuditLogHelper;
 
 import jakarta.transaction.Transactional;
 
@@ -21,104 +22,141 @@ public class HifziyaHazariService {
     private final HifziyaHazariRepository hifziyaHazariRepository;
     private final FileService fileService;
     private final FileRepository fileRepository;
+    private static final String TABLE_NAME = "hifziya_hazari";
+    private final AuditLogHelper auditLogHelper;
+
+
     
-    public HifziyaHazariService( HifziyaHazariRepository hifziyaHazariRepository, FileService fileService, FileRepository fileRepository) {
+    public HifziyaHazariService(HifziyaHazariRepository hifziyaHazariRepository, 
+                                FileService fileService, 
+                                FileRepository fileRepository,AuditLogHelper auditLogHelper) {
         this.hifziyaHazariRepository = hifziyaHazariRepository;
         this.fileService = fileService;
         this.fileRepository = fileRepository;
-
+        this.auditLogHelper = auditLogHelper;
     }
-
 
     public List<HifziyaHazari> getAllHifziyaHazaris() {
         return hifziyaHazariRepository.findAll();
     }
+    
     public Optional<HifziyaHazari> getHifziyaHazariById(Integer id) {
         return hifziyaHazariRepository.findById(id);
     }
-//     public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile fileURL) {
-//   hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
 
-//     // 2. که فایل موجود وي، ذخیره یې کړه
-//     if (fileURL != null && !fileURL.isEmpty()) {
-//         FileEntity fileEntity = new FileEntity();
-//         fileEntity.setFilePath(fileService.savefile(fileURL, hifziyaHazari));
-//         fileEntity.setFileName(fileURL.getOriginalFilename());
-//         fileEntity.setFileType(fileURL.getContentType());
-//         fileEntity.setHifziyaHazari(hifziyaHazari);      // د ریکارډ سره تړاو
-//         fileRepository.save(fileEntity);            // DB ته ذخیره
-//         hifziyaHazari.getFiles().add(fileEntity);        // لیست ته اضافه
-//     }
+    // ✅ UPDATED: Now accepts multiple files
+    public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile[] fileURL) {
+        System.out.println("Saving HifziyaHazari: " + hifziyaHazari);
 
-//     return hifziyaHazari;
-//     }
-public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile fileURL) {
-    // 🔹 ډیباګ: چاپ کړئ د ریکارډ معلومات
-    System.out.println("Saving HifziyaHazari: " + hifziyaHazari);
+        // Save the main entity first
+        hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
 
-    hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
-
-    // که فایل موجود وي، ذخیره یې کړه
-    if (fileURL != null && !fileURL.isEmpty()) {
-        System.out.println("Saving file: " + fileURL.getOriginalFilename());
-        FileEntity fileEntity = new FileEntity();
-        fileEntity.setFilePath(fileService.savefile(fileURL, hifziyaHazari));
-        fileEntity.setFileName(fileURL.getOriginalFilename());
-        fileEntity.setFileType(fileURL.getContentType());
-        fileEntity.setHifziyaHazari(hifziyaHazari);
-        fileRepository.save(fileEntity);
-        hifziyaHazari.getFiles().add(fileEntity);
-    } else {
-        System.out.println("No file to save in Service");
+        // If files exist, save them
+        if (fileURL != null && fileURL.length > 0) {
+            System.out.println("Saving " + fileURL.length + " files");
+            
+            // Save all files using fileService
+            List<String> storedPaths = fileService.savefiles(fileURL, hifziyaHazari);
+            
+            // Create FileEntity for each uploaded file
+            List<FileEntity> fileEntities = new ArrayList<>();
+            for (int i = 0; i < fileURL.length; i++) {
+                MultipartFile file = fileURL[i];
+                FileEntity fileEntity = new FileEntity();
+                fileEntity.setFilePath(storedPaths.get(i));
+                fileEntity.setFileName(file.getOriginalFilename());
+                fileEntity.setFileType(file.getContentType());
+                fileEntity.setHifziyaHazari(hifziyaHazari);
+                fileRepository.save(fileEntity);
+                fileEntities.add(fileEntity);
+                
+                System.out.println("Saved file " + (i+1) + ": " + file.getOriginalFilename());
+            }
+            
+            hifziyaHazari.setFiles(fileEntities);
+        } else {
+            System.out.println("No files to save in Service");
+        }
+auditLogHelper.logCreate(TABLE_NAME, hifziyaHazari.getId().longValue(), 
+            hifziyaHazari.getDescription());
+        return hifziyaHazari;
     }
 
-    return hifziyaHazari;
-}
-
-       @Transactional
+    @Transactional
     public HifziyaHazari updateHifziyaHazari(Integer id, HifziyaHazari hifziyaHazariDetails, MultipartFile[] fileURL) {
         HifziyaHazari existingDoc = hifziyaHazariRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("FileOffice not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("HifziyaHazari not found with id: " + id));
 
         existingDoc.setType(hifziyaHazariDetails.getType());
+        existingDoc.setSubType(hifziyaHazariDetails.getSubType());
         existingDoc.setYear(hifziyaHazariDetails.getYear());
         existingDoc.setOrg(hifziyaHazariDetails.getOrg());
         existingDoc.setDescription(hifziyaHazariDetails.getDescription());
         existingDoc.setIsIndraj(hifziyaHazariDetails.getIsIndraj());
-    // 3. فایلونه اپډېټ یا اضافه کړه که موجود وي
-    if (fileURL != null && fileURL.length > 0) {
-        // 3a. موجوده فایلونه حذف کړه
-        if (existingDoc.getFiles() != null) {
-            for (FileEntity oldFile : existingDoc.getFiles()) {
-                fileService.deleteFile(oldFile.getFilePath()); // د حقیقي مسیر نه فایل حذف
-                fileRepository.delete(oldFile);               // DB نه حذف
+        
+        // Update or add files if provided
+        if (fileURL != null && fileURL.length > 0) {
+            System.out.println("📁 Updating files for record ID: " + id);
+            
+            // Delete old files from database and disk
+            if (existingDoc.getFiles() != null && !existingDoc.getFiles().isEmpty()) {
+                System.out.println("🗑️ Removing " + existingDoc.getFiles().size() + " old files");
+                
+                List<FileEntity> filesToDelete = new ArrayList<>(existingDoc.getFiles());
+                
+                for (FileEntity oldFile : filesToDelete) {
+                    try {
+                        System.out.println("Deleting file: " + oldFile.getFilePath());
+                        fileService.deleteFile(oldFile.getFilePath());
+                        fileRepository.delete(oldFile);
+                    } catch (Exception e) {
+                        // Log but don't stop the process if file doesn't exist
+                        System.err.println("⚠️ Could not delete file " + oldFile.getFilePath() + ": " + e.getMessage());
+                    }
+                }
+                
+                existingDoc.getFiles().clear();
             }
-            existingDoc.getFiles().clear();
-        }
 
-        // 3b. نوي فایلونه ذخیره کړه
-        List<String> storedPaths = fileService.savefiles(fileURL, existingDoc); // د څو فایلونو save method
+            // Save new files
+    System.out.println("💾 Saving " + fileURL.length + " new files");
+List<String> storedPaths = fileService.savefiles(fileURL, existingDoc);
 
-        List<FileEntity> newAttachments = new ArrayList<>();
-        for (int i = 0; i < fileURL.length; i++) {
-            MultipartFile f = fileURL[i];
-            FileEntity fe = new FileEntity();
-            fe.setFilePath(storedPaths.get(i));         // حقیقي مسیر
-            fe.setFileName(f.getOriginalFilename());   // د فایل اصل نوم
-            fe.setFileType(f.getContentType());        // فایل ټایپ
-            fe.setHifziyaHazari(existingDoc);                   // د ریکارډ سره رابطه
-            fileRepository.save(fe);                   // DB ته ذخیره کړه
-            newAttachments.add(fe);
-        }
+List<FileEntity> newAttachments = new ArrayList<>();
+for (int i = 0; i < fileURL.length; i++) {
+    MultipartFile f = fileURL[i];
+    FileEntity fe = new FileEntity();
+    fe.setFilePath(storedPaths.get(i));
+    fe.setFileName(f.getOriginalFilename());
+    fe.setFileType(f.getContentType());
+    fe.setHifziyaHazari(existingDoc);
+    fileRepository.save(fe);
+    newAttachments.add(fe);
+    System.out.println("✅ Saved new file " + (i+1) + ": " + f.getOriginalFilename());
+}
 
-        existingDoc.setFiles(newAttachments);
-    }
+if (existingDoc.getFiles() == null) {
+    existingDoc.setFiles(new ArrayList<>());
+}
+existingDoc.getFiles().clear();
+existingDoc.getFiles().addAll(newAttachments);        }
+        auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(), existingDoc.getDescription());
+
         return hifziyaHazariRepository.save(existingDoc);
-
     }
+    
     public void deleteHifziyaHazari(Integer id) {
-        HifziyaHazari fileOffice = hifziyaHazariRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("FileOffice not found with id: " + id));
-        hifziyaHazariRepository.delete(fileOffice);
+        HifziyaHazari hifziyaHazari = hifziyaHazariRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("HifziyaHazari not found with id: " + id));
+        
+        // Delete associated files
+        if (hifziyaHazari.getFiles() != null) {
+            for (FileEntity file : hifziyaHazari.getFiles()) {
+                fileService.deleteFile(file.getFilePath());
+            }
+        }
+            auditLogHelper.logDelete(TABLE_NAME, id.longValue(), hifziyaHazari.getDescription());
+
+        hifziyaHazariRepository.delete(hifziyaHazari);
     }
 }

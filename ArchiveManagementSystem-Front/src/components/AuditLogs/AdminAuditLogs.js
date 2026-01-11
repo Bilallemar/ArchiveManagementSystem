@@ -5,119 +5,87 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Blocks } from "react-loader-spinner";
 import toast from "react-hot-toast";
 import { auditLogsTruncateTexts } from "../../utils/truncateText.js";
+import { auditLogcolumns } from "../../utils/auditLogColumns.js";
+
 import Errors from "../Errors.js";
 import moment from "moment";
-import { MdDateRange } from "react-icons/md";
 
-//Material ui data grid has used for the table
-//initialize the columns for the tables and (field) value is used to show data in a specific column dynamically
-export const auditLogcolumns = [
-  {
-    field: "actions",
-    headerName: "Action",
-    width: 160,
-    headerAlign: "center",
-    disableColumnMenu: true,
-    align: "center",
-    editable: false,
-    headerClassName: "text-black font-semibold border",
-    cellClassName: "text-slate-700 font-normal  border",
-    renderHeader: (params) => <span>Action</span>,
-  },
+// // ---------------- Columns ----------------
+// export const auditLogcolumns = [
+//   {
+//     field: "action",
+//     headerName: "Action",
+//     width: 160,
+//     headerAlign: "center",
+//     align: "center",
+//     headerClassName: "text-black font-semibold border",
+//     cellClassName: "text-slate-700 font-normal border",
+//   },
+//   {
+//     field: "username",
+//     headerName: "UserName",
+//     width: 180,
+//     headerAlign: "center",
+//     align: "center",
+//     headerClassName: "text-black font-semibold border",
+//     cellClassName: "text-slate-700 font-normal border",
+//   },
+//   {
+//     field: "timestamp",
+//     headerName: "TimeStamp",
+//     width: 220,
+//     headerAlign: "center",
+//     align: "center",
+//     headerClassName: "text-black font-semibold border",
+//     cellClassName: "text-slate-700 font-normal border",
+//   },
+//   {
+//     field: "recordId",
+//     headerName: "Record ID",
+//     width: 160,
+//     headerAlign: "center",
+//     align: "center",
+//     headerClassName: "text-black font-semibold border",
+//     cellClassName: "text-slate-700 font-normal border",
+//   },
+//   {
+//     field: "recordContent",
+//     headerName: "Note Content",
+//     width: 260,
+//     headerAlign: "center",
+//     align: "center",
+//     headerClassName: "text-black font-semibold border",
+//     cellClassName: "text-slate-700 font-normal border",
+//     renderCell: (params) => {
+//       const text = params?.value || "—";
+//       return (
+//         <p className="text-slate-700 text-center">
+//           {auditLogsTruncateTexts(text)}
+//         </p>
+//       );
+//     },
+//   },
+//   {
+//     field: "view",
+//     headerName: "Action",
+//     width: 150,
+//     headerAlign: "center",
+//     align: "center",
+//     sortable: false,
+//     renderCell: (params) => (
+//       <Link
+//         to={`/admin/audit-logs/${params.row.recordId}`}
+//         className="h-full flex justify-center items-center"
+//       >
+//         <button className="bg-btnColor text-white px-4 h-9 rounded-md">
+//           View
+//         </button>
+//       </Link>
+//     ),
+//   },
+// ];
 
-  {
-    field: "username",
-    headerName: "UserName",
-    width: 180,
-    editable: false,
-    disableColumnMenu: true,
-    headerAlign: "center",
-    align: "center",
-    headerClassName: "text-black font-semibold border",
-    cellClassName: "text-slate-700 font-normal  border",
-    renderHeader: (params) => <span>UserName</span>,
-  },
-
-  {
-    field: "timestamp",
-    headerName: "TimeStamp",
-    disableColumnMenu: true,
-    width: 220,
-    editable: false,
-    headerAlign: "center",
-    align: "center",
-    headerClassName: "text-black font-semibold border",
-    cellClassName: "text-slate-700 font-normal  border",
-    renderHeader: (params) => <span>TimeStamp</span>,
-    renderCell: (params) => {
-      return (
-        <div className=" flex  items-center justify-center  gap-1 ">
-          <span>
-            <MdDateRange className="text-slate-700 text-lg" />
-          </span>
-          <span>{params?.row?.timestamp}</span>
-        </div>
-      );
-    },
-  },
-  {
-    field: "noteid",
-    headerName: "NoteId",
-    disableColumnMenu: true,
-    width: 150,
-    editable: false,
-    headerAlign: "center",
-    align: "center",
-    headerClassName: "text-black font-semibold border",
-    cellClassName: "text-slate-700 font-normal  border",
-    renderHeader: (params) => <span>NoteId</span>,
-  },
-  {
-    field: "note",
-    headerName: "Note Content",
-    width: 220,
-    editable: false,
-    headerAlign: "center",
-    disableColumnMenu: true,
-    align: "center",
-    headerClassName: "text-black font-semibold border",
-    cellClassName: "text-slate-700 font-normal  border",
-    renderHeader: (params) => <span>Note Content</span>,
-    renderCell: (params) => {
-      const contens = JSON.parse(params?.value)?.content;
-
-      const response = auditLogsTruncateTexts(contens);
-
-      return <p className=" text-slate-700 text-center   ">{response}</p>;
-    },
-  },
-  {
-    field: "action",
-    headerName: "Action",
-    width: 150,
-    editable: false,
-    headerAlign: "center",
-    align: "center",
-    headerClassName: "text-black font-semibold ",
-    cellClassName: "text-slate-700 font-normal  ",
-    sortable: false,
-
-    renderHeader: (params) => <span>Action</span>,
-    renderCell: (params) => {
-      return (
-        <Link
-          to={`/admin/audit-logs/${params.row.noteId}`}
-          className="h-full flex justify-center  items-center   "
-        >
-          <button className="bg-btnColor text-white px-4 flex justify-center items-center  h-9 rounded-md ">
-            Views
-          </button>
-        </Link>
-      );
-    },
-  },
-];
-
+// ---------------- Component ----------------
 const AdminAuditLogs = () => {
   const [auditLogs, setAuditLogs] = useState([]);
   const [error, setError] = useState(null);
@@ -140,29 +108,17 @@ const AdminAuditLogs = () => {
     fetchAuditLogs();
   }, []);
 
-  const rows = auditLogs.map((item) => {
-    //format the time bu using moment npm package
+  const rows = auditLogs.map((item) => ({
+    id: item.id,
+    action: item.action,
+    username: item.username,
+    tableName: item.tableName,
+    recordId: item.recordId,
+    recordContent: item.recordContent,
+    timestamp: moment(item.timestamp).format("MMMM DD, YYYY, hh:mm A"),
+  }));
 
-    const formattedDate = moment(item.timestamp).format(
-      "MMMM DD, YYYY, hh:mm A"
-    );
-
-    //set the data for each rows in the table according to the field name in columns
-    //Example: username is the keyword in row it should matche with the field name in column so that the data will show on that column dynamically
-    return {
-      id: item.id,
-      noteId: item.noteId,
-      actions: item.action,
-      username: item.username,
-      timestamp: formattedDate,
-      noteid: item.noteId,
-      note: item.noteContent,
-    };
-  });
-
-  if (error) {
-    return <Errors message={error} />;
-  }
+  if (error) return <Errors message={error} />;
 
   return (
     <div className="p-4">
@@ -171,45 +127,24 @@ const AdminAuditLogs = () => {
           Audit Logs
         </h1>
       </div>
+
       {loading ? (
-        <>
-          {" "}
-          <div className="flex  flex-col justify-center items-center  h-72">
-            <span>
-              <Blocks
-                height="70"
-                width="70"
-                color="#4fa94d"
-                ariaLabel="blocks-loading"
-                wrapperStyle={{}}
-                wrapperClass="blocks-wrapper"
-                visible={true}
-              />
-            </span>
-            <span>Please wait...</span>
-          </div>
-        </>
+        <div className="flex flex-col justify-center items-center h-72">
+          <Blocks height="70" width="70" color="#4fa94d" visible={true} />
+          <span>Please wait...</span>
+        </div>
       ) : (
-        <>
-          {" "}
-          <div className="overflow-x-auto w-full mx-auto">
-            <DataGrid
-              className="w-fit mx-auto px-0"
-              rows={rows}
-              columns={auditLogcolumns}
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 6,
-                  },
-                },
-              }}
-              pageSizeOptions={[6]}
-              disableRowSelectionOnClick
-              disableColumnResize
-            />
-          </div>
-        </>
+        <div className="overflow-x-auto w-full mx-auto">
+          <DataGrid
+            className="w-fit mx-auto px-0"
+            rows={rows}
+            columns={auditLogcolumns}
+            initialState={{ pagination: { paginationModel: { pageSize: 6 } } }}
+            pageSizeOptions={[6]}
+            disableRowSelectionOnClick
+            disableColumnResize
+          />
+        </div>
       )}
     </div>
   );

@@ -8,30 +8,24 @@ import {
   Button,
 } from "@mui/material";
 
-export default function ViewAnnualReport({ open, onClose, report }) {
+export default function ViewHazari({ open, onClose, report }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>د رسید تفصیلات</DialogTitle>
       <DialogContent dividers>
         {report ? (
           <>
-            <DialogContentText>
-              Book Number: {report.bookNumber}
-            </DialogContentText>
-            <DialogContentText>Pravince: {report.pravince}</DialogContentText>
-            <DialogContentText>District: {report.district}</DialogContentText>
+            <DialogContentText>Type : {report.type?.name}</DialogContentText>
 
             <DialogContentText>
               Year: {new Date(report.year).toLocaleDateString()}
             </DialogContentText>
             <DialogContentText>
-              WaseqaType: {report.waseqaType}
+              Organization: {report.org?.name}
             </DialogContentText>
             <DialogContentText>
-              Summary Of Waseqa: {report.summaryOfWaseqa}
+              Description: {report.description}
             </DialogContentText>
-
-            <DialogContentText>Remarks: {report.remarks}</DialogContentText>
 
             {/* عکس ښودل */}
             {/* {receipt.attachments && receipt.attachments.length > 0 && (

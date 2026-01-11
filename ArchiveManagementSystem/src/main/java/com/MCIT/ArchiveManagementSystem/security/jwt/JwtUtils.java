@@ -1,4 +1,5 @@
 package com.MCIT.ArchiveManagementSystem.security.jwt;
+
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class JwtUtils {
+    
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     @Value("${spring.app.jwtSecret}")
@@ -27,10 +29,11 @@ public class JwtUtils {
 
     public String getJwtFromHeader(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        logger.debug("Authorization Header: {}", bearerToken);
+        
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7); // Remove Bearer prefix
+            return bearerToken.substring(7);
         }
+        
         return null;
     }
 
@@ -39,37 +42,36 @@ public class JwtUtils {
         String roles = userDetails.getAuthorities().stream()
                 .map(authority -> authority.getAuthority())
                 .collect(Collectors.joining(","));
-        return Jwts.builder()
+        
+        Long managementId = userDetails.getManagement() != null 
+                ? userDetails.getManagement().getManagementId() 
+                : null;
+        
+        JwtBuilder builder = Jwts.builder()
                 .subject(username)
                 .claim("roles", roles)
                 .claim("is2faEnabled", userDetails.is2faEnabled())
                 .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(key())
-                .compact();
+                .expiration(new Date((new Date()).getTime() + jwtExpirationMs));
+        
+        if (managementId != null) {
+            builder.claim("managementId", managementId);
+        }
+        
+        String token = builder.signWith(key()).compact();
+        
+        logger.info("JWT generated for user: {} with roles: {}", username, roles);
+        
+        return token;
     }
-public String generateTokenWithManagement(UserDetailsImpl userDetails, Long managementId) {
-    String username = userDetails.getUsername();
-    String roles = userDetails.getAuthorities().stream()
-            .map(authority -> authority.getAuthority())
-            .collect(Collectors.joining(","));
-
-    return Jwts.builder()
-            .subject(username)
-            .claim("roles", roles)
-            .claim("is2faEnabled", userDetails.is2faEnabled())
-            .claim("managementId", managementId)
-            .issuedAt(new Date())
-            .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
-            .signWith(key())
-            .compact();
-}
 
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parser()
-                        .verifyWith((SecretKey) key())
-                .build().parseSignedClaims(token)
-                .getPayload().getSubject();
+                .verifyWith((SecretKey) key())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
     private Key key() {
@@ -78,10 +80,13 @@ public String generateTokenWithManagement(UserDetailsImpl userDetails, Long mana
 
     public boolean validateJwtToken(String authToken) {
         try {
-            System.out.println("Validate");
-            Jwts.parser().verifyWith((SecretKey) key())
-                    .build().parseSignedClaims(authToken);
+            Jwts.parser()
+                    .verifyWith((SecretKey) key())
+                    .build()
+                    .parseSignedClaims(authToken);
+            
             return true;
+            
         } catch (MalformedJwtException e) {
             logger.error("Invalid JWT token: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
@@ -90,7 +95,10 @@ public String generateTokenWithManagement(UserDetailsImpl userDetails, Long mana
             logger.error("JWT token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             logger.error("JWT claims string is empty: {}", e.getMessage());
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            logger.error("JWT signature validation failed: {}", e.getMessage());
         }
+        
         return false;
     }
 }

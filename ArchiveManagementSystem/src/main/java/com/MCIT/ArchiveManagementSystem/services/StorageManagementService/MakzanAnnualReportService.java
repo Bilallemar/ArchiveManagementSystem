@@ -7,12 +7,18 @@ import org.springframework.stereotype.Service;
 
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanAnnualReportRepository;
+import com.MCIT.ArchiveManagementSystem.util.AuditLogHelper;
 
 @Service
 public class MakzanAnnualReportService {
     private final MakzanAnnualReportRepository makzanAnnualReportRepository;
-    public MakzanAnnualReportService( MakzanAnnualReportRepository makzanAnnualReportRepository) {
+       private final AuditLogHelper auditLogHelper;
+        private static final String TABLE_NAME = "makzan_annual_report";
+
+
+    public MakzanAnnualReportService( MakzanAnnualReportRepository makzanAnnualReportRepository,AuditLogHelper auditLogHelper) {
         this.makzanAnnualReportRepository = makzanAnnualReportRepository;
+        this.auditLogHelper = auditLogHelper;
     }
      public List<MakzanAnnualReport> gitAllAnnualReports() {
         return makzanAnnualReportRepository.findAll();
@@ -22,6 +28,8 @@ public class MakzanAnnualReportService {
     }
 
     public MakzanAnnualReport createAnnualReport(MakzanAnnualReport annualReport) {
+        auditLogHelper.logCreate(TABLE_NAME, annualReport.getId().longValue(), 
+            annualReport.getDescription());
         return makzanAnnualReportRepository.save(annualReport);
     }
     public MakzanAnnualReport updateAnnualReport(Integer id, MakzanAnnualReport annualReportDetails) {
@@ -34,12 +42,15 @@ public class MakzanAnnualReportService {
     existingReport.setDocType(annualReportDetails.getDocType());
     existingReport.setSummaryWaseqa(annualReportDetails.getSummaryWaseqa());
     existingReport.setDescription(annualReportDetails.getDescription());
+auditLogHelper.logUpdate(TABLE_NAME, annualReportDetails.getId().longValue(), annualReportDetails.getDescription());
 
         return makzanAnnualReportRepository.save(existingReport);
     }
     public void deleteAnnualReport(Integer id) {
          MakzanAnnualReport annualReport = makzanAnnualReportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("annualReport not found with id: " + id));
+                     auditLogHelper.logDelete(TABLE_NAME, id.longValue(), annualReport.getDescription());
+
         makzanAnnualReportRepository.delete(annualReport);
     }
 //     public List<MakzanAnnualReport> searchByKeyword(String field, String keyword) {

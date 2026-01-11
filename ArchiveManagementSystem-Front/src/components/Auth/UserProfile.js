@@ -1,4 +1,720 @@
-import React, { useState, useEffect } from "react";
+// // import React, { useState, useEffect } from "react";
+// import api from "../../services/api";
+// import { useMyContext } from "../../store/ContextApi";
+// import Avatar from "@mui/material/Avatar";
+// import Accordion from "@mui/material/Accordion";
+// import AccordionSummary from "@mui/material/AccordionSummary";
+// import AccordionDetails from "@mui/material/AccordionDetails";
+// import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+// import InputField from "../InputField/InputField";
+// import { useForm } from "react-hook-form";
+// import Buttons from "../../utils/Buttons";
+// import Switch from "@mui/material/Switch";
+// import toast from "react-hot-toast";
+// import { jwtDecode } from "jwt-decode";
+// import { Blocks } from "react-loader-spinner";
+// import moment from "moment";
+// import Errors from "../Errors";
+// import { Chip, Box, Typography, Card } from "@mui/material";
+// import { getUserManagement } from "../../utils/managementUtils";
+// import { useState, useEffect } from "react";
+// import { useTheme } from "@mui/material/styles";
+// import { Paper } from "@mui/material";
+// import { getUserProfileTexts } from "./userProfileTexts";
+
+// const UserProfile = () => {
+//   const { t } = useTranslation("userProfile"); // use the namespace
+//   const texts = getUserProfileTexts(t); // get all text strings
+
+//   const { currentUser, token, isAdmin } = useMyContext();
+//   const [loginSession, setLoginSession] = useState(null);
+//   const [credentialExpireDate, setCredentialExpireDate] = useState(null);
+//   const [pageError, setPageError] = useState(false);
+//   const [userManagement, setUserManagement] = useState(null);
+
+//   const [accountExpired, setAccountExpired] = useState();
+//   const [accountLocked, setAccountLock] = useState();
+//   const [accountEnabled, setAccountEnabled] = useState();
+//   const [credentialExpired, setCredentialExpired] = useState();
+
+//   const [openAccount, setOpenAccount] = useState(false);
+//   const [openSetting, setOpenSetting] = useState(false);
+
+//   const [is2faEnabled, setIs2faEnabled] = useState(false);
+//   const [qrCodeUrl, setQrCodeUrl] = useState("");
+//   const [code, setCode] = useState("");
+//   const [step, setStep] = useState(1);
+
+//   const [loading, setLoading] = useState(false);
+//   const [pageLoader, setPageLoader] = useState(false);
+//   const [disabledLoader, setDisabledLoader] = useState(false);
+//   const [twofaCodeLoader, setTwofaCodeLoader] = useState(false);
+//   const theme = useTheme();
+//   const { mode } = useMyContext();
+//   const {
+//     register,
+//     handleSubmit,
+//     setValue,
+//     formState: { errors },
+//   } = useForm({
+//     defaultValues: {
+//       username: currentUser?.username,
+//       email: currentUser?.email,
+//       password: "",
+//     },
+//     mode: "onTouched",
+//   });
+
+//   // Load user management info
+//   useEffect(() => {
+//     const management = getUserManagement();
+//     setUserManagement(management);
+//   }, []);
+
+//   useEffect(() => {
+//     setPageLoader(true);
+
+//     const fetch2FAStatus = async () => {
+//       try {
+//         const response = await api.get(`/auth/user/2fa-status`);
+//         setIs2faEnabled(response.data.is2faEnabled);
+//       } catch (error) {
+//         setPageError(
+//           error?.response?.data?.message || "Error fetching 2FA status"
+//         );
+//         toast.error("Error fetching 2FA status");
+//       } finally {
+//         setPageLoader(false);
+//       }
+//     };
+//     fetch2FAStatus();
+//   }, []);
+
+//   const enable2FA = async () => {
+//     setDisabledLoader(true);
+//     try {
+//       const response = await api.post(`/auth/enable-2fa`);
+//       setQrCodeUrl(response.data);
+//       setStep(2);
+//     } catch (error) {
+//       toast.error("Error enabling 2FA");
+//     } finally {
+//       setDisabledLoader(false);
+//     }
+//   };
+
+//   const disable2FA = async () => {
+//     setDisabledLoader(true);
+//     try {
+//       await api.post(`/auth/disable-2fa`);
+//       setIs2faEnabled(false);
+//       setQrCodeUrl("");
+//     } catch (error) {
+//       toast.error("Error disabling 2FA");
+//     } finally {
+//       setDisabledLoader(false);
+//     }
+//   };
+
+//   const verify2FA = async () => {
+//     if (!code || code.trim().length === 0)
+//       return toast.error("لطفاً د تایید لپاره کوډ داخل کړئ");
+
+//     setTwofaCodeLoader(true);
+//     try {
+//       const formData = new URLSearchParams();
+//       formData.append("code", code);
+
+//       const response = await api.post(`/auth/verify-2fa`, formData, {
+//         headers: { "Content-Type": "application/x-www-form-urlencoded" },
+//       });
+
+//       if (response.data?.token) {
+//         localStorage.setItem("token", response.data.token);
+//       }
+
+//       toast.success("✅ دوه‌مرحلې تایید بریالی شو");
+//       setIs2faEnabled(true);
+//       setStep(1);
+//     } catch (error) {
+//       const status = error?.response?.status;
+//       if (status === 400 || status === 422)
+//         toast.error("❌ داخل شوی کوډ ناسم دی");
+//       else if (status === 401) toast.error("دوه‌مرحلې تصدیق کوډ نامعتبر دی");
+//       else toast.error("⚠️ د دوه‌مرحلې تایید په بهیر کې ستونزه رامنځته شوه");
+//       console.error("Error verifying 2FA:", error);
+//     } finally {
+//       setTwofaCodeLoader(false);
+//     }
+//   };
+
+//   const handleUpdateCredential = async (data) => {
+//     const newUsername = data.username;
+//     const newPassword = data.password;
+
+//     try {
+//       setLoading(true);
+//       const formData = new URLSearchParams();
+//       formData.append("token", token);
+//       formData.append("newUsername", newUsername);
+//       formData.append("newPassword", newPassword);
+//       await api.post("/auth/update-credentials", formData, {
+//         headers: { "Content-Type": "application/x-www-form-urlencoded" },
+//       });
+//       toast.success("Update Credential successful");
+//     } catch (error) {
+//       toast.error("Update Credential failed");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (currentUser?.id) {
+//       setValue("username", currentUser.username);
+//       setValue("email", currentUser.email);
+//       setAccountExpired(!currentUser.accountNonExpired);
+//       setAccountLock(!currentUser.accountNonLocked);
+//       setAccountEnabled(currentUser.enabled);
+//       setCredentialExpired(!currentUser.credentialsNonExpired);
+
+//       const expiredFormatDate = moment(
+//         currentUser?.credentialsExpiryDate
+//       ).format("D MMMM YYYY");
+//       setCredentialExpireDate(expiredFormatDate);
+//     }
+//   }, [currentUser, setValue]);
+
+//   useEffect(() => {
+//     if (token) {
+//       const decodedToken = jwtDecode(token);
+//       const lastLoginSession = moment
+//         .unix(decodedToken.iat)
+//         .format("dddd, D MMMM YYYY, h:mm A");
+//       setLoginSession(lastLoginSession);
+//     }
+//   }, [token]);
+
+//   const handleAccountStatus = async (type, value) => {
+//     setLoading(true);
+//     try {
+//       const formData = new URLSearchParams();
+//       formData.append("token", token);
+//       formData.append(type, value);
+
+//       let url = "";
+//       switch (type) {
+//         case "expire":
+//           url = "/auth/update-expiry-status";
+//           break;
+//         case "lock":
+//           url = "/auth/update-lock-status";
+//           break;
+//         case "enabled":
+//           url = "/auth/update-enabled-status";
+//           break;
+//         case "credentialExpire":
+//           url = "/auth/update-credentials-expiry-status";
+//           break;
+//         default:
+//           break;
+//       }
+
+//       await api.put(url, formData, {
+//         headers: { "Content-Type": "application/x-www-form-urlencoded" },
+//       });
+//       toast.success("Update successful");
+//     } catch (error) {
+//       toast.error("Update failed");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   if (pageError) return <Errors message={pageError} />;
+
+//   return (
+//     <Box
+//       sx={{
+//         minHeight: "calc(100vh - 74px)",
+//         py: 5,
+//         bgcolor: theme.palette.background.default,
+//       }}
+//     >
+//       {pageLoader ? (
+//         <Box
+//           sx={{
+//             display: "flex",
+//             flexDirection: "column",
+//             justifyContent: "center",
+//             alignItems: "center",
+//             height: "18rem",
+//           }}
+//         >
+//           <Blocks
+//             height="70"
+//             width="70"
+//             color={theme.palette.success.main}
+//             ariaLabel="blocks-loading"
+//             visible={true}
+//           />
+//           <Typography sx={{ color: theme.palette.text.secondary }}>
+//             Please wait...
+//           </Typography>
+//         </Box>
+//       ) : (
+//         <Box
+//           sx={{
+//             width: { xl: "70%", lg: "80%", sm: "90%", xs: "100%" },
+//             mx: "auto",
+//             px: { sm: 0, xs: 2 },
+//             minHeight: 500,
+//             display: "flex",
+//             flexDirection: { lg: "row", xs: "column" },
+//             gap: 2,
+//           }}
+//         >
+//           {/* Left Panel */}
+//           <Paper
+//             sx={{
+//               flex: 1,
+//               display: "flex",
+//               flexDirection: "column",
+//               gap: 1,
+//               p: 3,
+//               bgcolor: theme.palette.background.paper,
+//               boxShadow: theme.shadows[3],
+//             }}
+//           >
+//             <Box
+//               sx={{
+//                 display: "flex",
+//                 flexDirection: "column",
+//                 alignItems: "center",
+//                 gap: 2,
+//               }}
+//             >
+//               <Avatar
+//                 alt={currentUser?.username}
+//                 src="/static/images/avatar/1.jpg"
+//                 sx={{ width: 80, height: 80 }}
+//               />
+//               <Typography
+//                 variant="h5"
+//                 sx={{
+//                   fontWeight: 600,
+//                   color: theme.palette.text.primary,
+//                 }}
+//               >
+//                 {currentUser?.username}
+//               </Typography>
+
+//               {/* Management Badge */}
+//               <Box
+//                 sx={{
+//                   display: "flex",
+//                   gap: 1,
+//                   flexWrap: "wrap",
+//                   justifyContent: "center",
+//                 }}
+//               >
+//                 {isAdmin ? (
+//                   <Chip
+//                     label="اډمین"
+//                     color="error"
+//                     sx={{ fontWeight: 600, fontFamily: "B nazanin" }}
+//                   />
+//                 ) : userManagement ? (
+//                   <Chip
+//                     label={userManagement.managementName}
+//                     color="primary"
+//                     sx={{ fontFamily: "B nazanin", fontWeight: 600 }}
+//                   />
+//                 ) : (
+//                   <Chip
+//                     label="څانګه تعین شوی نه دی"
+//                     color="warning"
+//                     sx={{ fontFamily: "B nazanin", fontWeight: 600 }}
+//                   />
+//                 )}
+//               </Box>
+//             </Box>
+
+//             {/* Management Info Card */}
+//             {userManagement && !isAdmin && (
+//               <Card
+//                 sx={{
+//                   mt: 2,
+//                   p: 2,
+//                   bgcolor: mode === "dark" ? "#2e2e2e" : "#f5f5f5",
+//                   boxShadow: 2,
+//                 }}
+//               >
+//                 <Typography
+//                   variant="subtitle2"
+//                   sx={{
+//                     fontFamily: "B nazanin",
+//                     fontWeight: 600,
+//                     mb: 1,
+//                     color: theme.palette.text.primary,
+//                   }}
+//                 >
+//                   د څانګې معلومات
+//                 </Typography>
+//                 <Typography
+//                   variant="body2"
+//                   sx={{
+//                     fontFamily: "B nazanin",
+//                     color: theme.palette.text.primary,
+//                   }}
+//                 >
+//                   څانګه: {userManagement.managementName}
+//                 </Typography>
+//                 <Typography
+//                   variant="caption"
+//                   sx={{
+//                     fontFamily: "B nazanin",
+//                     color: theme.palette.text.secondary,
+//                   }}
+//                 >
+//                   تاسو یوازې د خپلې څانګې ډیټا ته لاسرسی لرئ
+//                 </Typography>
+//               </Card>
+//             )}
+
+//             {/* User Credential Form */}
+//             <Box sx={{ my: 2 }}>
+//               <Accordion
+//                 expanded={openAccount}
+//                 onChange={() => setOpenAccount(!openAccount)}
+//                 sx={{
+//                   bgcolor: theme.palette.background.paper,
+//                   "&:before": { display: "none" },
+//                 }}
+//               >
+//                 <AccordionSummary
+//                   expandIcon={<ArrowDropDownIcon />}
+//                   sx={{ bgcolor: theme.palette.background.paper }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       color: theme.palette.text.primary,
+//                       fontSize: "1.125rem",
+//                       fontWeight: 600,
+//                     }}
+//                   >
+//                     Update User Credentials
+//                   </Typography>
+//                 </AccordionSummary>
+//                 <AccordionDetails>
+//                   <form
+//                     style={{
+//                       display: "flex",
+//                       flexDirection: "column",
+//                       gap: "1rem",
+//                     }}
+//                     onSubmit={handleSubmit(handleUpdateCredential)}
+//                   >
+//                     <InputField
+//                       label="UserName"
+//                       required
+//                       id="username"
+//                       type="text"
+//                       placeholder="Enter your username"
+//                       register={register}
+//                       errors={errors}
+//                     />
+//                     <InputField
+//                       label="Email"
+//                       required
+//                       id="email"
+//                       type="email"
+//                       placeholder="Enter your email"
+//                       register={register}
+//                       errors={errors}
+//                       readOnly
+//                     />
+//                     <InputField
+//                       label="Enter New Password"
+//                       id="password"
+//                       type="password"
+//                       placeholder="type your password"
+//                       register={register}
+//                       errors={errors}
+//                       min={6}
+//                     />
+//                     <Buttons
+//                       disabled={loading}
+//                       className="font-semibold text-white w-full py-2 rounded-sm"
+//                       style={{
+//                         backgroundColor:
+//                           mode === "dark" ? "#1e1e1e" : "#212B36",
+//                       }}
+//                       type="submit"
+//                     >
+//                       {loading ? "Loading..." : "Update"}
+//                     </Buttons>
+//                   </form>
+//                 </AccordionDetails>
+//               </Accordion>
+
+//               {/* Account Settings Accordion */}
+//               <Accordion
+//                 expanded={openSetting}
+//                 onChange={() => setOpenSetting(!openSetting)}
+//                 sx={{
+//                   bgcolor: theme.palette.background.paper,
+//                   "&:before": { display: "none" },
+//                 }}
+//               >
+//                 <AccordionSummary
+//                   expandIcon={<ArrowDropDownIcon />}
+//                   sx={{ bgcolor: theme.palette.background.paper }}
+//                 >
+//                   <Typography
+//                     sx={{
+//                       color: theme.palette.text.primary,
+//                       fontSize: "1.125rem",
+//                       fontWeight: 600,
+//                     }}
+//                   >
+//                     Account Setting
+//                   </Typography>
+//                 </AccordionSummary>
+//                 <AccordionDetails>
+//                   <Box
+//                     sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+//                   >
+//                     <Box>
+//                       <Typography
+//                         variant="body2"
+//                         sx={{ color: theme.palette.text.secondary }}
+//                       >
+//                         Account Expired
+//                       </Typography>
+//                       <Switch
+//                         checked={accountExpired}
+//                         onChange={(e) => {
+//                           setAccountExpired(e.target.checked);
+//                           handleAccountStatus("expire", e.target.checked);
+//                         }}
+//                       />
+//                     </Box>
+//                     <Box>
+//                       <Typography
+//                         variant="body2"
+//                         sx={{ color: theme.palette.text.secondary }}
+//                       >
+//                         Account Locked
+//                       </Typography>
+//                       <Switch
+//                         checked={accountLocked}
+//                         onChange={(e) => {
+//                           setAccountLock(e.target.checked);
+//                           handleAccountStatus("lock", e.target.checked);
+//                         }}
+//                       />
+//                     </Box>
+//                     <Box>
+//                       <Typography
+//                         variant="body2"
+//                         sx={{ color: theme.palette.text.secondary }}
+//                       >
+//                         Account Enabled
+//                       </Typography>
+//                       <Switch
+//                         checked={accountEnabled}
+//                         onChange={(e) => {
+//                           setAccountEnabled(e.target.checked);
+//                           handleAccountStatus("enabled", e.target.checked);
+//                         }}
+//                       />
+//                     </Box>
+//                     <Box>
+//                       <Typography
+//                         variant="body2"
+//                         sx={{ color: theme.palette.text.secondary }}
+//                       >
+//                         Credential Expired
+//                       </Typography>
+//                       <Switch
+//                         checked={credentialExpired}
+//                         onChange={(e) => {
+//                           setCredentialExpired(e.target.checked);
+//                           handleAccountStatus(
+//                             "credentialExpire",
+//                             e.target.checked
+//                           );
+//                         }}
+//                       />
+//                       <Typography
+//                         variant="caption"
+//                         sx={{ color: theme.palette.text.secondary, mt: 1 }}
+//                       >
+//                         Your credential will expired: {credentialExpireDate}
+//                       </Typography>
+//                     </Box>
+//                   </Box>
+//                 </AccordionDetails>
+//               </Accordion>
+
+//               {/* Last Login */}
+//               <Box sx={{ pt: 5 }}>
+//                 <Typography
+//                   variant="h6"
+//                   sx={{
+//                     color: theme.palette.text.primary,
+//                     fontWeight: 600,
+//                     mb: 1,
+//                   }}
+//                 >
+//                   Last Login Session
+//                 </Typography>
+//                 <Paper
+//                   sx={{
+//                     p: 2,
+//                     bgcolor: theme.palette.background.paper,
+//                     boxShadow: 1,
+//                     borderRadius: 1,
+//                   }}
+//                 >
+//                   <Typography
+//                     variant="body2"
+//                     sx={{ color: theme.palette.text.secondary }}
+//                   >
+//                     Your Last LogIn Session: <span>{loginSession}</span>
+//                   </Typography>
+//                 </Paper>
+//               </Box>
+//             </Box>
+//           </Paper>
+
+//           {/* Right Panel - 2FA */}
+//           <Paper
+//             sx={{
+//               flex: 1,
+//               display: "flex",
+//               flexDirection: "column",
+//               gap: 1,
+//               p: 3,
+//               bgcolor: theme.palette.background.paper,
+//               boxShadow: theme.shadows[3],
+//             }}
+//           >
+//             <Typography
+//               variant="h5"
+//               sx={{
+//                 color: theme.palette.text.primary,
+//                 display: "flex",
+//                 alignItems: "center",
+//                 gap: 1,
+//                 fontWeight: 700,
+//               }}
+//             >
+//               <span>تصدیق کول (MFA)</span>
+//               <Chip
+//                 label={is2faEnabled ? "فعال" : "غیر فعال شوی"}
+//                 color={is2faEnabled ? "success" : "error"}
+//                 size="small"
+//                 sx={{ fontFamily: "B nazanin" }}
+//               />
+//             </Typography>
+//             <Typography
+//               variant="body2"
+//               sx={{
+//                 color: theme.palette.text.secondary,
+//                 mt: 1,
+//                 fontFamily: "B nazanin",
+//               }}
+//             >
+//               دوه‌ مرحلې تصدیق ستا حساب ته د امنیت یو اضافي پوړ زیاتوي.
+//             </Typography>
+
+//             <Buttons
+//               disabled={disabledLoader}
+//               onClickhandler={is2faEnabled ? disable2FA : enable2FA}
+//               className="px-5 py-1 mt-2 text-white rounded-sm"
+//               style={{
+//                 backgroundColor: is2faEnabled ? "#d32f2f" : "#212B36",
+//               }}
+//             >
+//               {disabledLoader
+//                 ? "Loading..."
+//                 : is2faEnabled
+//                 ? "دوه‌مرحلې تصدیق غیر فعال کړئ"
+//                 : "دوه مرحلي تصدیق فعال کړئ"}
+//             </Buttons>
+
+//             {step === 2 && (
+//               <Accordion
+//                 sx={{
+//                   mt: 2,
+//                   bgcolor: theme.palette.background.paper,
+//                   "&:before": { display: "none" },
+//                 }}
+//               >
+//                 <AccordionSummary expandIcon={<ArrowDropDownIcon />}>
+//                   <Typography
+//                     sx={{
+//                       fontWeight: 700,
+//                       fontSize: "1.125rem",
+//                       color: theme.palette.text.primary,
+//                       fontFamily: "B nazanin",
+//                     }}
+//                   >
+//                     کیو آر د سکن لپاره
+//                   </Typography>
+//                 </AccordionSummary>
+//                 <AccordionDetails>
+//                   <img
+//                     src={qrCodeUrl}
+//                     alt="QR Code"
+//                     style={{ marginBottom: "1rem" }}
+//                   />
+//                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+//                     <input
+//                       type="text"
+//                       placeholder="دوه مرحلې کوډ داخل کړئ"
+//                       value={code}
+//                       required
+//                       onChange={(e) => setCode(e.target.value)}
+//                       style={{
+//                         border: `1px solid ${theme.palette.divider}`,
+//                         padding: "0.5rem",
+//                         borderRadius: "0.375rem",
+//                         flex: 1,
+//                         backgroundColor: theme.palette.background.paper,
+//                         color: theme.palette.text.primary,
+//                       }}
+//                     />
+//                     <button
+//                       onClick={verify2FA}
+//                       style={{
+//                         backgroundColor: theme.palette.primary.main,
+//                         color: "#fff",
+//                         padding: "0.5rem 0.75rem",
+//                         height: "2.5rem",
+//                         borderRadius: "0.375rem",
+//                         border: "none",
+//                         cursor: "pointer",
+//                       }}
+//                     >
+//                       {twofaCodeLoader ? "Loading..." : "Verify 2FA"}
+//                     </button>
+//                   </Box>
+//                 </AccordionDetails>
+//               </Accordion>
+//             )}
+//           </Paper>
+//         </Box>
+//       )}
+//     </Box>
+//   );
+// };
+
+// export default UserProfile;
+
+// import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import { useMyContext } from "../../store/ContextApi";
 import Avatar from "@mui/material/Avatar";
@@ -15,15 +731,25 @@ import { jwtDecode } from "jwt-decode";
 import { Blocks } from "react-loader-spinner";
 import moment from "moment";
 import Errors from "../Errors";
+import { Chip, Box, Typography, Card } from "@mui/material";
+import { getUserManagement } from "../../utils/managementUtils";
+import { useState, useEffect } from "react";
+import { useTheme } from "@mui/material/styles";
+import { Paper } from "@mui/material";
+import { getUserProfileTexts } from "./userProfileTexts";
+import { useTranslation } from "react-i18next";
 
 const UserProfile = () => {
-  // Access the currentUser and token hook using the useMyContext custom hook from the ContextProvider
-  const { currentUser, token } = useMyContext();
-  //set the loggin session from the token
-  const [loginSession, setLoginSession] = useState(null);
+  const { t } = useTranslation("userProfile");
+  const texts = getUserProfileTexts(t);
 
+  const { currentUser, token, isAdmin, mode } = useMyContext();
+  const theme = useTheme();
+
+  const [loginSession, setLoginSession] = useState(null);
   const [credentialExpireDate, setCredentialExpireDate] = useState(null);
   const [pageError, setPageError] = useState(false);
+  const [userManagement, setUserManagement] = useState(null);
 
   const [accountExpired, setAccountExpired] = useState();
   const [accountLocked, setAccountLock] = useState();
@@ -36,19 +762,17 @@ const UserProfile = () => {
   const [is2faEnabled, setIs2faEnabled] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [code, setCode] = useState("");
-  const [step, setStep] = useState(1); // Step 1: Enable, Step 2: Verify
+  const [step, setStep] = useState(1);
 
-  //loading state
   const [loading, setLoading] = useState(false);
   const [pageLoader, setPageLoader] = useState(false);
-  const [disabledLoader, setDisbledLoader] = useState(false);
-  const [twofaCodeLoader, settwofaCodeLoader] = useState(false);
+  const [disabledLoader, setDisabledLoader] = useState(false);
+  const [twofaCodeLoader, setTwofaCodeLoader] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
-
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -59,126 +783,30 @@ const UserProfile = () => {
     mode: "onTouched",
   });
 
-  //fetching the 2fa sttaus
+  // Load user management info
+  useEffect(() => {
+    const management = getUserManagement();
+    setUserManagement(management);
+  }, []);
 
+  // Load 2FA status
   useEffect(() => {
     setPageLoader(true);
-
     const fetch2FAStatus = async () => {
       try {
         const response = await api.get(`/auth/user/2fa-status`);
         setIs2faEnabled(response.data.is2faEnabled);
       } catch (error) {
-        setPageError(error?.response?.data?.message);
-        toast.error("Error fetching 2FA status");
+        setPageError(error?.response?.data?.message || texts.updateFailed);
+        toast.error(texts.updateFailed);
       } finally {
         setPageLoader(false);
       }
     };
     fetch2FAStatus();
-  }, []);
+  }, [texts.updateFailed]);
 
-  //enable the 2fa
-  const enable2FA = async () => {
-    setDisbledLoader(true);
-    try {
-      const response = await api.post(`/auth/enable-2fa`);
-      setQrCodeUrl(response.data);
-      setStep(2);
-    } catch (error) {
-      toast.error("Error enabling 2FA");
-    } finally {
-      setDisbledLoader(false);
-    }
-  };
-
-  //diable the 2fa
-
-  const disable2FA = async () => {
-    setDisbledLoader(true);
-    try {
-      await api.post(`/auth/disable-2fa`);
-      setIs2faEnabled(false);
-      setQrCodeUrl("");
-    } catch (error) {
-      toast.error("Error disabling 2FA");
-    } finally {
-      setDisbledLoader(false);
-    }
-  };
-
-  // Verify the 2FA code
-  const verify2FA = async () => {
-    if (!code || code.trim().length === 0)
-      return toast.error("لطفاً د تایید لپاره کوډ داخل کړئ");
-
-    settwofaCodeLoader(true);
-
-    try {
-      const formData = new URLSearchParams();
-      formData.append("code", code);
-
-      const response = await api.post(`/auth/verify-2fa`, formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-
-      // که سرور نوی توکن راولي، ذخیره یې کړه
-      if (response.data?.token) {
-        localStorage.setItem("token", response.data.token);
-        // که setToken function لرې، نو دلته یې هم وغواړه
-        // setToken(response.data.token);
-      }
-
-      toast.success("✅ دوه‌مرحلې تایید بریالی شو");
-      setIs2faEnabled(true);
-      setStep(1);
-    } catch (error) {
-      const status = error?.response?.status;
-      const message = error?.response?.data?.message || error?.message;
-
-      if (status === 400 || status === 422) {
-        toast.error("❌ داخل شوی کوډ ناسم دی");
-      } else if (status === 401) {
-        toast.error("دوه‌مرحلې تصدیق کوډ نامعتبر دی");
-      } else {
-        toast.error("⚠️ د دوه‌مرحلې تایید په بهیر کې ستونزه رامنځته شوه");
-      }
-
-      console.error("Error verifying 2FA:", error);
-    } finally {
-      settwofaCodeLoader(false);
-    }
-  };
-
-  //update the credentials
-  const handleUpdateCredential = async (data) => {
-    const newUsername = data.username;
-    const newPassword = data.password;
-
-    try {
-      setLoading(true);
-      const formData = new URLSearchParams();
-      formData.append("token", token);
-      formData.append("newUsername", newUsername);
-      formData.append("newPassword", newPassword);
-      await api.post("/auth/update-credentials", formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-
-      //fetchUser();
-      toast.success("Update Credential successful");
-    } catch (error) {
-      toast.error("Update Credential failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  //set the status of (credentialsNonExpired, accountNonLocked, enabled and credentialsNonExpired) current user
+  // Populate user credentials
   useEffect(() => {
     if (currentUser?.id) {
       setValue("username", currentUser.username);
@@ -188,7 +816,6 @@ const UserProfile = () => {
       setAccountEnabled(currentUser.enabled);
       setCredentialExpired(!currentUser.credentialsNonExpired);
 
-      //moment npm package is used to format the date
       const expiredFormatDate = moment(
         currentUser?.credentialsExpiryDate
       ).format("D MMMM YYYY");
@@ -196,405 +823,603 @@ const UserProfile = () => {
     }
   }, [currentUser, setValue]);
 
+  // Decode token for last login
   useEffect(() => {
     if (token) {
       const decodedToken = jwtDecode(token);
-
       const lastLoginSession = moment
         .unix(decodedToken.iat)
         .format("dddd, D MMMM YYYY, h:mm A");
-      //set the loggin session from the token
       setLoginSession(lastLoginSession);
     }
   }, [token]);
 
-  //update the AccountExpiryStatus
-  const handleAccountExpiryStatus = async (event) => {
-    setAccountExpired(event.target.checked);
+  const enable2FA = async () => {
+    setDisabledLoader(true);
+    try {
+      const response = await api.post(`/auth/enable-2fa`);
+      setQrCodeUrl(response.data);
+      setStep(2);
+    } catch (error) {
+      toast.error(texts.updateFailed);
+    } finally {
+      setDisabledLoader(false);
+    }
+  };
 
+  const disable2FA = async () => {
+    setDisabledLoader(true);
+    try {
+      await api.post(`/auth/disable-2fa`);
+      setIs2faEnabled(false);
+      setQrCodeUrl("");
+    } catch (error) {
+      toast.error(texts.updateFailed);
+    } finally {
+      setDisabledLoader(false);
+    }
+  };
+
+  const verify2FA = async () => {
+    if (!code || code.trim().length === 0)
+      return toast.error(texts.enter2FACode);
+
+    setTwofaCodeLoader(true);
     try {
       const formData = new URLSearchParams();
-      formData.append("token", token);
-      formData.append("expire", event.target.checked);
+      formData.append("code", code);
 
-      await api.put("/auth/update-expiry-status", formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+      const response = await api.post(`/auth/verify-2fa`, formData, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
 
-      //fetchUser();
-      toast.success("Update Account Expirey Status");
+      if (response.data?.token)
+        localStorage.setItem("token", response.data.token);
+
+      toast.success(texts.twoFAVerifySuccess);
+      setIs2faEnabled(true);
+      setStep(1);
     } catch (error) {
-      toast.error("Update expirey status failed");
+      const status = error?.response?.status;
+      if (status === 400 || status === 422) toast.error(texts.twoFAVerifyFail);
+      else if (status === 401) toast.error(texts.twoFAError);
+      else toast.error(texts.updateFailed);
+    } finally {
+      setTwofaCodeLoader(false);
+    }
+  };
+
+  const handleUpdateCredential = async (data) => {
+    try {
+      setLoading(true);
+      const formData = new URLSearchParams();
+      formData.append("token", token);
+      formData.append("newUsername", data.username);
+      formData.append("newPassword", data.password);
+
+      await api.post("/auth/update-credentials", formData, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+      toast.success(texts.updateSuccess);
+    } catch (error) {
+      toast.error(texts.updateFailed);
     } finally {
       setLoading(false);
     }
   };
 
-  //update the AccountLockStatus
-  const handleAccountLockStatus = async (event) => {
-    setAccountLock(event.target.checked);
-
+  const handleAccountStatus = async (type, value) => {
+    setLoading(true);
     try {
       const formData = new URLSearchParams();
       formData.append("token", token);
-      formData.append("lock", event.target.checked);
+      formData.append(type, value);
 
-      await api.put("/auth/update-lock-status", formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+      let url = "";
+      switch (type) {
+        case "expire":
+          url = "/auth/update-expiry-status";
+          break;
+        case "lock":
+          url = "/auth/update-lock-status";
+          break;
+        case "enabled":
+          url = "/auth/update-enabled-status";
+          break;
+        case "credentialExpire":
+          url = "/auth/update-credentials-expiry-status";
+          break;
+      }
+
+      await api.put(url, formData, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
-
-      //fetchUser();
-      toast.success("Update Account Lock Status");
+      toast.success(texts.updateSuccess);
     } catch (error) {
-      toast.error("Update Account Lock status failed");
+      toast.error(texts.updateFailed);
     } finally {
       setLoading(false);
     }
   };
 
-  //update the AccountEnabledStatus
-  const handleAccountEnabledStatus = async (event) => {
-    setAccountEnabled(event.target.checked);
-    try {
-      const formData = new URLSearchParams();
-      formData.append("token", token);
-      formData.append("enabled", event.target.checked);
-
-      await api.put("/auth/update-enabled-status", formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-
-      //fetchUser();
-      toast.success("Update Account Enabled Status");
-    } catch (error) {
-      toast.error("Update Account Enabled status failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  //update the CredentialExpiredStatus
-  const handleCredentialExpiredStatus = async (event) => {
-    setCredentialExpired(event.target.checked);
-    try {
-      const formData = new URLSearchParams();
-      formData.append("token", token);
-      formData.append("expire", event.target.checked);
-
-      await api.put("/auth/update-credentials-expiry-status", formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-
-      //fetchUser();
-      toast.success("Update Credentials Expiry Status");
-    } catch (error) {
-      toast.error("Credentials Expiry Status Failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (pageError) {
-    return <Errors message={pageError} />;
-  }
-
-  //two function for opening and closing the according
-  const onOpenAccountHandler = () => {
-    setOpenAccount(!openAccount);
-    setOpenSetting(false);
-  };
-  const onOpenSettingHandler = () => {
-    setOpenSetting(!openSetting);
-    setOpenAccount(false);
-  };
+  if (pageError) return <Errors message={pageError} />;
 
   return (
-    <div className="min-h-[calc(100vh-74px)] py-10">
+    <Box
+      sx={{
+        minHeight: "calc(100vh - 74px)",
+        py: 5,
+        bgcolor: theme.palette.background.default,
+      }}
+    >
       {pageLoader ? (
-        <>
-          {" "}
-          <div className="flex  flex-col justify-center items-center  h-72">
-            <span>
-              <Blocks
-                height="70"
-                width="70"
-                color="#4fa94d"
-                ariaLabel="blocks-loading"
-                wrapperStyle={{}}
-                wrapperClass="blocks-wrapper"
-                visible={true}
-              />
-            </span>
-            <span>Please wait...</span>
-          </div>
-        </>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "18rem",
+          }}
+        >
+          <Blocks
+            height="70"
+            width="70"
+            color={theme.palette.success.main}
+            ariaLabel="blocks-loading"
+            visible
+          />
+          <Typography sx={{ color: theme.palette.text.secondary }}>
+            {texts.pleaseWait}
+          </Typography>
+        </Box>
       ) : (
-        <>
-          {" "}
-          <div className="xl:w-[70%] lg:w-[80%] sm:w-[90%] w-full sm:mx-auto sm:px-0 px-4   min-h-[500px] flex lg:flex-row flex-col gap-4 ">
-            <div className="flex-1  flex flex-col shadow-lg shadow-gray-300 gap-2 px-4 py-6">
-              <div className="flex flex-col items-center gap-2   ">
-                <Avatar
-                  alt={currentUser?.username}
-                  src="/static/images/avatar/1.jpg"
-                />
-                <h3 className="font-semibold text-2xl">
-                  {currentUser?.username}
-                </h3>
-              </div>
-              <div className="my-4 ">
-                <div className="space-y-2 px-4 mb-1">
-                  <h1 className="font-semibold text-md text-slate-800">
-                    UserName :{" "}
-                    <span className=" text-slate-700  font-normal">
-                      {currentUser?.username}
-                    </span>
-                  </h1>
-                  <h1 className="font-semibold text-md text-slate-800">
-                    Role :{" "}
-                    <span className=" text-slate-700  font-normal">
-                      {currentUser && currentUser["roles"][0]}
-                    </span>
-                  </h1>
-                </div>
-                <div className="py-3">
-                  <Accordion expanded={openAccount}>
-                    <AccordionSummary
-                      className="shadow-md shadow-gray-300"
-                      onClick={onOpenAccountHandler}
-                      expandIcon={<ArrowDropDownIcon />}
-                      aria-controls="panel1-content"
-                      id="panel1-header"
-                    >
-                      <h3 className="text-slate-800 text-lg font-semibold ">
-                        Update User Credentials
-                      </h3>
-                    </AccordionSummary>
-                    <AccordionDetails className="shadow-md shadow-gray-300">
-                      <form
-                        className=" flex flex-col gap-3"
-                        onSubmit={handleSubmit(handleUpdateCredential)}
-                      >
-                        <InputField
-                          label="UserName"
-                          required
-                          id="username"
-                          className="text-sm"
-                          type="text"
-                          message="*Username is required"
-                          placeholder="Enter your username"
-                          register={register}
-                          errors={errors}
-                        />{" "}
-                        <InputField
-                          label="Email"
-                          required
-                          id="email"
-                          className="text-sm"
-                          type="email"
-                          message="*Email is required"
-                          placeholder="Enter your email"
-                          register={register}
-                          errors={errors}
-                          readOnly
-                        />{" "}
-                        <InputField
-                          label="Enter New Password"
-                          id="password"
-                          className="text-sm"
-                          type="password"
-                          message="*Password is required"
-                          placeholder="type your password"
-                          register={register}
-                          errors={errors}
-                          min={6}
-                        />
-                        <Buttons
-                          disabled={loading}
-                          className="bg-blackColor font-semibold flex justify-center text-white w-full py-2 hover:text-slate-400 transition-colors duration-100 rounded-sm my-3"
-                          type="submit"
-                        >
-                          {loading ? <span>Loading...</span> : "Update"}
-                        </Buttons>
-                      </form>
-                    </AccordionDetails>
-                  </Accordion>
-                  <div className="mt-6">
-                    <Accordion expanded={openSetting}>
-                      <AccordionSummary
-                        className="shadow-md shadow-gray-300"
-                        onClick={onOpenSettingHandler}
-                        expandIcon={<ArrowDropDownIcon />}
-                        aria-controls="panel1-content"
-                        id="panel1-header"
-                      >
-                        <h3 className="text-slate-800 text-lg font-semibold">
-                          Account Setting
-                        </h3>
-                      </AccordionSummary>
-                      <AccordionDetails className="shadow-md shadow-gray-300">
-                        <div className="flex flex-col gap-4">
-                          <div>
-                            <h3 className="text-slate-700 font-customWeight text-sm ">
-                              Account Expired
-                            </h3>
-                            <Switch
-                              checked={accountExpired}
-                              onChange={handleAccountExpiryStatus}
-                              inputProps={{ "aria-label": "controlled" }}
-                            />
-                          </div>{" "}
-                          <div>
-                            <h3 className="text-slate-700 font-customWeight text-sm ">
-                              Account Locked
-                            </h3>
-                            <Switch
-                              checked={accountLocked}
-                              onChange={handleAccountLockStatus}
-                              inputProps={{ "aria-label": "controlled" }}
-                            />
-                          </div>{" "}
-                          <div>
-                            <h3 className="text-slate-700 font-customWeight text-sm ">
-                              Account Enabled
-                            </h3>
-                            <Switch
-                              checked={accountEnabled}
-                              onChange={handleAccountEnabledStatus}
-                              inputProps={{ "aria-label": "controlled" }}
-                            />
-                          </div>
-                          <>
-                            <div className="mb-2">
-                              <h3 className="text-slate-700 font-customWeight text-sm ">
-                                Credential Setting
-                              </h3>
-                              <div className="shadow-gray-300 shadow-md px-4 py-4 rounded-md">
-                                <p className="text-slate-700  text-sm ">
-                                  Your credential will expired{" "}
-                                  <span>{credentialExpireDate}</span>
-                                </p>
-                              </div>
-                            </div>
-                          </>
-                          <div>
-                            <h3 className="text-slate-700 font-customWeight text-sm">
-                              Credential Expired
-                            </h3>
-                            <Switch
-                              checked={credentialExpired}
-                              onChange={handleCredentialExpiredStatus}
-                              inputProps={{ "aria-label": "controlled" }}
-                            />
-                          </div>
-                        </div>
-                      </AccordionDetails>
-                    </Accordion>
-                  </div>
+        <Box
+          sx={{
+            width: { xl: "70%", lg: "80%", sm: "90%", xs: "100%" },
+            mx: "auto",
+            px: { sm: 0, xs: 2 },
+            minHeight: 500,
+            display: "flex",
+            flexDirection: { lg: "row", xs: "column" },
+            gap: 2,
+          }}
+        >
+          {/* Left Panel */}
+          <Paper
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              p: 3,
+              bgcolor: theme.palette.background.paper,
+              boxShadow: theme.shadows[3],
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Avatar
+                alt={currentUser?.username}
+                src="/static/images/avatar/1.jpg"
+                sx={{ width: 80, height: 80 }}
+              />
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+              >
+                {currentUser?.username}
+              </Typography>
 
-                  <div className="pt-10 ">
-                    <h3 className="text-slate-800 text-lg font-semibold  mb-2 px-2">
-                      Last Login Session
-                    </h3>
-                    <div className="shadow-md shadow-gray-300 px-4 py-2 rounded-md">
-                      <p className="text-slate-700 text-sm">
-                        Your Last LogIn Session when you are loggedin <br />
-                        <span>{loginSession}</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 flex flex-col shadow-lg shadow-gray-300 gap-2 px-4 py-6">
-              <div className="space-y-1">
-                <h1 className="text-slate-800 flex items-center gap-1 text-2xl font-bold">
-                  <span>تصدیق کول (MFA)</span>
-                  <span
-                    className={` ${
-                      is2faEnabled ? "bg-green-800" : "bg-customRed"
-                    } px-2 text-center py-1 text-xs mt-2 rounded-sm text-white`}
-                  >
-                    {is2faEnabled ? "فعال" : "غیر فعال شوی"}
-                  </span>
-                </h1>{" "}
-                <h3 className="text-slate-800 text-xl font-semibold">
-                  څو فکتوره تصدیق.
-                </h3>{" "}
-                <p className="text-slate-800 text-sm ">
-                  دوه‌ مرحلې تصدیق ستا حساب ته د امنیت یو اضافي پوړ یا طبقه
-                  زیاتوي.
-                </p>
-              </div>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                }}
+              >
+                {isAdmin ? (
+                  <Chip
+                    label={texts.accountSetting}
+                    color="error"
+                    sx={{ fontWeight: 600, fontFamily: "B nazanin" }}
+                  />
+                ) : userManagement ? (
+                  <Chip
+                    label={userManagement.managementName}
+                    color="primary"
+                    sx={{ fontFamily: "B nazanin", fontWeight: 600 }}
+                  />
+                ) : (
+                  <Chip
+                    label={texts.accountLocked}
+                    color="warning"
+                    sx={{ fontFamily: "B nazanin", fontWeight: 600 }}
+                  />
+                )}
+              </Box>
+            </Box>
 
-              <div>
-                <Buttons
-                  disabled={disabledLoader}
-                  onClickhandler={is2faEnabled ? disable2FA : enable2FA}
-                  className={` ${
-                    is2faEnabled ? "bg-customRed" : "bg-blackColor"
-                  } px-5 py-1 hover:text-slate-300 rounded-sm text-white mt-2`}
+            {/* Management Info Card */}
+            {userManagement && !isAdmin && (
+              <Card
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: mode === "dark" ? "#2e2e2e" : "#f5f5f5",
+                  boxShadow: 2,
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontFamily: "B nazanin",
+                    fontWeight: 600,
+                    mb: 1,
+                    color: theme.palette.text.primary,
+                  }}
                 >
-                  {disabledLoader ? (
-                    <>Loading...</>
-                  ) : (
-                    <>
-                      {is2faEnabled
-                        ? "دوه‌مرحلې تصدیق غیر فعال کړئ"
-                        : "دوه مرحلي تصدیق فعال کړئ"}
-                    </>
+                  {texts.accountSetting}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: "B nazanin",
+                    color: theme.palette.text.primary,
+                  }}
+                >
+                  څانګه: {userManagement.managementName}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontFamily: "B nazanin",
+                    color: theme.palette.text.secondary,
+                  }}
+                >
+                  {texts.credentialExpireInfo.replace(
+                    "{date}",
+                    credentialExpireDate
                   )}
-                </Buttons>
-              </div>
-              {step === 2 && (
-                <div className="py-3">
-                  <Accordion>
-                    <AccordionSummary
-                      expandIcon={<ArrowDropDownIcon />}
-                      aria-controls="panel1-content"
-                      id="panel1-header"
+                </Typography>
+              </Card>
+            )}
+
+            {/* User Credential Form */}
+            <Box sx={{ my: 2 }}>
+              <Accordion
+                expanded={openAccount}
+                onChange={() => setOpenAccount(!openAccount)}
+                sx={{
+                  bgcolor: theme.palette.background.paper,
+                  "&:before": { display: "none" },
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ArrowDropDownIcon />}
+                  sx={{ bgcolor: theme.palette.background.paper }}
+                >
+                  <Typography
+                    sx={{
+                      color: theme.palette.text.primary,
+                      fontSize: "1.125rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {texts.updateUserCredentials}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <form
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1rem",
+                    }}
+                    onSubmit={handleSubmit(handleUpdateCredential)}
+                  >
+                    <InputField
+                      label={texts.usernameLabel}
+                      required
+                      id="username"
+                      type="text"
+                      placeholder={texts.usernamePlaceholder}
+                      register={register}
+                      errors={errors}
+                    />
+                    <InputField
+                      label={texts.emailLabel}
+                      required
+                      id="email"
+                      type="email"
+                      placeholder={texts.emailPlaceholder}
+                      register={register}
+                      errors={errors}
+                      readOnly
+                    />
+                    <InputField
+                      label={texts.passwordLabel}
+                      id="password"
+                      type="password"
+                      placeholder={texts.passwordPlaceholder}
+                      register={register}
+                      errors={errors}
+                      min={6}
+                    />
+                    <Buttons
+                      disabled={loading}
+                      className="font-semibold text-white w-full py-2 rounded-sm"
+                      style={{
+                        backgroundColor:
+                          mode === "dark" ? "#1e1e1e" : "#212B36",
+                      }}
+                      type="submit"
                     >
-                      <h3 className="font-bold text-lg  text-slate-700 uppercase">
-                        کیو آر د سکن لپاره
-                      </h3>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <div className="">
-                        <img src={qrCodeUrl} alt="QR Code" />
-                        <div className="flex items-center  gap-2  mt-4">
-                          <input
-                            type="text"
-                            placeholder="دوه مرحلې کوډ داخل کړئ"
-                            value={code}
-                            required
-                            className="mt-4 border px-2 py-1 border-slate-800 rounded-md"
-                            onChange={(e) => setCode(e.target.value)}
-                          />
-                          <button
-                            className="bg-btnColor text-white  px-3 h-10 rounded-md mt-4"
-                            onClick={verify2FA}
-                          >
-                            {twofaCodeLoader ? "Loading..." : "Verify 2FA"}
-                          </button>
-                        </div>
-                      </div>
-                    </AccordionDetails>
-                  </Accordion>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+                      {loading ? texts.pleaseWait : texts.updateButton}
+                    </Buttons>
+                  </form>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Account Settings */}
+              <Accordion
+                expanded={openSetting}
+                onChange={() => setOpenSetting(!openSetting)}
+                sx={{
+                  bgcolor: theme.palette.background.paper,
+                  "&:before": { display: "none" },
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ArrowDropDownIcon />}
+                  sx={{ bgcolor: theme.palette.background.paper }}
+                >
+                  <Typography
+                    sx={{
+                      color: theme.palette.text.primary,
+                      fontSize: "1.125rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {texts.accountSetting}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: theme.palette.text.secondary }}
+                      >
+                        {texts.accountExpired}
+                      </Typography>
+                      <Switch
+                        checked={accountExpired}
+                        onChange={(e) => {
+                          setAccountExpired(e.target.checked);
+                          handleAccountStatus("expire", e.target.checked);
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: theme.palette.text.secondary }}
+                      >
+                        {texts.accountLocked}
+                      </Typography>
+                      <Switch
+                        checked={accountLocked}
+                        onChange={(e) => {
+                          setAccountLock(e.target.checked);
+                          handleAccountStatus("lock", e.target.checked);
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: theme.palette.text.secondary }}
+                      >
+                        {texts.accountEnabled}
+                      </Typography>
+                      <Switch
+                        checked={accountEnabled}
+                        onChange={(e) => {
+                          setAccountEnabled(e.target.checked);
+                          handleAccountStatus("enabled", e.target.checked);
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: theme.palette.text.secondary }}
+                      >
+                        {texts.credentialExpired}
+                      </Typography>
+                      <Switch
+                        checked={credentialExpired}
+                        onChange={(e) => {
+                          setCredentialExpired(e.target.checked);
+                          handleAccountStatus(
+                            "credentialExpire",
+                            e.target.checked
+                          );
+                        }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{ color: theme.palette.text.secondary, mt: 1 }}
+                      >
+                        {texts.credentialExpireInfo.replace(
+                          "{date}",
+                          credentialExpireDate
+                        )}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Last Login */}
+              <Box sx={{ pt: 5 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: theme.palette.text.primary,
+                    fontWeight: 600,
+                    mb: 1,
+                  }}
+                >
+                  {texts.lastLoginSession}
+                </Typography>
+                <Paper
+                  sx={{
+                    p: 2,
+                    bgcolor: theme.palette.background.paper,
+                    boxShadow: 1,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
+                    {texts.lastLoginSession}: <span>{loginSession}</span>
+                  </Typography>
+                </Paper>
+              </Box>
+            </Box>
+          </Paper>
+
+          {/* Right Panel - 2FA */}
+          <Paper
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              p: 3,
+              bgcolor: theme.palette.background.paper,
+              boxShadow: theme.shadows[3],
+            }}
+          >
+            <Typography
+              variant="h5"
+              sx={{
+                color: theme.palette.text.primary,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                fontWeight: 700,
+              }}
+            >
+              <span>{texts.mfaTitle}</span>
+              <Chip
+                label={is2faEnabled ? texts.mfaEnabled : texts.mfaDisabled}
+                color={is2faEnabled ? "success" : "error"}
+                size="small"
+                sx={{ fontFamily: "B nazanin" }}
+              />
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.text.secondary,
+                mt: 1,
+                fontFamily: "B nazanin",
+              }}
+            >
+              {texts.mfaDescription}
+            </Typography>
+
+            <Buttons
+              disabled={disabledLoader}
+              onClickhandler={is2faEnabled ? disable2FA : enable2FA}
+              className="px-5 py-1 mt-2 text-white rounded-sm"
+              style={{ backgroundColor: is2faEnabled ? "#d32f2f" : "#212B36" }}
+            >
+              {disabledLoader
+                ? texts.pleaseWait
+                : is2faEnabled
+                ? texts.disableMFA
+                : texts.enableMFA}
+            </Buttons>
+
+            {step === 2 && (
+              <Accordion
+                sx={{
+                  mt: 2,
+                  bgcolor: theme.palette.background.paper,
+                  "&:before": { display: "none" },
+                }}
+              >
+                <AccordionSummary expandIcon={<ArrowDropDownIcon />}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "1.125rem",
+                      color: theme.palette.text.primary,
+                      fontFamily: "B nazanin",
+                    }}
+                  >
+                    {texts.enter2FACode}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <img
+                    src={qrCodeUrl}
+                    alt="QR Code"
+                    style={{ marginBottom: "1rem" }}
+                  />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <input
+                      type="text"
+                      placeholder={texts.enter2FACode}
+                      value={code}
+                      required
+                      onChange={(e) => setCode(e.target.value)}
+                      style={{
+                        border: `1px solid ${theme.palette.divider}`,
+                        padding: "0.5rem",
+                        borderRadius: "0.375rem",
+                        flex: 1,
+                        backgroundColor: theme.palette.background.paper,
+                        color: theme.palette.text.primary,
+                      }}
+                    />
+                    <button
+                      onClick={verify2FA}
+                      style={{
+                        backgroundColor: theme.palette.primary.main,
+                        color: "#fff",
+                        padding: "0.5rem 0.75rem",
+                        height: "2.5rem",
+                        borderRadius: "0.375rem",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {twofaCodeLoader ? texts.pleaseWait : texts.verify2FA}
+                    </button>
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            )}
+          </Paper>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 

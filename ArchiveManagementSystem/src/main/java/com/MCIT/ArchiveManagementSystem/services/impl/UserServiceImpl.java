@@ -79,6 +79,7 @@ public class UserServiceImpl implements UserService {
                 user.getUserId(),
                 user.getUserName(),
                 user.getEmail(),
+                user.getProfileImage(),
                 user.isAccountNonLocked(),
                 user.isAccountNonExpired(),
                 user.isCredentialsNonExpired(),

@@ -7,8 +7,12 @@ import { Blocks } from "react-loader-spinner";
 import Buttons from "../../utils/Buttons";
 import toast from "react-hot-toast";
 import Errors from "../Errors";
+import { useTranslation } from "react-i18next";
+import { getUserDetailsTexts } from "./getUserDetailsTexts";
 
 const UserDetails = () => {
+  const { t } = useTranslation("userDetails");
+  const texts = getUserDetailsTexts(t);
   const {
     register,
     handleSubmit,

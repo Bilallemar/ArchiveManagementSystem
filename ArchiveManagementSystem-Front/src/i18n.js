@@ -1,0 +1,199 @@
+// import i18n from "i18next";
+// import { initReactI18next } from "react-i18next";
+
+// // ================== Pashto ==================
+// import psLogin from "./locales/ps/login.json";
+// import psForgotPassword from "./locales/ps/forgotPassword.json";
+// import psUserManagement from "./locales/ps/userManagement.json";
+// import psUsers from "./locales/ps/users.json";
+// import psNavbar from "./locales/ps/navbar.json";
+// import psUserProfile from "./locales/ps/UserProfile.json";
+// import psUserDetails from "./locales/ps/UserDetails.json";
+// import psSidebarLayout from "./locales/ps/SidebarLayout.json";
+
+// // ================== Dari ==================
+// import faLogin from "./locales/fa/login.json";
+// import faForgotPassword from "./locales/fa/forgotPassword.json";
+// import faUserManagement from "./locales/fa/userManagement.json";
+// import faUsers from "./locales/fa/users.json";
+// import faUserDetails from "./locales/fa/UserDetails.json";
+// import faUserProfile from "./locales/fa/UserProfile.json";
+// import faNavbar from "./locales/fa/navbar.json";
+// import faSidebarLayout from "./locales/fa/SidebarLayout.json";
+
+// // ================== English ==================
+// import enLogin from "./locales/en/login.json";
+// import enForgotPassword from "./locales/en/forgotPassword.json";
+// import enUserManagement from "./locales/en/userManagement.json";
+// import enUsers from "./locales/en/users.json";
+// import enUserDetails from "./locales/en/UserDetails.json";
+// import enUserProfile from "./locales/en/UserProfile.json";
+// import enNavbar from "./locales/en/navbar.json";
+// import enSidebarLayout from "./locales/en/SidebarLayout.json";
+
+// i18n.use(initReactI18next).init({
+//   resources: {
+//     ps: {
+//       login: psLogin,
+//       forgotPassword: psForgotPassword,
+//       userManagement: psUserManagement,
+//       users: psUsers,
+//       userDetails: psUserDetails,
+//       userProfile: psUserProfile,
+//       navbar: psNavbar,
+//       SidebarLayout: psSidebarLayout,
+//     },
+
+//     fa: {
+//       login: faLogin,
+//       forgotPassword: faForgotPassword,
+//       userManagement: faUserManagement,
+//       users: faUsers,
+//       userDetails: faUserDetails,
+//       userProfile: faUserProfile,
+//       navbar: faNavbar,
+//       SidebarLayout: faSidebarLayout,
+//     },
+
+//     en: {
+//       login: enLogin,
+//       forgotPassword: enForgotPassword,
+//       userManagement: enUserManagement,
+//       users: enUsers,
+//       userDetails: enUserDetails,
+//       userProfile: enUserProfile,
+//       navbar: enNavbar,
+//       SidebarLayout: enSidebarLayout,
+//     },
+//   },
+
+//   lng: "ps", // ✅ default Pashto
+//   fallbackLng: "ps", // ✅ fallback Pashto
+//   supportedLngs: ["ps", "fa", "en"],
+
+//   interpolation: {
+//     escapeValue: false,
+//   },
+
+//   ns: [
+//     "login",
+//     "forgotPassword",
+//     "userManagement",
+//     "users",
+//     "userDetails",
+//     "userProfile",
+//     "navbar",
+//     "SidebarLayout",
+//   ],
+
+//   defaultNS: "login",
+// });
+
+// export default i18n;
+
+// src/i18n.js
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+
+// ================== Pashto ==================
+import psLogin from "./locales/ps/login.json";
+import psForgotPassword from "./locales/ps/forgotPassword.json";
+import psUserManagement from "./locales/ps/userManagement.json";
+import psUsers from "./locales/ps/users.json";
+import psNavbar from "./locales/ps/navbar.json";
+import psUserProfile from "./locales/ps/UserProfile.json";
+import psUserDetails from "./locales/ps/UserDetails.json";
+import psSidebarLayout from "./locales/ps/SidebarLayout.json";
+import psLandingPage from "./locales/ps/landingPage.json";
+import psArchive from "./locales/ps/archive.json";
+
+// ================== Dari ==================
+import faLogin from "./locales/fa/login.json";
+import faForgotPassword from "./locales/fa/forgotPassword.json";
+import faUserManagement from "./locales/fa/userManagement.json";
+import faUsers from "./locales/fa/users.json";
+import faUserDetails from "./locales/fa/UserDetails.json";
+import faUserProfile from "./locales/fa/UserProfile.json";
+import faNavbar from "./locales/fa/navbar.json";
+import faSidebarLayout from "./locales/fa/SidebarLayout.json";
+import faLandingPage from "./locales/fa/landingPage.json";
+import faArchive from "./locales/fa/archive.json";
+// ================== English ==================
+import enLogin from "./locales/en/login.json";
+import enForgotPassword from "./locales/en/forgotPassword.json";
+import enUserManagement from "./locales/en/userManagement.json";
+import enUsers from "./locales/en/users.json";
+import enUserDetails from "./locales/en/UserDetails.json";
+import enUserProfile from "./locales/en/UserProfile.json";
+import enNavbar from "./locales/en/navbar.json";
+import enSidebarLayout from "./locales/en/SidebarLayout.json";
+import enLandingPage from "./locales/en/landingPage.json";
+import enArchive from "./locales/en/archive.json";
+
+i18n.use(initReactI18next).init({
+  resources: {
+    ps: {
+      login: psLogin,
+      forgotPassword: psForgotPassword,
+      userManagement: psUserManagement,
+      users: psUsers,
+      userDetails: psUserDetails,
+      userProfile: psUserProfile,
+      navbar: psNavbar,
+      SidebarLayout: psSidebarLayout,
+      landingPage: psLandingPage, // ✅ added
+      archive: psArchive,
+    },
+
+    fa: {
+      login: faLogin,
+      forgotPassword: faForgotPassword,
+      userManagement: faUserManagement,
+      users: faUsers,
+      userDetails: faUserDetails,
+      userProfile: faUserProfile,
+      navbar: faNavbar,
+      SidebarLayout: faSidebarLayout,
+      landingPage: faLandingPage, // ✅ added
+      archive: faArchive,
+    },
+
+    en: {
+      login: enLogin,
+      forgotPassword: enForgotPassword,
+      userManagement: enUserManagement,
+      users: enUsers,
+      userDetails: enUserDetails,
+      userProfile: enUserProfile,
+      navbar: enNavbar,
+      SidebarLayout: enSidebarLayout,
+      landingPage: enLandingPage, // ✅ added
+      archive: enArchive,
+    },
+  },
+
+  lng: "ps",
+  fallbackLng: "ps",
+  supportedLngs: ["ps", "fa", "en"],
+
+  interpolation: {
+    escapeValue: false,
+  },
+
+  ns: [
+    "login",
+    "forgotPassword",
+    "userManagement",
+    "users",
+    "userDetails",
+    "userProfile",
+    "navbar",
+    "SidebarLayout",
+    "landingPage", // ✅ added
+    "archive",
+  ],
+
+  defaultNS: "login",
+});
+
+export default i18n;

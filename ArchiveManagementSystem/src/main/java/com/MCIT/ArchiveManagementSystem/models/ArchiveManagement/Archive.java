@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.MCIT.ArchiveManagementSystem.models.DocType;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
 
 
@@ -26,11 +28,16 @@ public class Archive {
     @ManyToOne
     @JoinColumn(name = "org")
     private Org org;
-
+  @ManyToOne
+    @JoinColumn(name = "management_id")
+    private Management management;
+    
     private String submitedDate;
     private String description;
-    private String docType;
+  @ManyToOne
+    @JoinColumn(name = "doc_type_id")
+    private DocType docType;
     private Integer year;
-    private Boolean isIndraj;
+    private Boolean isIncoming;
 }
 

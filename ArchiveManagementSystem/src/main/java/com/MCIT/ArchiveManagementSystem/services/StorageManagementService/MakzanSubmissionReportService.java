@@ -4,15 +4,23 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanSubmissionReport;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanSubmissionReportRepository;
+import com.MCIT.ArchiveManagementSystem.util.AuditLogHelper;
 
 @Service
 public class MakzanSubmissionReportService {
     private final MakzanSubmissionReportRepository makzanSubmissionReportRepository;
-    public MakzanSubmissionReportService( MakzanSubmissionReportRepository makzanSubmissionReportRepository) {
+       private final AuditLogHelper auditLogHelper;
+
+        private static final String TABLE_NAME = "makzan_submission_report";
+
+    public MakzanSubmissionReportService( MakzanSubmissionReportRepository makzanSubmissionReportRepository,AuditLogHelper auditLogHelper) {
         this.makzanSubmissionReportRepository = makzanSubmissionReportRepository;
+        this.auditLogHelper = auditLogHelper;
     }
      public List<MakzanSubmissionReport> gitAllMakzanSubmissionReport() {
         return makzanSubmissionReportRepository.findAll();
@@ -21,8 +29,18 @@ public class MakzanSubmissionReportService {
         return makzanSubmissionReportRepository.findById(id);
     }
 
-    public MakzanSubmissionReport createMakzanSubmissionReport(MakzanSubmissionReport annualReport) {
-        return makzanSubmissionReportRepository.save(annualReport);
+    // public MakzanSubmissionReport createMakzanSubmissionReport(MakzanSubmissionReport annualReport) {
+    //     auditLogHelper.logCreate(TABLE_NAME, annualReport.getId().longValue(), 
+    //         annualReport.getDescription());
+    //     return makzanSubmissionReportRepository.save(annualReport);
+    // }
+        public MakzanSubmissionReport createMakzanSubmissionReport(MakzanSubmissionReport annualReport, MultipartFile fileURL) {
+        annualReport = makzanSubmissionReportRepository.save(annualReport);
+
+
+auditLogHelper.logCreate(TABLE_NAME, annualReport.getId().longValue(), 
+          annualReport.getDescription());
+        return annualReport;
     }
     public MakzanSubmissionReport updateMakzanSubmissionReport(Integer id, MakzanSubmissionReport annualReportDetails) {
         MakzanSubmissionReport existingReport = makzanSubmissionReportRepository.findById(id)
@@ -32,6 +50,9 @@ public class MakzanSubmissionReportService {
         existingReport.setDocType(annualReportDetails.getDocType());
         existingReport.setSummaryWaseqa(annualReportDetails.getSummaryWaseqa());
         existingReport.setDescription(annualReportDetails.getDescription());
+
+        auditLogHelper.logUpdate(TABLE_NAME, annualReportDetails.getId().longValue(), annualReportDetails.getDescription());
+
         return makzanSubmissionReportRepository.save(existingReport);
 
     }
@@ -39,6 +60,8 @@ public class MakzanSubmissionReportService {
 
          MakzanSubmissionReport annualReport = makzanSubmissionReportRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("annualReportInfo not found with id: " + id));
+             auditLogHelper.logDelete(TABLE_NAME, id.longValue(), annualReport.getDescription());
+
         makzanSubmissionReportRepository.delete(annualReport);
     }
 // public List<AnnualReportInfo> searchByKeyword(String field, String keyword) {

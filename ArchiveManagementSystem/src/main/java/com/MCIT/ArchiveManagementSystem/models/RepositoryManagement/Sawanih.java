@@ -1,5 +1,6 @@
 package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
 
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
 
 import jakarta.persistence.*;
@@ -27,9 +28,11 @@ public class Sawanih {
     @ManyToOne
     @JoinColumn(name = "org")
     private Org org;
-
+  @ManyToOne
+    @JoinColumn(name = "management_id")
+    private Management management;
+    
     private String description;
     private Integer pageQuantity;
-    private Boolean isIndraj;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../services/api";
 import { FcGoogle } from "react-icons/fc";
@@ -9,17 +9,17 @@ import InputField from "../InputField/InputField";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useMyContext } from "../../store/ContextApi";
-import { useEffect } from "react";
+import { Box, Paper } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 const Signup = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const [role, setRole] = useState();
   const [loading, setLoading] = useState(false);
-  // Access the token and setToken function using the useMyContext hook from the ContextProvider
-  const { token } = useMyContext();
+  const { token, mode } = useMyContext();
   const navigate = useNavigate();
+  const theme = useTheme();
 
-  //react hook form initialization
   const {
     register,
     handleSubmit,
@@ -51,15 +51,12 @@ const Signup = () => {
     try {
       setLoading(true);
       const response = await api.post("/auth/public/signup", sendData);
-      toast.success("Reagister Successful");
+      toast.success("Register Successful");
       reset();
       if (response.data) {
         navigate("/login");
       }
     } catch (error) {
-      // Add an error programmatically by using the setError function provided by react-hook-form
-      //setError(keyword,message) => keyword means the name of the field where I want to show the error
-
       if (
         error?.response?.data?.message === "Error: Username is already taken!"
       ) {
@@ -74,53 +71,133 @@ const Signup = () => {
     }
   };
 
-  //if there is token  exist navigate to the user to the home page if he tried to access the login page
   useEffect(() => {
     if (token) navigate("/");
   }, [navigate, token]);
 
   return (
-    <div className="min-h-[calc(100vh-74px)] flex justify-center items-center">
-      <form
+    <Box
+      sx={{
+        minHeight: "calc(100vh - 74px)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        bgcolor: theme.palette.background.default,
+        px: 2,
+      }}
+    >
+      <Paper
+        component="form"
         onSubmit={handleSubmit(onSubmitHandler)}
-        className="sm:w-[450px] w-[360px]  shadow-custom py-6 sm:px-8 px-4"
+        sx={{
+          width: { xs: 360, sm: 450 },
+          p: { xs: 3, sm: 4 },
+          bgcolor: theme.palette.background.paper,
+          boxShadow: theme.shadows[3],
+          borderRadius: 2,
+        }}
       >
-        <div>
-          <h1 className="font-montserrat text-center font-bold text-2xl">
-            Register Here Here
+        <Box sx={{ mb: 3 }}>
+          <h1
+            style={{
+              fontFamily: "Montserrat",
+              textAlign: "center",
+              fontWeight: "bold",
+              fontSize: "2rem",
+              color: theme.palette.text.primary,
+            }}
+          >
+            Register Here
           </h1>
-          <p className="text-slate-600 text-center">
+          <p
+            style={{
+              color: theme.palette.text.secondary,
+              textAlign: "center",
+              fontSize: "0.875rem",
+            }}
+          >
             Enter your credentials to create new account
           </p>
-          <div className="flex items-center justify-between gap-1 py-5 ">
+
+          {/* OAuth Buttons */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1,
+              py: 3,
+            }}
+          >
             <a
               href={`${apiUrl}/oauth2/authorization/google`}
-              className="flex gap-1 items-center justify-center flex-1 border p-2 shadow-sm shadow-slate-200 rounded-md hover:bg-slate-300 transition-all duration-300"
+              style={{
+                display: "flex",
+                gap: "0.25rem",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: 1,
+                border: `1px solid ${theme.palette.divider}`,
+                padding: "0.5rem",
+                borderRadius: "0.375rem",
+                backgroundColor: theme.palette.background.paper,
+                transition: "all 0.3s",
+              }}
             >
-              <span>
-                <FcGoogle className="text-2xl" />
-              </span>
-              <span className="font-semibold sm:text-customText text-xs">
+              <FcGoogle style={{ fontSize: "1.5rem" }} />
+              <span
+                style={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  color: theme.palette.text.primary,
+                }}
+              >
                 Login with Google
               </span>
             </a>
+
             <a
               href={`${apiUrl}/oauth2/authorization/github`}
-              className="flex gap-1 items-center justify-center flex-1 border p-2 shadow-sm shadow-slate-200 rounded-md hover:bg-slate-300 transition-all duration-300"
+              style={{
+                display: "flex",
+                gap: "0.25rem",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: 1,
+                border: `1px solid ${theme.palette.divider}`,
+                padding: "0.5rem",
+                borderRadius: "0.375rem",
+                backgroundColor: theme.palette.background.paper,
+                transition: "all 0.3s",
+              }}
             >
-              <span>
-                <FaGithub className="text-2xl" />
-              </span>
-              <span className="font-semibold sm:text-customText text-xs">
+              <FaGithub
+                style={{
+                  fontSize: "1.5rem",
+                  color: theme.palette.text.primary,
+                }}
+              />
+              <span
+                style={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  color: theme.palette.text.primary,
+                }}
+              >
                 Login with Github
               </span>
             </a>
-          </div>
+          </Box>
 
-          <Divider className="font-semibold">OR</Divider>
-        </div>
+          <Divider
+            sx={{ fontWeight: 600, color: theme.palette.text.secondary }}
+          >
+            OR
+          </Divider>
+        </Box>
 
-        <div className="flex flex-col gap-2">
+        {/* Form Fields */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <InputField
             label="UserName"
             required
@@ -130,7 +207,7 @@ const Signup = () => {
             placeholder="type your username"
             register={register}
             errors={errors}
-          />{" "}
+          />
           <InputField
             label="Email"
             required
@@ -152,7 +229,9 @@ const Signup = () => {
             errors={errors}
             min={6}
           />
-        </div>
+        </Box>
+
+        {/* Submit Button */}
         <Buttons
           disabled={loading}
           onClickhandler={() => {}}
@@ -162,17 +241,29 @@ const Signup = () => {
           {loading ? <span>Loading...</span> : "Register"}
         </Buttons>
 
-        <p className="text-center text-sm text-slate-700 mt-2">
+        {/* Login Link */}
+        <p
+          style={{
+            textAlign: "center",
+            fontSize: "0.875rem",
+            color: theme.palette.text.secondary,
+            marginTop: "0.5rem",
+          }}
+        >
           Already have an account?{" "}
           <Link
-            className="font-semibold underline hover:text-black"
+            style={{
+              fontWeight: 600,
+              textDecoration: "underline",
+              color: theme.palette.text.primary,
+            }}
             to="/login"
           >
             Login
           </Link>
         </p>
-      </form>
-    </div>
+      </Paper>
+    </Box>
   );
 };
 

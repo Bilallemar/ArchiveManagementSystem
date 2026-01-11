@@ -41,6 +41,8 @@ public class User {
     @Email
     @Column(name = "email")
     private String email;
+    @Column(name = "profile_image")
+private String profileImage;
 
     @Size(max = 120)
     @Column(name = "password")
@@ -88,7 +90,9 @@ public class User {
         this.userName = userName;
         this.email = email;
     }
-
+   @ManyToOne
+    @JoinColumn(name = "org") // ADD THIS if missing
+    private Org org;
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
