@@ -1570,7 +1570,6 @@ import {
   Alert,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-
 import {
   getManagementName,
   isAdmin,
@@ -1741,23 +1740,21 @@ export default function LandingPage() {
     },
   ];
 
-  const defaultMonths =
-    text.months.length > 0
-      ? text.months
-      : [
-          "حمل",
-          "ثور",
-          "جوزا",
-          "سرطان",
-          "اسد",
-          "سنبله",
-          "میزان",
-          "عقرب",
-          "قوس",
-          "جدی",
-          "دلو",
-          "حوت",
-        ];
+  const defaultMonths = [
+    "حمل",
+    "ثور",
+    "جوزا",
+    "سرطان",
+    "اسد",
+    "سنبله",
+    "میزان",
+    "عقرب",
+    "قوس",
+    "جدی",
+    "دلو",
+    "حوت",
+  ];
+
   const displayMonths =
     chartData.months.length > 0 ? chartData.months : defaultMonths;
   const displaySenderData =
@@ -1819,7 +1816,7 @@ export default function LandingPage() {
       }}
     >
       <Box sx={{ maxWidth: "1400px", mx: "auto" }}>
-        {/* Stat Cards */}
+        {/* Stat Cards - Main */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {statCards.map((card, index) => {
             const percentage = calculatePercentage(
@@ -1836,12 +1833,12 @@ export default function LandingPage() {
                     borderRadius: 4,
                     p: 3,
                     boxShadow:
-                      "0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06)",
+                      "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
                     border: "1px solid #F3F4F6",
                     transition: "all 0.3s",
                     "&:hover": {
                       boxShadow:
-                        "0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)",
+                        "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
                     },
                   }}
                 >
@@ -1927,76 +1924,123 @@ export default function LandingPage() {
           })}
         </Grid>
 
-        {/* Management Cards */}
+        {/* Management Cards - Same Style as Stat Cards */}
         {userIsAdmin && (
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            {managementCards.map((card, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Card
-                  sx={{
-                    bgcolor: "white",
-                    borderRadius: 4,
-                    p: 3,
-                    boxShadow:
-                      "0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06)",
-                    border: "1px solid #F3F4F6",
-                    transition: "all 0.3s",
-                    "&:hover": {
+            {managementCards.map((card, index) => {
+              const percentage = calculatePercentage(
+                card.weeklyValue,
+                card.value
+              );
+              const isPositive = card.weeklyValue >= 0;
+
+              return (
+                <Grid item xs={12} md={4} key={index}>
+                  <Card
+                    sx={{
+                      bgcolor: "white",
+                      borderRadius: 4,
+                      p: 3,
                       boxShadow:
-                        "0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)",
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
+                        "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                      border: "1px solid #F3F4F6",
+                      transition: "all 0.3s",
+                      "&:hover": {
+                        boxShadow:
+                          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                      },
+                    }}
                   >
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        sx={{
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          color: "#6B7280",
-                          mb: 1,
-                        }}
-                      >
-                        {card.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "2.25rem",
-                          fontWeight: 700,
-                          color: "#111827",
-                          mb: 1.5,
-                        }}
-                      >
-                        {card.value.toLocaleString()}
-                      </Typography>
-                    </Box>
                     <Box
-                      sx={{
-                        width: 64,
-                        height: 64,
-                        bgcolor: card.lightBg,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
+                      sx={{ display: "flex", justifyContent: "space-between" }}
                     >
-                      <MiniSparkline
-                        data={card.sparklineData}
-                        color={card.color}
-                      />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          sx={{
+                            fontSize: "0.875rem",
+                            fontWeight: 600,
+                            color: "#6B7280",
+                            mb: 1,
+                          }}
+                        >
+                          {card.title}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: "2.25rem",
+                            fontWeight: 700,
+                            color: "#111827",
+                            mb: 1.5,
+                          }}
+                        >
+                          {card.value.toLocaleString()}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          {isPositive ? (
+                            <TrendingUpIcon
+                              sx={{ fontSize: 16, color: "#10B981" }}
+                            />
+                          ) : (
+                            <TrendingDownIcon
+                              sx={{ fontSize: 16, color: "#EF4444" }}
+                            />
+                          )}
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: "0.875rem",
+                              fontWeight: 600,
+                              color: isPositive ? "#10B981" : "#EF4444",
+                            }}
+                          >
+                            {isPositive ? "+" : ""}
+                            {percentage}%
+                          </Typography>
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: "0.875rem",
+                              color: "#6B7280",
+                              ml: 0.5,
+                            }}
+                          >
+                            {text.last7Days}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          bgcolor: card.lightBg,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <MiniSparkline
+                          data={card.sparklineData}
+                          color={card.color}
+                        />
+                      </Box>
                     </Box>
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         )}
 
-        {/* Charts */}
+        {/* Charts - Always Visible */}
         <Grid container spacing={3}>
+          {/* Donut Chart - Only show if there's data */}
           {hasDonutData && (
             <Grid item xs={12} lg={4}>
               <Card
@@ -2005,7 +2049,7 @@ export default function LandingPage() {
                   borderRadius: 4,
                   p: 3,
                   boxShadow:
-                    "0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06)",
+                    "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
                   border: "1px solid #F3F4F6",
                   height: "100%",
                 }}
@@ -2021,13 +2065,172 @@ export default function LandingPage() {
                   {text.documentDistribution}
                 </Typography>
 
-                {/* Donut chart code remains */}
-                {/* ... (unchanged) */}
+                <Box
+                  sx={{
+                    position: "relative",
+                    display: "flex",
+                    justifyContent: "center",
+                    mb: 3,
+                  }}
+                >
+                  <svg width="220" height="220" viewBox="0 0 220 220">
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="75"
+                      fill="none"
+                      stroke="#FFAB00"
+                      strokeWidth="35"
+                      strokeDasharray={`${
+                        (chartData.totalSender /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      } 471`}
+                      strokeDashoffset="0"
+                      transform="rotate(-90 110 110)"
+                    />
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="75"
+                      fill="none"
+                      stroke="#00B8D9"
+                      strokeWidth="35"
+                      strokeDasharray={`${
+                        (chartData.totalRecipient /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      } 471`}
+                      strokeDashoffset={`-${
+                        (chartData.totalSender /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      }`}
+                      transform="rotate(-90 110 110)"
+                    />
+                    <circle
+                      cx="110"
+                      cy="110"
+                      r="75"
+                      fill="none"
+                      stroke="#00A76F"
+                      strokeWidth="35"
+                      strokeDasharray={`${
+                        (chartData.totalFile /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      } 471`}
+                      strokeDashoffset={`-${
+                        ((chartData.totalSender + chartData.totalRecipient) /
+                          (chartData.totalSender +
+                            chartData.totalRecipient +
+                            chartData.totalFile)) *
+                        471
+                      }`}
+                      transform="rotate(-90 110 110)"
+                    />
+                  </svg>
+
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontSize: "0.75rem", color: "#6B7280", mb: 0.5 }}
+                    >
+                      {text.total}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "1.875rem",
+                        fontWeight: 700,
+                        color: "#111827",
+                      }}
+                    >
+                      {(
+                        chartData.totalSender +
+                        chartData.totalRecipient +
+                        chartData.totalFile
+                      ).toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
+                >
+                  {[
+                    {
+                      color: "#FFAB00",
+                      label: text.sender,
+                      value: chartData.totalSender,
+                    },
+                    {
+                      color: "#00B8D9",
+                      label: text.recipient,
+                      value: chartData.totalRecipient,
+                    },
+                    {
+                      color: "#00A76F",
+                      label: text.file,
+                      value: chartData.totalFile,
+                    },
+                  ].map((item, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            bgcolor: item.color,
+                            borderRadius: "50%",
+                          }}
+                        />
+                        <Typography
+                          sx={{ fontSize: "0.875rem", color: "#6B7280" }}
+                        >
+                          {item.label}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={{
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          color: "#111827",
+                        }}
+                      >
+                        {item.value.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
               </Card>
             </Grid>
           )}
 
-          {/* Dynamic Bar Chart */}
+          {/* Bar Chart - Always Visible */}
           <Grid item xs={12} lg={hasDonutData ? 8 : 12}>
             <Card
               sx={{
@@ -2035,12 +2238,11 @@ export default function LandingPage() {
                 borderRadius: 4,
                 p: 3,
                 boxShadow:
-                  "0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06)",
+                  "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
                 border: "1px solid #F3F4F6",
                 height: "100%",
               }}
             >
-              {/* Title + Year */}
               <Box
                 sx={{
                   display: "flex",
@@ -2078,7 +2280,6 @@ export default function LandingPage() {
                 </Box>
               </Box>
 
-              {/* Bar chart */}
               <Box sx={{ position: "relative", height: 288 }}>
                 <Box
                   sx={{
@@ -2117,7 +2318,10 @@ export default function LandingPage() {
                       (displayRecipientData[idx] / maxHeight) * 100;
                     const file = (displayFileData[idx] / maxHeight) * 100;
 
-                    const monthLabel = text.months?.[idx] || month;
+                    const monthLabel =
+                      Array.isArray(text.months) && text.months[idx]
+                        ? text.months[idx]
+                        : month;
 
                     return (
                       <Box
@@ -2187,6 +2391,39 @@ export default function LandingPage() {
                     );
                   })}
                 </Box>
+              </Box>
+
+              {/* Legend */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 3,
+                  mt: 2,
+                }}
+              >
+                {[
+                  { color: "#FFAB00", label: text.sender },
+                  { color: "#00B8D9", label: text.recipient },
+                  { color: "#00A76F", label: text.file },
+                ].map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                  >
+                    <Box
+                      sx={{
+                        width: 12,
+                        height: 12,
+                        bgcolor: item.color,
+                        borderRadius: "50%",
+                      }}
+                    />
+                    <Typography sx={{ fontSize: "0.875rem", color: "#6B7280" }}>
+                      {item.label}
+                    </Typography>
+                  </Box>
+                ))}
               </Box>
             </Card>
           </Grid>

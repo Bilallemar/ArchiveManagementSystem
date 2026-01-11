@@ -347,10 +347,14 @@ export default function SidebarLayout({ children }) {
           {groupedNav.map((group) => (
             <React.Fragment key={group.group}>
               {group.items.length === 1 && group.group === "dashboard" ? (
+                // ✅ FIXED: Dashboard single item - now navigates properly
                 <ListItem disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
-                    onClick={() => navigate(group.items[0].path)}
-                    selected={pathname === group.items[0].path}
+                    onClick={() => {
+                      navigate("/");
+                      if (isMobile) setMobileOpen(false); // Close drawer on mobile
+                    }}
+                    selected={pathname === "/"}
                     sx={{
                       borderRadius: 2,
                       mx: 1,
@@ -359,22 +363,25 @@ export default function SidebarLayout({ children }) {
                         color: group.color,
                         "& .MuiListItemIcon-root": { color: group.color },
                       },
+                      "&:hover": {
+                        bgcolor: `${group.color}10`,
+                      },
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
+                    <ListItemIcon sx={{ minWidth: 40, color: group.color }}>
                       {group.icon}
                     </ListItemIcon>
                     <ListItemText
                       primary={group.label}
                       primaryTypographyProps={{
                         fontSize: "0.9rem",
-                        fontWeight:
-                          pathname === group.items[0].path ? 600 : 500,
+                        fontWeight: pathname === "/" ? 600 : 500,
                       }}
                     />
                   </ListItemButton>
                 </ListItem>
               ) : (
+                // Multi-item groups (Archive, Hifziya, Makzan, Settings)
                 <>
                   <ListItem disablePadding sx={{ mb: 0.5 }}>
                     <ListItemButton

@@ -103,10 +103,13 @@ export const isAdmin = () => {
 export const getNavigationItems = () => {
   const managementId = getManagementId();
   const admin = isAdmin();
-
+  const baseItems = [
+    { path: "/", label: "ډشبورډ" }, // ✅ ADD THIS - Dashboard for everyone
+  ];
   // Admin sees everything
   if (admin) {
     return [
+      ...baseItems,
       {
         path: "/hifziya-hazari",
         label: "کتاب حاضري",
@@ -142,19 +145,21 @@ export const getNavigationItems = () => {
   // Regular user sees only their management section
   const allItems = {
     [MANAGEMENTS.HIFZIYA]: [
+      ...baseItems,
       { path: "/hifziya-hazari", label: "کتاب حاضري" },
       { path: "/hifziya-warada-sadera", label: "وارده صادره" },
       { path: "/sawanih", label: "سوانح" },
     ],
-    [MANAGEMENTS.ARCHIVE]: [{ path: "/archive", label: "آرشیف" }],
+    [MANAGEMENTS.ARCHIVE]: [...baseItems, { path: "/archive", label: "آرشیف" }],
     [MANAGEMENTS.MAKHZAN]: [
+      ...baseItems,
       { path: "/makzan-annual-reports", label: "راپور سال تمام" },
       { path: "/makzan-receipts", label: "رسیدات" },
       { path: "/annual-reports-info", label: "ارایه معلومات راپور" },
     ],
   };
 
-  return allItems[managementId] || [];
+  return allItems[managementId] || baseItems;
 };
 
 // =========================
