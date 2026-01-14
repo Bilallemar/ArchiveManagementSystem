@@ -7,6 +7,7 @@ export const getUserManagementTexts = (t) => ({
   ),
   username: t("username"),
   email: t("email"),
+  createdDate: t("createdDate") || "Created Date",
   role: t("role"),
   currentManagement: t("currentManagement"),
   assignNewManagement: t("assignNewManagement"),

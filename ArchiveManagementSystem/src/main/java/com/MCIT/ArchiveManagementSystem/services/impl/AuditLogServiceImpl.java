@@ -7,6 +7,8 @@ import com.MCIT.ArchiveManagementSystem.repositories.AuditLogRepository;
 import com.MCIT.ArchiveManagementSystem.services.AuditLogService;
 
 import java.util.List;
+import java.time.LocalDateTime;
+
 
 @Service
 public class AuditLogServiceImpl implements AuditLogService {
@@ -46,6 +48,17 @@ public class AuditLogServiceImpl implements AuditLogService {
     //     log.setTimestamp(LocalDateTime.now());
     //     auditLogRepository.save(log);
     // }
+@Override
+public void logAction(String action, String username, String tableName, Long recordId, String recordContent) {
+    AuditLog log = new AuditLog();
+    log.setAction(action);
+    log.setUsername(username);
+    log.setTableName(tableName);
+    log.setRecordId(recordId);
+    log.setRecordContent(recordContent);
+    log.setTimestamp(LocalDateTime.now());
+    auditLogRepository.save(log);
+}
 
     @Override
     public List<AuditLog> getAllAuditLogs() {

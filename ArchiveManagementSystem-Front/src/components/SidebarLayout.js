@@ -545,9 +545,9 @@ export default function SidebarLayout({ children }) {
             </Select>
           </FormControl>
 
-          <IconButton onClick={toggleTheme} sx={{ mr: 1 }}>
+          {/* <IconButton onClick={toggleTheme} sx={{ mr: 1 }}>
             {mode === "dark" ? <LightMode /> : <DarkMode />}
-          </IconButton>
+          </IconButton> */}
 
           <IconButton sx={{ mr: 1 }}>
             <Badge badgeContent={4} color="error">
@@ -588,7 +588,12 @@ export default function SidebarLayout({ children }) {
           </ListItemIcon>
           {text.profile}
         </MenuItem>
-        <MenuItem onClick={handleProfileMenuClose}>
+        <MenuItem
+          onClick={() => {
+            navigate("/master-data");
+            handleProfileMenuClose();
+          }}
+        >
           <ListItemIcon>
             <Settings fontSize="small" />
           </ListItemIcon>
@@ -598,7 +603,7 @@ export default function SidebarLayout({ children }) {
         {isAdmin && (
           <>
             <Divider />
-            <MenuItem
+            {/* <MenuItem
               onClick={() => {
                 navigate("/admin/users");
                 handleProfileMenuClose();
@@ -608,7 +613,7 @@ export default function SidebarLayout({ children }) {
                 <AdminPanelSettings fontSize="small" />
               </ListItemIcon>
               {text.users}
-            </MenuItem>
+            </MenuItem> */}
             <MenuItem
               onClick={() => {
                 navigate("/admin/audit-logs");

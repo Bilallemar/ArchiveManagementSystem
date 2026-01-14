@@ -15,6 +15,7 @@ public interface AuditLogService {
 //     void logUpdate(String username);
 //     void logDeletion(String username, Long recordId);
 
+ void logAction(String action, String username, String tableName, Long recordId, String recordContent);
     List<AuditLog> getAllAuditLogs();
 
     List<AuditLog> getAuditLogsForId(Long id);

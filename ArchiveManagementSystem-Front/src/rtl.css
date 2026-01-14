@@ -1,0 +1,232 @@
+/* RTL Global Styles */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] body {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Fix MUI components for RTL */
+[dir="rtl"] .MuiDrawer-paperAnchorLeft {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .MuiDrawer-paperAnchorDockedLeft {
+  border-right: none;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+}
+/* ------------------ Sidebar Flex Fix ------------------ */
+/* Force Profile Menu icon first, text second in RTL & LTR */
+.MuiMenuItem-root {
+  display: flex !important;
+  align-items: center;
+}
+
+.MuiMenuItem-root .MuiListItemIcon-root {
+  order: 0 !important; /* icon first */
+  margin-right: 16px; /* spacing between icon and text */
+  margin-left: 0;
+}
+
+.MuiMenuItem-root .MuiListItemText-root {
+  order: 1 !important; /* text second */
+  text-align: left; /* LTR default, will inherit RTL if needed */
+  flex: 1;
+  white-space: nowrap; /* prevents wrapping below icon */
+}
+
+/* RTL: icon right, text left */
+[dir="rtl"] .MuiListItemIcon-root {
+  order: 1; /* icon په آخر کې ښکاره کیږي */
+  margin-left: 16px;
+  margin-right: 0;
+}
+
+[dir="rtl"] .MuiListItemText-root {
+  order: 0; /* ټیکسټ لومړی */
+  text-align: right;
+}
+
+[dir="rtl"] .MuiAppBar-root {
+  right: 280px;
+  left: auto;
+}
+
+[dir="rtl"] .MuiToolbar-root {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .MuiIconButton-root {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+/* Fix badges for RTL */
+[dir="rtl"] .MuiBadge-badge {
+  right: auto;
+  left: 0;
+  transform: scale(1) translate(-50%, -50%);
+}
+
+/* Fix select dropdown for RTL */
+[dir="rtl"] .MuiSelect-icon {
+  right: auto;
+  left: 7px;
+}
+
+/* Fix menu items for RTL */
+[dir="rtl"] .MuiMenuItem-root {
+  padding-right: 16px;
+  padding-left: 16px;
+  text-align: right;
+}
+
+/* Fix text fields for RTL */
+[dir="rtl"] .MuiInputBase-root {
+  direction: rtl;
+}
+
+[dir="rtl"] .MuiOutlinedInput-notchedOutline {
+  text-align: right;
+}
+
+/* Fix buttons for RTL */
+[dir="rtl"] .MuiButton-startIcon {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+[dir="rtl"] .MuiButton-endIcon {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+/* Fix grid system for RTL */
+[dir="rtl"] .MuiGrid-container {
+  direction: rtl;
+}
+
+/* Fix cards for RTL */
+[dir="rtl"] .MuiCard-root {
+  text-align: right;
+}
+
+/* Fix dialogs for RTL */
+[dir="rtl"] .MuiDialog-paper {
+  direction: rtl;
+}
+
+[dir="rtl"] .MuiDialogTitle-root {
+  text-align: right;
+}
+
+[dir="rtl"] .MuiDialogContent-root {
+  text-align: right;
+}
+
+[dir="rtl"] .MuiDialogActions-root {
+  flex-direction: row-reverse;
+}
+
+/* Fix tables for RTL */
+[dir="rtl"] .MuiTableCell-root {
+  text-align: right;
+}
+
+[dir="rtl"] .MuiTableCell-head {
+  text-align: right;
+}
+
+/* Fix tooltips for RTL */
+[dir="rtl"] .MuiTooltip-tooltip {
+  direction: rtl;
+}
+
+/* Fix snackbar for RTL */
+[dir="rtl"] .MuiSnackbar-root {
+  right: auto;
+  left: 8px;
+}
+
+/* Fix breadcrumbs for RTL */
+[dir="rtl"] .MuiBreadcrumbs-separator {
+  margin-left: 0;
+  margin-right: 8px;
+  transform: scaleX(-1);
+}
+
+/* Fix expansion panel for RTL */
+[dir="rtl"] .MuiAccordionSummary-expandIconWrapper {
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+/* Fix pagination for RTL */
+[dir="rtl"] .MuiPagination-ul {
+  flex-direction: row-reverse;
+}
+
+/* Custom scrollbar for RTL */
+[dir="rtl"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[dir="rtl"] ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+[dir="rtl"] ::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+[dir="rtl"] ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* LTR specific (English) */
+[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="ltr"] body {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="rtl"] .MuiInputLabel-root {
+  right: 0;
+  left: auto;
+  transform-origin: top right; /* ← Key fix! */
+}
+
+[dir="rtl"] .MuiInputLabel-shrink {
+  transform: translate(0, -9px) scale(0.75);
+  transform-origin: top right; /* ← Keeps label in correct position */
+}
+[dir="rtl"] .MuiInputLabel-outlined {
+  transform: translate(-14px, 16px) scale(1);
+}
+
+[dir="rtl"] .MuiInputLabel-outlined.MuiInputLabel-shrink {
+  transform: translate(-14px, -9px) scale(0.75); /* ← Fixes floating label */
+}
+[dir="rtl"] .MuiFormHelperText-root {
+  text-align: right;
+  margin-right: 14px;
+  margin-left: 14px;
+}
+[dir="rtl"] input[type="date"],
+[dir="rtl"] input[type="time"] {
+  text-align: right;
+  direction: rtl;
+}
+
+/* I haven't created any file for the toolbar, I'll put every thing in rtl 
+and not solved the problem */

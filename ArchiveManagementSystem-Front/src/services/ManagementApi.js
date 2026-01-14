@@ -25,3 +25,7 @@ export const getManagementStatistics = async () => {
   const response = await api.get("/user-management/statistics");
   return response.data;
 };
+export const getAllUsers = async () => {
+  const response = await api.get("/admin/getusers");
+  return response.data;
+};

@@ -14,7 +14,6 @@ import { useMemo, useState } from "react";
 import { createAppTheme } from "./theme";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-// import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./components/LandingPage";
 import AccessDenied from "./components/Auth/AccessDenied";
@@ -56,12 +55,25 @@ import SidebarLayout from "./components/SidebarLayout";
 
 const App = () => {
   const { i18n } = useTranslation();
+
+  // Set RTL direction based on language
   useEffect(() => {
     // Set Pashto as default only once
     if (!i18n.language) {
       i18n.changeLanguage("ps");
     }
-  }, [i18n]);
+
+    // Set document direction based on language (NOT on theme change)
+    const direction = ["ps", "fa"].includes(i18n.language) ? "rtl" : "ltr";
+    document.dir = direction;
+    document.documentElement.setAttribute("dir", direction);
+    document.body.setAttribute("dir", direction);
+
+    // Force a small delay to ensure CSS is applied
+    setTimeout(() => {
+      document.body.style.direction = direction;
+    }, 0);
+  }, [i18n.language]); // Only depend on language, NOT mode
 
   const location = useLocation();
   const hideNavbarRoutes = [
@@ -73,9 +85,8 @@ const App = () => {
   ];
   const { mode } = useMyContext();
 
+  // Memoize theme creation to prevent unnecessary re-renders
   const theme = useMemo(() => createAppTheme(mode), [mode]);
-  console.log("Current mode:", mode);
-  console.log("Stored theme:", localStorage.getItem("theme"));
 
   const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
   const { token } = useMyContext();
@@ -89,6 +100,7 @@ const App = () => {
     "/reset-password",
   ];
   const isAuthPage = authPages.includes(pathname);
+
   if (isAuthPage || !token) {
     return (
       <ThemeProvider theme={theme}>
@@ -113,7 +125,6 @@ const App = () => {
         <Toaster position="bottom-center" reverseOrder={false} />
         <SidebarLayout>
           <Routes>
-            {/* <Route path="/" element={<LandingPage />} /> */}
             <Route
               path="/"
               element={

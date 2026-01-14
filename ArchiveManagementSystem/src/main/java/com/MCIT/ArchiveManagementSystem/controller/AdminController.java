@@ -37,6 +37,7 @@ public class AdminController {
                 userInfo.put("userId", user.getUserId());
                 userInfo.put("userName", user.getUserName());
                 userInfo.put("email", user.getEmail());
+                userInfo.put("createdDate", user.getCreatedDate());
                 
                 // Add role info with clean name
                 Map<String, Object> roleInfo = new HashMap<>();

@@ -48,11 +48,11 @@ const AdminAreaSidebar = () => {
         <Tooltip title={`${openSidebar ? "" : "All Users"}`}>
           <Link
             to="/admin/users"
-            className={`flex text-white items-center gap-2 ${
+            className={`flex text-black items-center gap-2 ${
               pathName.startsWith("/admin/users")
-                ? "bg-blackColor"
+                ? "bg-WhiteColor"
                 : "bg-transparent"
-            }   min-h-10 max-h-10 py-2 px-2 rounded-md hover:bg-blackColor`}
+            }   min-h-10 max-h-10 py-2 px-2 rounded-md hover:bg-WhiteColor`}
           >
             <span>
               <FaUser />
@@ -69,11 +69,11 @@ const AdminAreaSidebar = () => {
         <Tooltip title={`${openSidebar ? "" : "Audit Logs"}`}>
           <Link
             to="/admin/audit-logs"
-            className={`flex text-white items-center gap-2 ${
+            className={`flex text-black items-center gap-2 ${
               pathName.startsWith("/admin/audit-logs")
-                ? "bg-blackColor"
+                ? "bg-WhiteColor"
                 : "bg-transparent"
-            }   min-h-10 max-h-10 py-2 px-2 rounded-md hover:bg-blackColor`}
+            }   min-h-10 max-h-10 py-2 px-2 rounded-md hover:bg-whiteColor`}
           >
             <span>
               <LiaBlogSolid className="text-xl" />
