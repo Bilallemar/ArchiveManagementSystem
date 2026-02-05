@@ -1,21 +1,23 @@
-const getarchiveTexts = (t) => ({
+const ViewArchiveTexts = (t) => ({
   title: t("title"),
+
+  // ===== Fields =====
   type: t("type"),
   incoming: t("incoming"),
   outgoing: t("outgoing"),
   docNo: t("docNo"),
   incomingDate: t("incomingDate"),
   outgoingDate: t("outgoingDate"),
-  org: t("org"),
+  organization: t("organization"),
   submittedDate: t("submittedDate"),
   docType: t("docType"),
   year: t("year"),
   description: t("description"),
-  save: t("save"),
-  loading: t("loading"),
-  required: t("required"),
-  loadError: t("loadError"),
-  success: t("success"),
-  error: t("error"),
+
+  // ===== Common =====
+  notAvailable: t("notAvailable"),
+  noArchiveSelected: t("noArchiveSelected"),
+  close: t("close"),
 });
-export default getarchiveTexts;
+
+export default ViewArchiveTexts;

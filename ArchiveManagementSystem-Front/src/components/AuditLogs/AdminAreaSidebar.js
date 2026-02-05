@@ -6,7 +6,7 @@ import { FaUser } from "react-icons/fa";
 import Tooltip from "@mui/material/Tooltip";
 import { useMyContext } from "../../store/ContextApi";
 
-const Sidebar = () => {
+const AdminAreaSidebar = () => {
   // Access the openSidebar and setOpenSidebar function using the useMyContext hook from the ContextProvider
   const { openSidebar, setOpenSidebar } = useMyContext();
 
@@ -92,4 +92,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default AdminAreaSidebar;
