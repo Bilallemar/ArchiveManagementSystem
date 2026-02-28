@@ -17,6 +17,7 @@ import {
   Chip,
   Typography,
   Stack,
+  Alert,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
@@ -25,16 +26,21 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
 import { updateHifziyaHazari } from "../../../services/RepositoryManagement/HifziyaHazariAPI";
 import api from "../../../services/api";
+import { useTranslation } from "react-i18next";
+import getAddHazariTexts from "../../../helpers/hifziya/hazari/AddHazariText";
 
 export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
+  const { t } = useTranslation("addHazari");
+  const text = getAddHazariTexts(t);
+
   const [formData, setFormData] = useState({
+    volume: "",
     type: "",
     subType: "",
     year: "",
     org: "",
     description: "",
-    isIndraj: true,
-    newFiles: [], // New files to upload
+    newFiles: [], // only new files to upload
   });
 
   const [types, setTypes] = useState([]);
@@ -43,7 +49,7 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingFiles, setExistingFiles] = useState([]);
 
-  // Load organizations and types
+  // Load types & organizations
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -51,42 +57,38 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
           api.get("/type"),
           api.get("/org"),
         ]);
-        setTypes(typesRes.data);
-        setOrgs(orgsRes.data);
+        setTypes(typesRes.data || []);
+        setOrgs(orgsRes.data || []);
       } catch (error) {
         console.error("Failed to load data", error);
-        toast.error("د معلوماتو لوډولو کې ستونزه");
+        toast.error(text.loadError || "د معلوماتو لوستلو کې ستونزه");
       }
     };
     loadData();
-  }, []);
+  }, [text.loadError]);
 
-  // Populate form when hazari changes
+  // Populate form & existing files when hazari changes
   useEffect(() => {
-    if (hazari) {
-      const formattedDate = hazari.year
+    if (hazari && open) {
+      const formattedYear = hazari.year
         ? new Date(hazari.year).toISOString().split("T")[0]
         : "";
 
       setFormData({
+        volume: hazari.volume || "",
         type: hazari.type?.id || "",
         subType: hazari.subType?.id || "",
-        year: formattedDate,
+        year: formattedYear,
         org: hazari.org?.id || "",
         description: hazari.description || "",
-        isIndraj: hazari.isIndraj !== undefined ? hazari.isIndraj : true,
         newFiles: [],
       });
 
-      if (hazari.files && hazari.files.length > 0) {
-        setExistingFiles(hazari.files);
-      } else {
-        setExistingFiles([]);
-      }
+      setExistingFiles(hazari.files || []);
     }
-  }, [hazari]);
+  }, [hazari, open]);
 
-  // Load SubTypes when Type changes
+  // Load sub-types when type changes
   useEffect(() => {
     const loadSubTypes = async () => {
       if (!formData.type) {
@@ -94,29 +96,23 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
         setFormData((prev) => ({ ...prev, subType: "" }));
         return;
       }
-
       try {
-        const response = await api.get(`/sub-type/by-type/${formData.type}`);
-        setSubTypes(response.data);
+        const res = await api.get(`/sub-type/by-type/${formData.type}`);
+        setSubTypes(res.data || []);
       } catch (error) {
-        console.error("Failed to load subtypes", error);
-        toast.error("د فرعي ډولونو لوډولو کې ستونزه");
+        console.error("Failed to load sub-types", error);
+        toast.error(text.loadSubTypesError || "د فرعي ډولونو لوستلو کې ستونزه");
         setSubTypes([]);
       }
     };
-
     loadSubTypes();
-  }, [formData.type]);
+  }, [formData.type, text.loadSubTypesError]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ NEW: Handle multiple file selection
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFormData((prev) => ({
@@ -125,7 +121,6 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
     }));
   };
 
-  // ✅ NEW: Remove newly selected file
   const handleRemoveNewFile = (index) => {
     setFormData((prev) => ({
       ...prev,
@@ -137,62 +132,50 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["type", "subType", "year", "org"];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
+    const required = ["type", "subType", "year", "org"];
+    const missing = required.filter((f) => !formData[f]);
+    if (missing.length) {
+      toast.error(text.error.requiredFields || "ټول اړین فیلډونه ډک کړئ");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      console.log("📤 Submitting update for ID:", hazari.id);
-      console.log("📎 New files:", formData.newFiles.length);
+      const fd = new FormData();
 
-      const formDataToSend = new FormData();
       const yearAsInteger = new Date(formData.year).getFullYear();
 
-      const hazariData = {
-        type: { id: formData.type },
-        subType: { id: formData.subType },
+      const payload = {
+        volume: formData.volume?.trim() || null,
+        type: { id: Number(formData.type) },
+        subType: { id: Number(formData.subType) },
         year: yearAsInteger,
-        org: { id: formData.org },
-        description: formData.description,
-        isIndraj: formData.isIndraj,
+        org: { id: Number(formData.org) },
+        description: formData.description?.trim() || null,
+        isIndraj: hazari.isIndraj, // ← taken from record, not changeable
       };
 
-      console.log("📝 Data to send:", hazariData);
-      formDataToSend.append("hifziyaHazari", JSON.stringify(hazariData));
+      fd.append("hifziyaHazari", JSON.stringify(payload));
 
-      // ✅ Append multiple new files
-      if (formData.newFiles.length > 0) {
-        formData.newFiles.forEach((file, index) => {
-          console.log(`📎 Appending file ${index + 1}:`, file.name);
-          formDataToSend.append("fileURL", file);
-        });
-      }
+      // Append new files only
+      formData.newFiles.forEach((file) => fd.append("fileURL", file));
 
-      const response = await updateHifziyaHazari(hazari.id, formDataToSend);
-      console.log("✅ Update response:", response);
-
-      toast.success("حاضری راپور په بریالیتوب سره تازه شو");
+      await updateHifziyaHazari(hazari.id, fd);
+      toast.success(text.edit.updateSuccess || "معلومات په بریالیتوب تازه شول");
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("❌ Update failed:", error);
-      console.error("Error response:", error.response?.data);
-
-      const errorMsg =
-        error.response?.data?.message ||
-        error.response?.data ||
-        error.message ||
-        "Unknown error";
-
-      toast.error("تازه کول ناکام شو: " + errorMsg);
+      console.error("Update failed:", error);
+      toast.error(text.edit.updateError || "د تازه کولو کې ستونزه");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Show current type as read-only info (Indraj or Hazari)
+  const recordTypeLabel = hazari?.isIndraj
+    ? text.indraj || "اندراج"
+    : text.hazari || "حاضري";
 
   return (
     <Dialog
@@ -200,11 +183,7 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-        },
-      }}
+      PaperProps={{ sx: { borderRadius: 2 } }}
     >
       {/* Header */}
       <DialogTitle
@@ -216,11 +195,9 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
         }}
       >
         <Box>
-          <Box
-            sx={{ fontFamily: "B Nazanin", fontWeight: "bold", fontSize: 20 }}
-          >
-            ویرایش کتاب حاضری
-          </Box>
+          <Typography variant="h6" fontWeight="bold">
+            {text.title || "د حاضري اصلاح"}
+          </Typography>
           {hazari && (
             <Chip
               label={`ID: ${hazari.id}`}
@@ -236,27 +213,26 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
         </IconButton>
       </DialogTitle>
 
-      {/* Content */}
+      {/* Read-only Type Info */}
+      <Alert severity="info" sx={{ mx: 3, mt: 2 }} icon={false}>
+        <Typography variant="body1">
+          <strong>{text.recordType || "ډول"}:</strong> {recordTypeLabel}
+        </Typography>
+      </Alert>
+
       <DialogContent dividers sx={{ py: 3 }}>
-        <Box component="form" onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {/* LEFT SIDE - File Upload Section */}
-            <Grid item xs={12} sm={4}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 2,
-                }}
-              >
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={4}>
+            {/* LEFT: File Upload Section */}
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {/* File Upload Area */}
                 <Box
                   sx={{
                     width: 144,
                     height: 144,
                     borderRadius: "50%",
-                    border: "1px dashed",
+                    border: "2px dashed",
                     borderColor: "divider",
                     display: "flex",
                     flexDirection: "column",
@@ -264,20 +240,22 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                     justifyContent: "center",
                     bgcolor: "background.neutral",
                     cursor: "pointer",
-                    position: "relative",
                     "&:hover": {
                       bgcolor: "action.hover",
+                      borderColor: "primary.main",
                     },
                   }}
                   component="label"
                 >
                   <AttachFileIcon
-                    sx={{ fontSize: 32, color: "text.secondary" }}
+                    sx={{ fontSize: 40, color: "primary.main" }}
                   />
-                  <Box sx={{ mt: 1, color: "text.secondary", fontSize: 12 }}>
-                    نوي فایلونه اضافه کړئ
-                  </Box>
-                  <Box
+                  <Typography
+                    sx={{ mt: 1, color: "text.secondary", fontSize: 12 }}
+                  >
+                    نوي فایل اپلوډ
+                  </Typography>
+                  <Typography
                     sx={{
                       mt: 0.5,
                       color: "primary.main",
@@ -286,12 +264,13 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                     }}
                   >
                     {formData.newFiles.length} نوی
-                  </Box>
+                  </Typography>
                   <input
                     type="file"
                     hidden
                     multiple
                     onChange={handleFileChange}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   />
                 </Box>
 
@@ -303,10 +282,12 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                       p: 1.5,
                       bgcolor: "info.lighter",
                       borderRadius: 1,
-                      width: "100%",
                     }}
                   >
-                    <Typography variant="caption" sx={{ color: "info.dark" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "info.dark", fontWeight: "bold" }}
+                    >
                       موجوده فایلونه: {existingFiles.length}
                     </Typography>
                   </Box>
@@ -314,12 +295,11 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
 
                 {/* New Files List */}
                 {formData.newFiles.length > 0 && (
-                  <Box
-                    sx={{ width: "100%", maxHeight: 150, overflowY: "auto" }}
-                  >
+                  <Box sx={{ maxHeight: 150, overflowY: "auto" }}>
                     <Typography
                       variant="caption"
-                      sx={{ fontWeight: "bold", mb: 1, display: "block" }}
+                      fontWeight="bold"
+                      sx={{ mb: 1, display: "block" }}
                     >
                       نوي فایلونه:
                     </Typography>
@@ -332,15 +312,6 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                           deleteIcon={<DeleteIcon />}
                           size="small"
                           color="success"
-                          sx={{
-                            justifyContent: "space-between",
-                            "& .MuiChip-label": {
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              maxWidth: 120,
-                            },
-                          }}
                         />
                       ))}
                     </Stack>
@@ -352,36 +323,26 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                   color="text.secondary"
                   textAlign="center"
                 >
-                  Allowed *.jpeg, *.jpg, *.png, *.pdf
+                  Allowed: PNG, JPG, PDF, DOCX
                   <br />
-                  max size of 5 MB
-                  <br />
-                  <span style={{ color: "red", fontSize: 10 }}>
-                    ⚠ نوي فایلونه زاړه فایلونه بدلوي
-                  </span>
+                  Max 10MB per file
                 </Typography>
               </Box>
             </Grid>
 
-            {/* RIGHT SIDE - Form Fields */}
-            <Grid item xs={12} sm={8}>
+            {/* RIGHT: Form Fields */}
+            <Grid item xs={12} md={8}>
               <Grid container spacing={2.5}>
-                {/* Record Type */}
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>د ریکارډ ډول</InputLabel>
-                    <Select
-                      name="isIndraj"
-                      value={formData.isIndraj}
-                      onChange={handleInputChange}
-                      label="د ریکارډ ډول"
-                    >
-                      <MenuItem value={true}>اندراج</MenuItem>
-                      <MenuItem value={false}>حاضری</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    name="volume"
+                    label={text.volume || "جلد"}
+                    value={formData.volume}
+                    onChange={handleInputChange}
+                  />
                 </Grid>
-
                 {/* Type */}
                 <Grid item xs={12} sm={6}>
                   <FormControl
@@ -390,18 +351,24 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                     required
                     error={!formData.type}
                   >
-                    <InputLabel>نوعیت</InputLabel>
+                    <InputLabel>{text.type || "ډول"}</InputLabel>
                     <Select
                       name="type"
                       value={formData.type}
                       onChange={handleInputChange}
-                      label="نوعیت"
+                      label={text.type || "ډول"}
                     >
-                      {types.map((type) => (
-                        <MenuItem key={type.id} value={type.id}>
-                          {type.name}
+                      {types.length === 0 ? (
+                        <MenuItem disabled>
+                          {text.loading || "په بار کې دی..."}
                         </MenuItem>
-                      ))}
+                      ) : (
+                        types.map((type) => (
+                          <MenuItem key={type.id} value={type.id}>
+                            {type.name}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -415,23 +382,25 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                     error={!formData.subType}
                     disabled={!formData.type}
                   >
-                    <InputLabel>زیر نوعیت</InputLabel>
+                    <InputLabel>{text.subType || "فرعي ډول"}</InputLabel>
                     <Select
                       name="subType"
                       value={formData.subType}
                       onChange={handleInputChange}
-                      label="زیر نوعیت"
+                      label={text.subType || "فرعي ډول"}
                     >
-                      {subTypes.length === 0 ? (
+                      {!formData.type ? (
                         <MenuItem disabled>
-                          {formData.type
-                            ? "Loading..."
-                            : "لطفاً اول نوعیت انتخاب کنید"}
+                          {text.selectTypeFirst || "لومړی ډول وټاکئ"}
+                        </MenuItem>
+                      ) : subTypes.length === 0 ? (
+                        <MenuItem disabled>
+                          {text.loading || "په بار کې دی..."}
                         </MenuItem>
                       ) : (
-                        subTypes.map((subType) => (
-                          <MenuItem key={subType.id} value={subType.id}>
-                            {subType.name}
+                        subTypes.map((st) => (
+                          <MenuItem key={st.id} value={st.id}>
+                            {st.name}
                           </MenuItem>
                         ))
                       )}
@@ -444,18 +413,19 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                   <TextField
                     fullWidth
                     size="small"
-                    type="date"
                     name="year"
-                    label="سال"
+                    type="date"
+                    label={text.year || "کال"}
                     InputLabelProps={{ shrink: true }}
                     value={formData.year}
                     onChange={handleInputChange}
                     required
                     error={!formData.year}
+                    helperText={!formData.year ? text.required || "اړین" : ""}
                   />
                 </Grid>
 
-                {/* Org */}
+                {/* Organization */}
                 <Grid item xs={12} sm={6}>
                   <FormControl
                     fullWidth
@@ -463,15 +433,17 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                     required
                     error={!formData.org}
                   >
-                    <InputLabel>اداره</InputLabel>
+                    <InputLabel>{text.org || "اداره"}</InputLabel>
                     <Select
                       name="org"
                       value={formData.org}
                       onChange={handleInputChange}
-                      label="اداره"
+                      label={text.org || "اداره"}
                     >
                       {orgs.length === 0 ? (
-                        <MenuItem disabled>Loading...</MenuItem>
+                        <MenuItem disabled>
+                          {text.loading || "په بار کې دی..."}
+                        </MenuItem>
                       ) : (
                         orgs.map((org) => (
                           <MenuItem key={org.id} value={org.id}>
@@ -489,9 +461,9 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                     fullWidth
                     size="small"
                     name="description"
-                    label="ملاحظات"
+                    label={text.description || "توضیحات / ملاحظات"}
                     multiline
-                    rows={3}
+                    rows={4}
                     value={formData.description}
                     onChange={handleInputChange}
                   />
@@ -499,33 +471,27 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
               </Grid>
             </Grid>
           </Grid>
-        </Box>
+        </form>
       </DialogContent>
 
       {/* Actions */}
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          disabled={isSubmitting}
-          sx={{ textTransform: "none" }}
-        >
-          لغوه
+      <DialogActions sx={{ px: 3, py: 2, gap: 2 }}>
+        <Button onClick={onClose} variant="outlined" disabled={isSubmitting}>
+          {text.cancel || "لغوه"}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={isSubmitting}
-          startIcon={
-            isSubmitting ? <CircularProgress size={18} /> : <SaveIcon />
-          }
+          endIcon={isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />}
           sx={{
             bgcolor: "black",
             "&:hover": { bgcolor: "#1d252e" },
-            textTransform: "none",
           }}
         >
-          {isSubmitting ? "ذخیره کیږي..." : "ذخیره تغییرات"}
+          {isSubmitting
+            ? text.saving || "په ساتلو کې..."
+            : text.save || "تغییرات خوندي کړئ"}
         </Button>
       </DialogActions>
     </Dialog>

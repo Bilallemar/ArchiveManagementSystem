@@ -1,56 +1,53 @@
-import React, { useEffect, useState, useCallback } from "react";
-
-import { getAllHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
-import { deleteHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
-import ViewHifziyaWaradaSadera from "./ViewHifziyaWaradaSadera";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-import Filter from "../../Filter";
-import EditHifziyaWaradaSaderaDialog from "./EditHifziyaWaradaSaderaDialog";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
-  FormControl,
-  InputLabel,
-  Select,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
   TablePagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Box,
+  TableRow,
+  Tabs,
   Typography,
-  IconButton,
-  Menu,
-  MenuItem,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-
-const columns = [
-  { id: "no", label: "نمبر", minWidth: 100 },
-  { id: "org", label: " اداره", minWidth: 100 },
-  { id: "letterNumber", label: "نمبر مکتوب", minWidth: 120 },
-  { id: "incommingDate", label: " تاریخ مرسل", minWidth: 150 },
-  { id: "outgoingDate", label: " تاریخ مرسل الیه", minWidth: 150 },
-  { id: "summary", label: " خلص مطلب", minWidth: 150 },
-  { id: "description", label: " ملاحضات", minWidth: 150 },
-  { id: "actions", label: "عملیات", minWidth: 120 },
-];
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import getHifziyaWaradaSaderaTexts from "../../../helpers/hifziya/waradaSadera/waradaSaderaListTexts";
+import {
+  deleteHifziyaWaradaSadera,
+  getAllHifziyaWaradaSadera,
+} from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
+import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
+import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+import Filter from "../../Filter";
+import EditHifziyaWaradaSaderaDialog from "./EditHifziyaWaradaSaderaDialog";
+import ViewHifziyaWaradaSadera from "./ViewHifziyaWaradaSadera";
 
 export default function HifziyaWaradaSaderaList() {
+  const { t } = useTranslation("hifziyaWaradaSadera");
+  const text = getHifziyaWaradaSaderaTexts(t);
+  const navigate = useNavigate();
+
   const [hifziyaWaradaSadera, setHifziyaWaradaSadera] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -60,148 +57,230 @@ export default function HifziyaWaradaSaderaList() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tabValue, setTabValue] = useState(0); // 0=All, 1=وارده, 2=صادره
 
-  const [field, setField] = useState("bookNumber");
+  const [field, setField] = useState("no");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
 
   const open = Boolean(anchorEl);
-  const navigate = useNavigate();
 
-  const lodadHifziyaWaradaSadera = useCallback(async () => {
+  const columns = [
+    { id: "no", label: text.headerNo || "شمېره", minWidth: 80 },
+    { id: "org", label: text.headerOrg || "اداره", minWidth: 150 },
+    {
+      id: "letterNumber",
+      label: text.headerLetterNumber || "شمېره مکتوب",
+      minWidth: 120,
+    },
+    {
+      id: "subjectType",
+      label: text.headerSubjectType || "د لاسند ډول",
+      minWidth: 120,
+    },
+    {
+      id: "incommingDate",
+      label: text.headerIncommingDate || "تاریخ وارده",
+      minWidth: 130,
+    },
+    {
+      id: "outgoingDate",
+      label: text.headerOutgoingDate || "تاریخ صادره",
+      minWidth: 130,
+    },
+    {
+      id: "summary",
+      label: text.headerSummary || "لنډیز",
+      minWidth: 150,
+    },
+    {
+      id: "description",
+      label: text.headerDescription || "ملاحظات",
+      minWidth: 150,
+    },
+    {
+      id: "direction",
+      label: text.headerDirection || "Direction",
+      minWidth: 100,
+    },
+    { id: "actions", label: text.headerActions || "عملیات", minWidth: 100 },
+  ];
+
+  const loadHifziyaWaradaSadera = useCallback(async () => {
     try {
+      setIsLoading(true);
       const response = await getAllHifziyaWaradaSadera();
-      console.log(response.data);
-      setHifziyaWaradaSadera(response.data);
+      setHifziyaWaradaSadera(response.data || []);
     } catch (error) {
-      console.error(error);
+      console.error("Error loading data:", error);
+      toast.error(text.loadError || "Error loading data");
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [text.loadError]);
 
   useEffect(() => {
-    lodadHifziyaWaradaSadera();
-  }, [lodadHifziyaWaradaSadera]);
+    loadHifziyaWaradaSadera();
+  }, [loadHifziyaWaradaSadera]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      lodadHifziyaWaradaSadera();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [lodadHifziyaWaradaSadera]); //
-
-  //  د سرچ ارزښت بدلول
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-  //  د فلټر فیلډ بدلول
-  const handleFieldChange = (e) => {
-    setField(e.target.value);
-  };
+  const handleSearch = (e) => setSearchTerm(e.target.value);
+  const handleFieldChange = (e) => setField(e.target.value);
 
   const handleView = () => {
     setOpenViewDialog(true);
-    handleClose(); // د مینو بندول
+    handleClose();
   };
-
   const handleCloseView = () => {
     setOpenViewDialog(false);
     setSelectedHifziyaWaradaSadera(null);
   };
 
-  const handleClick = (event, report) => {
+  const handleClick = (event, record) => {
     setAnchorEl(event.currentTarget);
-    setSelectedHifziyaWaradaSadera(report);
+    setSelectedHifziyaWaradaSadera(record);
   };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  const handleClose = () => setAnchorEl(null);
 
   const handleEdit = () => {
     setOpenEditDialog(true);
     handleClose();
   };
-
   const handleCloseEdit = () => {
     setOpenEditDialog(false);
     setSelectedHifziyaWaradaSadera(null);
   };
+  const handleEditSuccess = () => loadHifziyaWaradaSadera();
 
-  const handleEditSuccess = () => {
-    lodadHifziyaWaradaSadera();
-  };
-  const filteredReport = hifziyaWaradaSadera.filter((row) => {
-    if (filterType === "all") return true;
-    return row.isHifziya === filterType;
-  });
+  // ✅ Tab filter + Search filter
+  const filteredRecords = useMemo(() => {
+    let data = [...hifziyaWaradaSadera];
+
+    // Tab filter: 0=All, 1=وارده (isIncoming=true), 2=صادره (isIncoming=false)
+    // Tab filter: 0=All, 1=وارده (INCOMING), 2=صادره (OUTGOING)
+    if (tabValue === 1) {
+      data = data.filter((r) => r.direction === "INCOMING");
+    } else if (tabValue === 2) {
+      data = data.filter((r) => r.direction === "OUTGOING");
+    }
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      data = data.filter((row) => {
+        switch (field) {
+          case "no":
+            return row.no?.toString().toLowerCase().includes(term);
+          case "org":
+            return row.org?.name?.toLowerCase().includes(term);
+          case "letterNumber":
+            return row.letterNumber?.toLowerCase().includes(term);
+          case "subjectType":
+            return row.subjectType?.toLowerCase().includes(term);
+          case "summary":
+            return row.summary?.toLowerCase().includes(term);
+
+          default:
+            return true;
+        }
+      });
+    }
+
+    data.sort((a, b) => b.id - a.id);
+    return data;
+  }, [hifziyaWaradaSadera, tabValue, searchTerm, field]);
+
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
     handleClose();
   };
-  const handleNewReport = () => {
-    navigate("/hifziya-warada-sadera/add-hifziya-warada-sadera");
+
+  // ✅ Navigate with isIncoming param
+  const handleNewRecord = (direction = null) => {
+    // navigate(
+    //   `/hifziya-warada-sadera/add-hifziya-warada-sadera?isIncoming=${isIncoming}`,
+    // );
+    const url = direction
+      ? `/hifziya-warada-sadera/add-hifziya-warada-sadera?direction=${direction}`
+      : "/hifziya-warada-sadera/add-hifziya-warada-sadera";
+    navigate(url);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    setPage(0);
   };
 
   const handleDelete = async () => {
     try {
       await deleteHifziyaWaradaSadera(selectedHifziyaWaradaSadera.id);
-      lodadHifziyaWaradaSadera();
-      toast.success("Hazari deleted successfully");
+      loadHifziyaWaradaSadera();
+      toast.success(text.deleteSuccess || "Record deleted successfully");
     } catch (error) {
-      console.error("Failed to delete hazari", error);
-      toast.error("Failed to delete hazari");
+      console.error("Failed to delete record", error);
+      toast.error(text.deleteError || "Error deleting record");
     } finally {
       setOpenDeleteDialog(false);
+      setSelectedHifziyaWaradaSadera(null);
     }
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
+  const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  return (
-    <>
+  if (isLoading) {
+    return (
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center", // د 80% په مرکز کې
-          width: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
         }}
       >
-        {/* 🔹 Header */}
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      <Box sx={{ width: "100%", p: 3 }}>
+        {/* Header */}
         <Box
           sx={{
-            width: "80%", // د لیست په اندازه
             display: "flex",
-            justifyContent: "space-between", // بټن چپ، سرلیک+Breadcrumbs ښي
+            justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 2,
+            mb: 3,
+            flexWrap: "wrap",
+            gap: 2,
           }}
         >
-          {/* کیڼ طرف: بټن */}
-          <Button
-            variant="contained"
-            onClick={handleNewReport}
-            sx={{
-              backgroundColor: "black",
-              color: "white",
-              borderRadius: "10px",
-              "&:hover": {
-                backgroundColor: "#1d252e",
-              },
-            }}
-            endIcon={<AddIcon />}
-          >
-            ریکارډ جدید
-          </Button>
+          {/* ✅ Two buttons: وارده and صادره */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<AddIcon />}
+              onClick={() => handleNewRecord("INCOMING")}
+              sx={{ borderRadius: "10px" }}
+            >
+              {text.newWareda || "نوی وارده"}
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => handleNewRecord("OUTGOING")}
+              sx={{ borderRadius: "10px" }}
+            >
+              {text.newSadera || "نوی صادره"}
+            </Button>
+          </Box>
 
-          {/* ښي طرف: سرلیک + Breadcrumbs */}
           <Box
             sx={{
               display: "flex",
@@ -210,53 +289,59 @@ export default function HifziyaWaradaSaderaList() {
               textAlign: "right",
             }}
           >
-            <Typography
-              variant="h5"
-              sx={{
-                fontFamily: "B Nazanin",
-                fontWeight: "bold",
-              }}
-            >
-              کتاب حاضری
-            </Typography>
             <PageBreadcrumbs />
           </Box>
         </Box>
 
-        <Paper
-          sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
-        >
-          <div
-            style={{
-              marginTop: "10px",
-            }}
+        {/* ✅ Tabs: All / وارده / صادره */}
+        <Paper elevation={2} sx={{ mb: 3 }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            indicatorColor="primary"
+            textColor="primary"
+            variant="fullWidth"
           >
-            <Filter
-              value={searchTerm}
-              onChange={handleSearch}
-              field={field}
-              onFieldChange={handleFieldChange}
-              fields={[
-                { value: "bookNumber", label: "کتاب نمبر" },
-                { value: "province", label: " ولایت" },
-                { value: "district", label: "ولسوالئ" },
-              ]}
+            <Tab label={text.all || "ټولې"} />
+            <Tab
+              label={text.incoming || "وارده"}
+              sx={{
+                color: "success.main",
+                "&.Mui-selected": { color: "success.main !important" },
+              }}
             />
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>د ریکارډ ډول</InputLabel>
-              <Select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                label="د ریکارډ ډول"
-              >
-                <MenuItem value="all">ټول</MenuItem>
-                <MenuItem value={true}>حفظیه </MenuItem>
-                <MenuItem value={false}>مخزن</MenuItem>
-              </Select>
-            </FormControl>
-            {/* ستاسو د رسېداتو جدول */}
-          </div>
-          <TableContainer sx={{ maxHeight: 440, textAlign: "center" }}>
+            <Tab
+              label={text.outgoing || "صادره"}
+              sx={{ color: "primary.main" }}
+            />
+          </Tabs>
+        </Paper>
+
+        {/* Filter */}
+        <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+          <Filter
+            value={searchTerm}
+            onChange={handleSearch}
+            field={field}
+            onFieldChange={handleFieldChange}
+            fields={[
+              { value: "no", label: text.no || "شمېره" },
+              { value: "org", label: text.org || "اداره" },
+              {
+                value: "letterNumber",
+                label: text.letterNumber || "شمېره مکتوب",
+              },
+              {
+                value: "subjectType",
+                label: text.subjectType || "د لاسند ډول",
+              },
+              { value: "summary", label: text.summary || "لنډیز" },
+            ]}
+          />
+        </Paper>
+        {/* Table */}
+        <Paper sx={{ overflow: "hidden", borderRadius: 2 }}>
+          <TableContainer sx={{ maxHeight: 520 }}>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
@@ -266,9 +351,8 @@ export default function HifziyaWaradaSaderaList() {
                       align="center"
                       style={{
                         minWidth: column.minWidth,
-                        backgroundColor: "#f4f6f8", // Blue color - you can change this
-                        color: "#637381", // White text for better contrast
-                        fontWeight: "bold", // Make header text bold
+                        backgroundColor: "#f5f7fa",
+                        fontWeight: "bold",
                         fontSize: "0.875rem",
                       }}
                     >
@@ -278,137 +362,154 @@ export default function HifziyaWaradaSaderaList() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredReport
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => {
-                    console.log(
-                      "Attachments for row id:",
-                      row.id,
-                      row.attachments
-                    );
-                    return (
-                      <TableRow
-                        hover
-                        role="checkbox"
-                        tabIndex={-1}
-                        key={row.id}
-                      >
+                {filteredRecords.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      align="center"
+                      sx={{ py: 5 }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        {text.noRecords || "No records found"}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredRecords
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row) => (
+                      <TableRow hover key={row.id}>
                         <TableCell align="center">{row.no || "N/A"}</TableCell>
-
-                        {/* اداره */}
                         <TableCell align="center">
                           {row.org?.name || "N/A"}
                         </TableCell>
-
-                        {/* نمبر مکتوب */}
                         <TableCell align="center">
                           {row.letterNumber || "N/A"}
                         </TableCell>
-
-                        {/* تاریخ وارده */}
+                        {/* ✅ Display docType */}
                         <TableCell align="center">
-                          {row.incommingDate || "N/A"}
+                          {row.subjectType || "N/A"}
                         </TableCell>
-
-                        {/* تاریخ صادره */}
                         <TableCell align="center">
-                          {row.outgoingDate || "N/A"}
+                          {formatHijriDateForDisplay(row.incommingDate) ||
+                            "N/A"}
                         </TableCell>
-
-                        {/* خلاصه */}
                         <TableCell align="center">
+                          {formatHijriDateForDisplay(row.outgoingDate) || "N/A"}
+                        </TableCell>
+                        <TableCell
+                          align="center"
+                          sx={{
+                            maxWidth: 150,
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                          }}
+                        >
                           {row.summary || "N/A"}
                         </TableCell>
-
-                        {/* ملاحظات */}
-                        <TableCell align="center">
+                        <TableCell
+                          align="center"
+                          sx={{
+                            maxWidth: 150,
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                          }}
+                        >
                           {row.description || "N/A"}
                         </TableCell>
-
+                        {/* ✅ Direction badge using isIncoming */}
+                        <TableCell align="center">
+                          <Box
+                            sx={{
+                              display: "inline-block",
+                              px: 2,
+                              py: 0.5,
+                              borderRadius: "999px",
+                              fontSize: "0.875rem",
+                              fontWeight: 600,
+                              backgroundColor:
+                                row.direction === "INCOMING"
+                                  ? "#4CAF50"
+                                  : "#2196F3",
+                              color: "white",
+                            }}
+                          >
+                            {row.direction === "INCOMING" ? "وارده" : "صادره"}
+                          </Box>
+                        </TableCell>
                         <TableCell align="center">
                           <IconButton onClick={(e) => handleClick(e, row)}>
                             <MoreVertIcon />
                           </IconButton>
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={open}
-                            onClose={handleClose}
-                          >
-                            <MenuItem onClick={handleView}>
-                              <VisibilityIcon
-                                fontSize="small"
-                                style={{ marginRight: 8 }}
-                              />
-                              View
-                            </MenuItem>
-
-                            <MenuItem onClick={handleEdit}>
-                              <EditIcon
-                                fontSize="small"
-                                style={{ marginRight: 8 }}
-                              />
-                              Edit
-                            </MenuItem>
-
-                            <MenuItem
-                              onClick={handleDeleteClick}
-                              style={{ color: red[500] }}
-                            >
-                              <DeleteIcon
-                                fontSize="small"
-                                style={{ marginRight: 8, color: red[500] }}
-                              />
-                              Delete
-                            </MenuItem>
-                          </Menu>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
+
           <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
-            count={filteredReport.length}
+            count={filteredRecords.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage={text.rowsPerPage || "Rows per page:"}
           />
         </Paper>
       </Box>
+
+      {/* Context Menu */}
+      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+        <MenuItem onClick={handleView}>
+          <VisibilityIcon fontSize="small" style={{ marginRight: 8 }} />
+          {text.view || "View"}
+        </MenuItem>
+        <MenuItem onClick={handleEdit}>
+          <EditIcon fontSize="small" style={{ marginRight: 8 }} />
+          {text.edit || "Edit"}
+        </MenuItem>
+        <MenuItem onClick={handleDeleteClick} style={{ color: red[500] }}>
+          <DeleteIcon
+            fontSize="small"
+            style={{ marginRight: 8, color: red[500] }}
+          />
+          {text.delete || "Delete"}
+        </MenuItem>
+      </Menu>
 
       <ViewHifziyaWaradaSadera
         open={openViewDialog}
         onClose={handleCloseView}
         report={selectedHifziyaWaradaSadera}
       />
-      {/* Edit Dialog */}
       <EditHifziyaWaradaSaderaDialog
         open={openEditDialog}
         onClose={handleCloseEdit}
         waradaSadara={selectedHifziyaWaradaSadera}
         onSuccess={handleEditSuccess}
       />
-      {/* Delete Confirmation Dialog */}
+
+      {/* Delete Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{"د ریکارډ حذف؟"}</DialogTitle>
+        <DialogTitle>{text.deleteTitle || "حذف"}</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            آیا تاسو مطمئن یاست چې غواړئ دا ریکارډ حذف کړئ؟ دا عمل بیرته نه شی.
+          <DialogContentText>
+            {text.deleteText || "ایا تاسو ډاډه یاست؟"}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>لغوه</Button>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {text.deleteCancel || "لغوه"}
+          </Button>
           <Button onClick={handleDelete} color="error" autoFocus>
-            حذف
+            {text.deleteConfirm || "حذف"}
           </Button>
         </DialogActions>
       </Dialog>

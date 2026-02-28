@@ -1,4 +1,5 @@
 // utils/managementUtils.js
+import i18n from "../i18n";
 
 // =========================
 // MANAGEMENT CONSTANTS
@@ -11,18 +12,23 @@ export const MANAGEMENTS = {
   MAKHZAN: 3,
 };
 
-// Management names mapping
-export const MANAGEMENT_NAMES = {
-  1: "آرشیف",
-  2: "حفظیه",
-  3: "مخزن",
+// =========================
+// LOCALIZED MANAGEMENT NAMES
+// =========================
+
+export const getManagementNameById = (id) => {
+  const names = {
+    1: i18n.t("managementUtils:managementNames.archive"),
+    2: i18n.t("managementUtils:managementNames.hifziya"),
+    3: i18n.t("managementUtils:managementNames.makhzan"),
+  };
+  return names[id] || "No Management";
 };
 
 // =========================
 // LOCAL STORAGE HELPERS
 // =========================
 
-// Get user's management from localStorage
 export const getUserManagement = () => {
   try {
     const data = localStorage.getItem("USER_MANAGEMENT");
@@ -33,7 +39,6 @@ export const getUserManagement = () => {
   }
 };
 
-// Set user's management
 export const setUserManagement = (managementData) => {
   try {
     localStorage.setItem("USER_MANAGEMENT", JSON.stringify(managementData));
@@ -42,7 +47,6 @@ export const setUserManagement = (managementData) => {
   }
 };
 
-// Clear user management
 export const clearUserManagement = () => {
   try {
     localStorage.removeItem("USER_MANAGEMENT");
@@ -55,28 +59,24 @@ export const clearUserManagement = () => {
 // MANAGEMENT GETTERS
 // =========================
 
-// Get management ID
 export const getManagementId = () => {
   const management = getUserManagement();
   return management?.managementId || null;
 };
 
-// Get management name
 export const getManagementName = () => {
   const management = getUserManagement();
   return (
     management?.managementName ||
-    MANAGEMENT_NAMES[management?.managementId] ||
+    getManagementNameById(management?.managementId) ||
     "No Management"
   );
 };
 
-// Check if user has management
 export const hasManagement = () => {
   return getUserManagement() !== null;
 };
 
-// Check if user belongs to specific management
 export const isUserInManagement = (managementId) => {
   const userManagementId = getManagementId();
   return userManagementId === managementId;
@@ -86,7 +86,6 @@ export const isUserInManagement = (managementId) => {
 // ADMIN CHECK
 // =========================
 
-// Check if user is admin
 export const isAdmin = () => {
   try {
     const user = JSON.parse(localStorage.getItem("USER") || "{}");
@@ -103,42 +102,79 @@ export const isAdmin = () => {
 export const getNavigationItems = () => {
   const managementId = getManagementId();
   const admin = isAdmin();
+
   const baseItems = [
-    { path: "/", label: "ډشبورډ" }, // ✅ ADD THIS - Dashboard for everyone
+    {
+      path: "/",
+      label: i18n.t("managementUtils:dashboard"),
+      translationKey: "dashboard",
+    },
   ];
+
   // Admin sees everything
   if (admin) {
     return [
       ...baseItems,
       {
         path: "/hifziya-hazari",
-        label: "کتاب حاضري",
+        label: i18n.t("managementUtils:bookAttendance"),
         management: MANAGEMENTS.HIFZIYA,
+        translationKey: "bookAttendance",
       },
       {
         path: "/hifziya-warada-sadera",
-        label: "وارده صادره",
+        label: i18n.t("managementUtils:incomingOutgoing"),
         management: MANAGEMENTS.HIFZIYA,
+        translationKey: "incomingOutgoing",
       },
-      { path: "/sawanih", label: "سوانح", management: MANAGEMENTS.HIFZIYA },
-      { path: "/archive", label: "آرشیف", management: MANAGEMENTS.ARCHIVE },
+      {
+        path: "/sawanih",
+        label: i18n.t("managementUtils:incidents"),
+        management: MANAGEMENTS.HIFZIYA,
+        translationKey: "incidents",
+      },
+      {
+        path: "/shura-aali-resolutions",
+        label: i18n.t("managementUtils:shuraAaliResolutions"),
+        management: MANAGEMENTS.HIFZIYA,
+        translationKey: "shuraAaliResolutions",
+      },
+
+      {
+        path: "/archive",
+        label: i18n.t("managementUtils:archive"),
+        management: MANAGEMENTS.ARCHIVE,
+        translationKey: "archive",
+      },
       {
         path: "/makzan-annual-reports",
-        label: "راپور سال تمام",
+        label: i18n.t("managementUtils:annualReports"),
         management: MANAGEMENTS.MAKHZAN,
+        translationKey: "annualReports",
       },
       {
         path: "/makzan-receipts",
-        label: "رسیدات",
+        label: i18n.t("managementUtils:receipts"),
         management: MANAGEMENTS.MAKHZAN,
+        translationKey: "receipts",
       },
       {
         path: "/annual-reports-info",
-        label: "ارایه معلومات راپور",
+        label: i18n.t("managementUtils:reportInformation"),
         management: MANAGEMENTS.MAKHZAN,
+        translationKey: "reportInformation",
       },
-      // ✅ ADD THIS LINE - Master Data Management (Admin Only)
-      { path: "/master-data", label: "اساسی معلومات" },
+      {
+        path: "/makhzan-warada-sadera",
+        label: i18n.t("managementUtils:makhzanwaradaSadera"),
+        management: MANAGEMENTS.MAKHZAN,
+        translationKey: "makhzanwaradaSadera",
+      },
+      {
+        path: "/master-data",
+        label: i18n.t("managementUtils:masterData"),
+        translationKey: "masterData",
+      },
     ];
   }
 
@@ -146,16 +182,57 @@ export const getNavigationItems = () => {
   const allItems = {
     [MANAGEMENTS.HIFZIYA]: [
       ...baseItems,
-      { path: "/hifziya-hazari", label: "کتاب حاضري" },
-      { path: "/hifziya-warada-sadera", label: "وارده صادره" },
-      { path: "/sawanih", label: "سوانح" },
+      {
+        path: "/hifziya-hazari",
+        label: i18n.t("managementUtils:bookAttendance"),
+        translationKey: "bookAttendance",
+      },
+      {
+        path: "/hifziya-warada-sadera",
+        label: i18n.t("managementUtils:incomingOutgoing"),
+        translationKey: "incomingOutgoing",
+      },
+      {
+        path: "/sawanih",
+        label: i18n.t("managementUtils:incidents"),
+        translationKey: "incidents",
+      },
+      {
+        path: "/shura-aali-resolutions",
+        label: i18n.t("managementUtils:shuraAaliResolutions"),
+        translationKey: "shuraAaliResolutions",
+      },
     ],
-    [MANAGEMENTS.ARCHIVE]: [...baseItems, { path: "/archive", label: "آرشیف" }],
+    [MANAGEMENTS.ARCHIVE]: [
+      ...baseItems,
+      {
+        path: "/archive",
+        label: i18n.t("managementUtils:archive"),
+        translationKey: "archive",
+      },
+    ],
     [MANAGEMENTS.MAKHZAN]: [
       ...baseItems,
-      { path: "/makzan-annual-reports", label: "راپور سال تمام" },
-      { path: "/makzan-receipts", label: "رسیدات" },
-      { path: "/annual-reports-info", label: "ارایه معلومات راپور" },
+      {
+        path: "/makzan-annual-reports",
+        label: i18n.t("managementUtils:annualReports"),
+        translationKey: "annualReports",
+      },
+      {
+        path: "/makzan-receipts",
+        label: i18n.t("managementUtils:receipts"),
+        translationKey: "receipts",
+      },
+      {
+        path: "/annual-reports-info",
+        label: i18n.t("managementUtils:reportInformation"),
+        translationKey: "reportInformation",
+      },
+      {
+        path: "/makhzan-warada-sadera",
+        label: i18n.t("managementUtils:makhzanwaradaSadera"),
+        translationKey: "makhzanwaradaSadera",
+      },
     ],
   };
 
@@ -173,7 +250,7 @@ export const getDashboardConfig = () => {
   if (userIsAdmin) {
     return {
       showAllStats: true,
-      title: "Admin Dashboard",
+      title: i18n.t("managementUtils:dashboard"),
       widgets: ["all"],
       allowedManagements: [
         MANAGEMENTS.ARCHIVE,
@@ -186,17 +263,17 @@ export const getDashboardConfig = () => {
   const configs = {
     [MANAGEMENTS.ARCHIVE]: {
       showAllStats: false,
-      title: "Archive Dashboard",
+      title: i18n.t("managementUtils:archiveManagement"),
       widgets: ["archives", "receipts"],
     },
     [MANAGEMENTS.HIFZIYA]: {
       showAllStats: false,
-      title: "Hifziya Dashboard",
+      title: i18n.t("managementUtils:hifziyaManagement"),
       widgets: ["sawanih", "hazari"],
     },
     [MANAGEMENTS.MAKHZAN]: {
       showAllStats: false,
-      title: "Makhzan Dashboard",
+      title: i18n.t("managementUtils:makhzanManagement"),
       widgets: ["receipts", "reports"],
     },
   };
@@ -204,7 +281,7 @@ export const getDashboardConfig = () => {
   return (
     configs[managementId] || {
       showAllStats: false,
-      title: "Dashboard",
+      title: i18n.t("managementUtils:dashboard"),
       widgets: [],
     }
   );

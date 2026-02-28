@@ -1,0 +1,47 @@
+{
+  "title": "فهرست سوانح",
+  "newRecord": "رکورد جدید",
+  "editRecord": "ویرایش سوانح",
+  "newSawanih": "ثبت سوانح جدید",
+  "newIsteqdam": "ثبت استخدام جدید",
+
+  "all": "همه",
+  "sawanih": "سوانح",
+  "isteqdam": "استخدام",
+
+  "name": "نام",
+  "fatherName": "نام پدر",
+  "qaidWarida": "قید وارده",
+  "incommingDate": "تاریخ وارده",
+  "outgoingDate": "تاریخ صادره",
+  "org": "مرسل",
+  "pageQuantity": "تعداد صفحات",
+  "description": "ملاحظات",
+  "recordStatus": "نوع رکورد",
+
+  "actions": "عملیات",
+  "view": "مشاهده",
+  "edit": "ویرایش",
+  "delete": "حذف",
+  "cancel": "لغو",
+  "close": "بستن",
+  "save": "ذخیره",
+  "saving": "در حال ذخیره‌سازی...",
+  "back": "بازگشت",
+
+  "deleteDialogTitle": "تأیید حذف",
+  "deleteDialogText": "آیا از حذف این رکورد اطمینان دارید؟",
+  "deleteSuccess": "رکورد با موفقیت حذف شد",
+  "deleteError": "در حذف رکورد خطا رخ داد",
+
+  "search": "جستجو",
+  "fieldOrg": "اداره",
+
+  "rowsPerPage": "تعداد سطر در هر صفحه",
+
+  "loading": "در حال بارگذاری اطلاعات...",
+  "loadError": "خطا در بارگذاری اطلاعات",
+  "noData": "هیچ اطلاعاتی موجود نیست",
+  "notAvailable": "در دسترس نیست",
+  "noArchiveSelected": "هیچ سوانحی انتخاب نشده است"
+}

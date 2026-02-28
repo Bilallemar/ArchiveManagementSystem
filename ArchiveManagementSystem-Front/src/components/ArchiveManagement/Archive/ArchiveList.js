@@ -1,408 +1,54 @@
-// import React, { useEffect, useState, useCallback } from "react";
-// import {
-//   getAllArchives,
-//   deleteArchive,
-// } from "../../../services/ArchiveManagement/ArchiveAPI";
-// import ViewArchive from "./ViewArchive";
-// import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-// import Filter from "../../Filter";
-// import EditArchiveDialog from "./EditArchiveDialog";
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableContainer,
-//   TableHead,
-//   TableRow,
-//   Paper,
-//   TablePagination,
-//   Dialog,
-//   DialogTitle,
-//   DialogContent,
-//   DialogContentText,
-//   DialogActions,
-//   Button,
-//   Box,
-//   Typography,
-// } from "@mui/material";
-// import { red } from "@mui/material/colors";
-// import VisibilityIcon from "@mui/icons-material/Visibility";
-// import EditIcon from "@mui/icons-material/Edit";
-// import DeleteIcon from "@mui/icons-material/Delete";
-// import { IconButton, Menu, MenuItem } from "@mui/material";
-// import MoreVertIcon from "@mui/icons-material/MoreVert";
-// import { useNavigate } from "react-router-dom";
-// import { toast } from "react-hot-toast";
-// import AddIcon from "@mui/icons-material/Add";
-
-// const columns = [
-//   { id: "docNo", label: "نمبر سند", minWidth: 120 },
-//   { id: "incommingDate", label: "تاریخ وارده", minWidth: 120 },
-//   { id: "outgoingDate", label: "تاریخ صادره", minWidth: 120 },
-//   { id: "org", label: "اداره", minWidth: 120 },
-//   { id: "submitedDate", label: "تاریخ تسلیمی", minWidth: 120 },
-//   { id: "docType", label: "نوع سند", minWidth: 120 },
-//   { id: "year", label: "سال", minWidth: 100 },
-//   { id: "description", label: "ملاحظات", minWidth: 150 },
-//   { id: "actions", label: "عملیات", minWidth: 120 },
-// ];
-
-// export default function ArchiveList() {
-//   const [archives, setArchives] = useState([]);
-//   const [page, setPage] = useState(0);
-//   const [rowsPerPage, setRowsPerPage] = useState(10);
-//   const [anchorEl, setAnchorEl] = useState(null);
-//   const [selectedArchive, setSelectedArchive] = useState(null);
-//   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-//   const [openViewDialog, setOpenViewDialog] = useState(false);
-//   const [openEditDialog, setOpenEditDialog] = useState(false);
-//   const [field, setField] = useState("docNo");
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [filterType, setFilterType] = useState("all");
-
-//   const open = Boolean(anchorEl);
-//   const navigate = useNavigate();
-
-//   const loadArchives = useCallback(async () => {
-//     try {
-//       const response = await getAllArchives();
-//       setArchives(response.data);
-//       console.log("Archives loaded:", response.data);
-//     } catch (error) {
-//       console.error(error);
-//       toast.error("د معلوماتو لوډولو کې ستونزه");
-//     }
-//   }, []);
-
-//   useEffect(() => {
-//     loadArchives();
-//   }, [loadArchives]);
-
-//   const handleSearch = (e) => setSearchTerm(e.target.value);
-//   const handleFieldChange = (e) => setField(e.target.value);
-
-//   const handleView = () => {
-//     setOpenViewDialog(true);
-//     handleClose();
-//   };
-//   const handleCloseView = () => {
-//     setOpenViewDialog(false);
-//     setSelectedArchive(null);
-//   };
-
-//   const handleClick = (event, archive) => {
-//     setAnchorEl(event.currentTarget);
-//     setSelectedArchive(archive);
-//   };
-//   const handleClose = () => setAnchorEl(null);
-
-//   const handleEdit = () => {
-//     setOpenEditDialog(true);
-//     handleClose();
-//   };
-//   const handleCloseEdit = () => {
-//     setOpenEditDialog(false);
-//     setSelectedArchive(null);
-//   };
-//   const handleEditSuccess = () => loadArchives();
-
-//   const filteredArchives = archives.filter((row) => {
-//     if (filterType !== "all" && row.isIncoming !== filterType) return false;
-//     if (!searchTerm) return true;
-//     const searchValue = searchTerm.toLowerCase();
-//     switch (field) {
-//       case "docNo":
-//         return row.docNo?.toLowerCase().includes(searchValue);
-//       case "org":
-//         return row.org?.name?.toLowerCase().includes(searchValue);
-//       case "year":
-//         return row.year?.toString().includes(searchValue);
-//       case "docType":
-//         return row.docType?.toLowerCase().includes(searchValue);
-//       default:
-//         return true;
-//     }
-//   });
-
-//   const handleDeleteClick = () => {
-//     setOpenDeleteDialog(true);
-//     handleClose();
-//   };
-
-//   const handleNewArchive = () => navigate("/archive/add");
-
-//   const handleDelete = async () => {
-//     try {
-//       await deleteArchive(selectedArchive.id);
-//       loadArchives();
-//       toast.success("آرشیف په بریالیتوب سره حذف شو");
-//     } catch (error) {
-//       console.error(error);
-//       toast.error("د حذف کولو کې ستونزه");
-//     } finally {
-//       setOpenDeleteDialog(false);
-//     }
-//   };
-
-//   const handleChangePage = (event, newPage) => setPage(newPage);
-//   const handleChangeRowsPerPage = (event) => {
-//     setRowsPerPage(+event.target.value);
-//     setPage(0);
-//   };
-
-//   return (
-//     <>
-//       <Box
-//         sx={{
-//           display: "flex",
-//           flexDirection: "column",
-//           alignItems: "center",
-//           width: "100%",
-//         }}
-//       >
-//         <Box
-//           sx={{
-//             width: "80%",
-//             display: "flex",
-//             justifyContent: "space-between",
-//             alignItems: "center",
-//             marginBottom: 2,
-//           }}
-//         >
-//           <Button
-//             variant="contained"
-//             onClick={handleNewArchive}
-//             sx={{
-//               backgroundColor: "black",
-//               color: "white",
-//               borderRadius: "10px",
-//               "&:hover": { backgroundColor: "#1d252e" },
-//               marginLeft: "-30px",
-//             }}
-//             endIcon={<AddIcon />}
-//           >
-//             آرشیف جدید
-//           </Button>
-
-//           <Box
-//             sx={{
-//               display: "flex",
-//               flexDirection: "column",
-//               alignItems: "flex-end",
-//               textAlign: "right",
-//               marginRight: "-30px",
-//             }}
-//           >
-//             <Typography
-//               variant="h5"
-//               sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
-//             >
-//               آرشیف
-//             </Typography>
-//             <PageBreadcrumbs />
-//           </Box>
-//         </Box>
-
-//         <Paper
-//           sx={{ width: "100%", overflow: "hidden", justifyContent: "center" }}
-//         >
-//           <div style={{ marginTop: 10, padding: 10 }}>
-//             <Filter
-//               value={searchTerm}
-//               onChange={handleSearch}
-//               field={field}
-//               onFieldChange={handleFieldChange}
-//               fields={[
-//                 { value: "docNo", label: "نمبر سند" },
-//                 { value: "org", label: "اداره" },
-//                 { value: "year", label: "سال" },
-//                 { value: "docType", label: "نوع سند" },
-//               ]}
-//             />
-//           </div>
-
-//           <TableContainer sx={{ maxHeight: 440, textAlign: "center" }}>
-//             <Table stickyHeader>
-//               <TableHead>
-//                 <TableRow>
-//                   {columns.map((column) => (
-//                     <TableCell
-//                       key={column.id}
-//                       align="center"
-//                       style={{
-//                         minWidth: column.minWidth,
-//                         backgroundColor: "#f4f6f8",
-//                         color: "#637381",
-//                         fontWeight: "bold",
-//                         fontSize: "0.875rem",
-//                       }}
-//                     >
-//                       {column.label}
-//                     </TableCell>
-//                   ))}
-//                 </TableRow>
-//               </TableHead>
-//               <TableBody>
-//                 {filteredArchives
-//                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-//                   .map((row) => (
-//                     <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-//                       <TableCell align="center">{row.docNo || "N/A"}</TableCell>
-//                       <TableCell align="center">
-//                         {row.incommingDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.outgoingDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.org?.name || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.submitedDate || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         {row.docType || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">{row.year || "N/A"}</TableCell>
-//                       <TableCell align="center">
-//                         {row.description || "N/A"}
-//                       </TableCell>
-//                       <TableCell align="center">
-//                         <IconButton onClick={(e) => handleClick(e, row)}>
-//                           <MoreVertIcon />
-//                         </IconButton>
-//                         <Menu
-//                           anchorEl={anchorEl}
-//                           open={open}
-//                           onClose={handleClose}
-//                         >
-//                           <MenuItem onClick={handleView}>
-//                             <VisibilityIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8 }}
-//                             />
-//                             View
-//                           </MenuItem>
-//                           <MenuItem onClick={handleEdit}>
-//                             <EditIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8 }}
-//                             />
-//                             Edit
-//                           </MenuItem>
-//                           <MenuItem
-//                             onClick={handleDeleteClick}
-//                             style={{ color: red[500] }}
-//                           >
-//                             <DeleteIcon
-//                               fontSize="small"
-//                               style={{ marginRight: 8, color: red[500] }}
-//                             />
-//                             Delete
-//                           </MenuItem>
-//                         </Menu>
-//                       </TableCell>
-//                     </TableRow>
-//                   ))}
-//               </TableBody>
-//             </Table>
-//           </TableContainer>
-
-//           <TablePagination
-//             rowsPerPageOptions={[10, 25, 50]}
-//             component="div"
-//             count={filteredArchives.length}
-//             rowsPerPage={rowsPerPage}
-//             page={page}
-//             onPageChange={handleChangePage}
-//             onRowsPerPageChange={handleChangeRowsPerPage}
-//           />
-//         </Paper>
-//       </Box>
-
-//       <ViewArchive
-//         open={openViewDialog}
-//         onClose={handleCloseView}
-//         archive={selectedArchive}
-//       />
-//       <EditArchiveDialog
-//         open={openEditDialog}
-//         onClose={handleCloseEdit}
-//         archive={selectedArchive}
-//         onSuccess={handleEditSuccess}
-//       />
-
-//       <Dialog
-//         open={openDeleteDialog}
-//         onClose={() => setOpenDeleteDialog(false)}
-//       >
-//         <DialogTitle>د آرشیف حذف؟</DialogTitle>
-//         <DialogContent>
-//           <DialogContentText>
-//             آیا تاسو مطمئن یاست چې غواړئ دا آرشیف حذف کړئ؟
-//           </DialogContentText>
-//         </DialogContent>
-//         <DialogActions>
-//           <Button onClick={() => setOpenDeleteDialog(false)}>لغوه</Button>
-//           <Button onClick={handleDelete} color="error" autoFocus>
-//             حذف
-//           </Button>
-//         </DialogActions>
-//       </Dialog>
-//     </>
-//   );
-// }
-
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
-  getAllArchives,
-  deleteArchive,
-} from "../../../services/ArchiveManagement/ArchiveAPI";
-import ViewArchive from "./ViewArchive";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-import Filter from "../../Filter";
-import EditArchiveDialog from "./EditArchiveDialog";
-import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
   TablePagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Box,
+  TableRow,
+  Tabs,
   Typography,
-  IconButton,
-  Menu,
-  MenuItem,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-
-import getArchiveListTexts from "./archivelistTexts";
+import { useNavigate } from "react-router-dom";
+import getArchiveTexts from "../../../helpers/archive/getArchiveTexts";
+import {
+  deleteArchive,
+  getAllArchives,
+} from "../../../services/ArchiveManagement/ArchiveAPI";
+import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
+import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+import Filter from "../../Filter";
+import EditArchiveDialog from "./EditArchiveDialog";
+import ViewArchive from "./ViewArchive";
 
 export default function ArchiveList() {
-  const { t } = useTranslation("archivelist");
+  const { t } = useTranslation("archive");
+  const texts = useMemo(() => getArchiveTexts(t), [t]);
+  const navigate = useNavigate();
 
-  // ✅ Memoize texts to prevent infinite loop
-  const texts = useMemo(() => getArchiveListTexts(t), [t]);
-
-  // ✅ Component state
   const [archives, setArchives] = useState([]);
+  const [tabValue, setTabValue] = useState(0); // 0=All, 1=Incoming, 2=Outgoing
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -412,35 +58,40 @@ export default function ArchiveList() {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [field, setField] = useState("docNo");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
 
   const open = Boolean(anchorEl);
-  const navigate = useNavigate();
 
-  // ✅ Memoize columns so they update only when texts change
+  // Columns with separate sender and receiver
   const columns = useMemo(
     () => [
-      { id: "docNo", label: texts.docNo, minWidth: 120 },
-      { id: "incomingDate", label: texts.incomingDate, minWidth: 120 },
-      { id: "outgoingDate", label: texts.outgoingDate, minWidth: 120 },
-      { id: "org", label: texts.org, minWidth: 120 },
-      { id: "submittedDate", label: texts.submittedDate, minWidth: 120 },
-      { id: "docType", label: texts.docType, minWidth: 120 },
-      { id: "year", label: texts.year, minWidth: 100 },
-      { id: "description", label: texts.description, minWidth: 150 },
+      { id: "docNo", label: texts.docNo, minWidth: 130 },
+      { id: "sendDate", label: texts.sendDate, minWidth: 120 },
+      { id: "departmentDate", label: texts.departmentDate, minWidth: 120 },
+      {
+        id: "senderOrg",
+        label: texts.org || "Sender (مرسل)",
+        minWidth: 180,
+      },
+      {
+        id: "receiverOrg",
+        label: texts.organization || "Receiver (مرسل الیه)",
+        minWidth: 180,
+      },
+      { id: "docType", label: texts.docType, minWidth: 140 },
+      { id: "description", label: texts.description, minWidth: 200 },
+      { id: "direction", label: texts.type, minWidth: 100 },
       { id: "actions", label: texts.actions, minWidth: 120 },
     ],
-    [texts]
+    [texts],
   );
 
-  // ✅ Load archives
   const loadArchives = useCallback(async () => {
     try {
       const response = await getAllArchives();
-      setArchives(response.data);
+      setArchives(response.data || []);
     } catch (error) {
-      console.error(error);
-      toast.error(t("loadError"));
+      console.error("Failed to load archives:", error);
+      toast.error(t("loadError") || "Failed to load documents");
     }
   }, [t]);
 
@@ -448,54 +99,89 @@ export default function ArchiveList() {
     loadArchives();
   }, [loadArchives]);
 
-  // ✅ Search & filter
+  // Filter logic
+  const displayedArchives = useMemo(() => {
+    let data = [...archives];
+
+    // 1. Tab filter
+    if (tabValue === 1) {
+      data = data.filter((r) => r.direction === "INCOMING");
+    } else if (tabValue === 2) {
+      data = data.filter((r) => r.direction === "OUTGOING");
+    }
+
+    // 2. Search filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      data = data.filter((row) => {
+        switch (field) {
+          case "docNo":
+            return row.docNo?.toLowerCase().includes(term);
+          case "sender":
+            return row.senderOrg?.name?.toLowerCase().includes(term);
+          case "receiver":
+            return row.receiverOrg?.name?.toLowerCase().includes(term);
+          case "docType":
+            return row.docType?.name?.toLowerCase().includes(term);
+          default:
+            return true;
+        }
+      });
+    }
+
+    // 3. Sort — newest first
+    data.sort((a, b) => b.id - a.id);
+
+    return data;
+  }, [archives, tabValue, searchTerm, field]);
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    setPage(0);
+  };
+
   const handleSearch = (e) => setSearchTerm(e.target.value);
   const handleFieldChange = (e) => setField(e.target.value);
 
-  // ✅ Menu & dialog handlers
   const handleClick = (event, archive) => {
     setAnchorEl(event.currentTarget);
     setSelectedArchive(archive);
   };
+
   const handleClose = () => setAnchorEl(null);
 
   const handleView = () => {
     setOpenViewDialog(true);
     handleClose();
   };
-  const handleCloseView = () => {
-    setOpenViewDialog(false);
-    setSelectedArchive(null);
-  };
 
   const handleEdit = () => {
     setOpenEditDialog(true);
     handleClose();
   };
-  const handleCloseEdit = () => {
-    setOpenEditDialog(false);
-    setSelectedArchive(null);
-  };
-  const handleEditSuccess = () => loadArchives();
 
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
     handleClose();
   };
 
-  const handleNewArchive = () => navigate("/archive/add");
-
   const handleDelete = async () => {
     try {
       await deleteArchive(selectedArchive.id);
+      toast.success(texts.deleteSuccess || "Document deleted");
       loadArchives();
-      toast.success(texts.deleteSuccess);
-    } catch (error) {
-      console.error(error);
-      toast.error(texts.deleteError);
+    } catch (err) {
+      toast.error(texts.deleteError || "Failed to delete");
     } finally {
       setOpenDeleteDialog(false);
     }
+  };
+
+  const handleNewArchive = (direction = null) => {
+    const url = direction
+      ? `/archive/add?direction=${direction}`
+      : "/archive/add";
+    navigate(url);
   };
 
   const handleChangePage = (event, newPage) => setPage(newPage);
@@ -504,222 +190,221 @@ export default function ArchiveList() {
     setPage(0);
   };
 
-  // ✅ Filter archives
-  const filteredArchives = archives.filter((row) => {
-    if (filterType !== "all" && row.isIncoming !== filterType) return false;
-    if (!searchTerm) return true;
-    const searchValue = searchTerm.toLowerCase();
-    switch (field) {
-      case "docNo":
-        return row.docNo?.toLowerCase().includes(searchValue);
-      case "org":
-        return row.org?.name?.toLowerCase().includes(searchValue);
-      case "year":
-        return row.year?.toString().includes(searchValue);
-      case "docType":
-        return row.docType?.toLowerCase().includes(searchValue);
-      default:
-        return true;
-    }
-  });
-
   return (
-    <>
+    <Box sx={{ width: "100%", p: 2 }}>
+      {/* Header + Tabs + Add Buttons */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
+          justifyContent: "space-between",
           alignItems: "center",
-          width: "100%",
+          mb: 3,
+          flexWrap: "wrap",
+          gap: 2,
         }}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            width: "80%",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 2,
-          }}
-        >
+        <Box sx={{ display: "flex", gap: 2 }}>
           <Button
             variant="contained"
-            onClick={handleNewArchive}
-            sx={{
-              backgroundColor: "black",
-              color: "white",
-              borderRadius: "10px",
-              "&:hover": { backgroundColor: "#1d252e" },
-            }}
-            endIcon={<AddIcon />}
+            color="success"
+            startIcon={<AddIcon />}
+            onClick={() => handleNewArchive("INCOMING")}
           >
-            {texts.newArchive}
+            {texts.newIncoming || "New Incoming"}
           </Button>
 
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              textAlign: "right",
-            }}
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => handleNewArchive("OUTGOING")}
           >
-            <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-              {texts.title}
-            </Typography>
-            <PageBreadcrumbs />
-          </Box>
+            {texts.newOutgoing || "New Outgoing"}
+          </Button>
         </Box>
 
-        {/* Filter */}
-        <Paper sx={{ width: "100%", overflow: "hidden" }}>
-          <div style={{ marginTop: 10, padding: 10 }}>
-            <Filter
-              value={searchTerm}
-              onChange={handleSearch}
-              field={field}
-              onFieldChange={handleFieldChange}
-              fields={[
-                { value: "docNo", label: texts.docNo },
-                { value: "org", label: texts.org },
-                { value: "year", label: texts.year },
-                { value: "docType", label: texts.docType },
-              ]}
-            />
-          </div>
+        <Box>
+          <Typography variant="h5" fontWeight="bold">
+            {/* {texts.title || "Archive Register"} */}
+          </Typography>
+          <PageBreadcrumbs />
+        </Box>
+      </Box>
 
-          {/* Table */}
-          <TableContainer sx={{ maxHeight: 440, textAlign: "center" }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  {columns.map((column) => (
+      {/* Tabs */}
+      <Paper elevation={2} sx={{ mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          indicatorColor="primary"
+          textColor="primary"
+          variant="fullWidth"
+        >
+          <Tab label={texts.all || "All"} />
+          <Tab label={texts.incoming || "Incoming (وارده)"} />
+          <Tab label={texts.outgoing || "Outgoing (صادره)"} />
+        </Tabs>
+      </Paper>
+
+      {/* Filter */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Filter
+          value={searchTerm}
+          onChange={handleSearch}
+          field={field}
+          onFieldChange={handleFieldChange}
+          fields={[
+            { value: "docNo", label: texts.docNo },
+            { value: "sender", label: texts.sender || "Sender" },
+            { value: "receiver", label: texts.receiver || "Receiver" },
+            { value: "docType", label: texts.docType },
+          ]}
+        />
+      </Paper>
+
+      {/* Table */}
+      <Paper sx={{ overflow: "hidden" }}>
+        <TableContainer sx={{ maxHeight: 520 }}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                {columns.map((col) => (
+                  <TableCell
+                    key={col.id}
+                    align="center"
+                    sx={{
+                      minWidth: col.minWidth,
+                      backgroundColor: "#f5f7fa",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {col.label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {displayedArchives
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((row) => (
+                  <TableRow hover key={row.id}>
+                    <TableCell align="center">{row.docNo || "-"}</TableCell>
+                    <TableCell align="center">
+                      {formatHijriDateForDisplay(row.sendDate) || "-"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {formatHijriDateForDisplay(row.departmentDate) || "-"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {row.senderOrg?.name || "—"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {row.receiverOrg?.name || "—"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {row.docType?.name || "-"}
+                    </TableCell>
                     <TableCell
-                      key={column.id}
                       align="center"
-                      style={{
-                        minWidth: column.minWidth,
-                        backgroundColor: "#f4f6f8",
-                        color: "#637381",
-                        fontWeight: "bold",
-                        fontSize: "0.875rem",
+                      sx={{
+                        maxWidth: 200,
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
                       }}
                     >
-                      {column.label}
+                      {row.description || "-"}
                     </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredArchives
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => (
-                    <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                      <TableCell align="center">{row.docNo || "N/A"}</TableCell>
-                      <TableCell align="center">
-                        {row.incomingDate || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.outgoingDate || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.org?.name || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.submittedDate || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.docType || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">{row.year || "N/A"}</TableCell>
-                      <TableCell align="center">
-                        {row.description || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton onClick={(e) => handleClick(e, row)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={open}
-                          onClose={handleClose}
-                        >
-                          <MenuItem onClick={handleView}>
-                            <VisibilityIcon
-                              fontSize="small"
-                              style={{ marginRight: 8 }}
-                            />
-                            {texts.view}
-                          </MenuItem>
-                          <MenuItem onClick={handleEdit}>
-                            <EditIcon
-                              fontSize="small"
-                              style={{ marginRight: 8 }}
-                            />
-                            {texts.edit}
-                          </MenuItem>
-                          <MenuItem
-                            onClick={handleDeleteClick}
-                            style={{ color: red[500] }}
-                          >
-                            <DeleteIcon
-                              fontSize="small"
-                              style={{ marginRight: 8, color: red[500] }}
-                            />
-                            {texts.delete}
-                          </MenuItem>
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                    <TableCell align="center">
+                      <Box
+                        sx={{
+                          display: "inline-block",
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: "999px",
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          backgroundColor:
+                            row.direction === "INCOMING"
+                              ? "#4CAF50"
+                              : "#2196F3",
+                          color: "white",
+                        }}
+                      >
+                        {row.direction === "INCOMING" ? "وارده" : "صادره"}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={(e) => handleClick(e, row)}>
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          {/* Pagination */}
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredArchives.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Box>
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          component="div"
+          count={displayedArchives.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage={texts.rowsPerPage || "Rows per page:"}
+        />
+      </Paper>
+
+      {/* Menu */}
+      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+        <MenuItem onClick={handleView}>
+          <VisibilityIcon fontSize="small" sx={{ mr: 1 }} />
+          {texts.view}
+        </MenuItem>
+        <MenuItem onClick={handleEdit}>
+          <EditIcon fontSize="small" sx={{ mr: 1 }} />
+          {texts.edit}
+        </MenuItem>
+        <MenuItem onClick={handleDeleteClick} sx={{ color: red[700] }}>
+          <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+          {texts.delete}
+        </MenuItem>
+      </Menu>
 
       {/* Dialogs */}
       <ViewArchive
         open={openViewDialog}
-        onClose={handleCloseView}
+        onClose={() => setOpenViewDialog(false)}
         archive={selectedArchive}
       />
       <EditArchiveDialog
         open={openEditDialog}
-        onClose={handleCloseEdit}
+        onClose={() => setOpenEditDialog(false)}
         archive={selectedArchive}
-        onSuccess={handleEditSuccess}
+        onSuccess={loadArchives}
       />
-
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
       >
-        <DialogTitle>{texts.deleteDialogTitle}</DialogTitle>
+        <DialogTitle>{texts.deleteConfirm || "Confirm Delete"}</DialogTitle>
         <DialogContent>
-          <DialogContentText>{texts.deleteDialogText}</DialogContentText>
+          <DialogContentText>
+            {texts.deleteMessage ||
+              "Are you sure you want to delete this document? This action cannot be undone."}
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>
             {texts.cancel}
           </Button>
-          <Button onClick={handleDelete} color="error" autoFocus>
+          <Button onClick={handleDelete} color="error" variant="contained">
             {texts.delete}
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 }

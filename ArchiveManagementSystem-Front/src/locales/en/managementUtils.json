@@ -1,0 +1,23 @@
+{
+  "dashboard": "Dashboard",
+  "archiveManagement": "Archive Management",
+  "hifziyaManagement": "Hifziya Management",
+  "makhzanManagement": "Makhzan Management",
+  "settings": "Settings",
+  "bookAttendance": "Book Attendance",
+  "incomingOutgoing": "Incoming/Outgoing",
+  "incidents": "Incidents",
+  "shuraAaliResolutions": "Shura Aali Resolutions",
+  "archive": "Archive",
+  "makhzanwaradaSadera": "Incoming/Outgoing",
+
+  "annualReports": "Annual Reports",
+  "receipts": "Receipts",
+  "reportInformation": "Report Information",
+  "masterData": "Master Data",
+  "managementNames": {
+    "archive": "Archive",
+    "hifziya": "Hifziya",
+    "makhzan": "Makhzan"
+  }
+}

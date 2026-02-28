@@ -1,38 +1,44 @@
-import React, { useState, useEffect } from "react";
 import {
-  TextField,
+  Badge,
   Box,
-  Grid,
   Button,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Typography,
   Card,
   CardContent,
   Chip,
-  Stack,
-  Alert,
+  CircularProgress,
+  FormControl,
+  Grid,
   IconButton,
-  Badge,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import { createReceipt } from "../../../services/StorageManagement/MakzanReceiptAPI";
-import SaveIcon from "@mui/icons-material/Save";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
+import { useEffect, useState } from "react";
+import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FolderIcon from "@mui/icons-material/Folder";
+import SaveIcon from "@mui/icons-material/Save";
 import ScannerIcon from "@mui/icons-material/Scanner";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import getMakzanReceiptTexts from "../../../helpers/Storage/MakzanReceipt/MakzanReceiptText";
 import api from "../../../services/api";
-
+import { createReceipt } from "../../../services/StorageManagement/MakzanReceiptAPI";
+import { convertHijriToGregorian } from "../../../utils/hijriDateUtils";
+import HijriDatePicker from "../../HijriDatePicker";
 export default function AddMakzanReceipt() {
+  const { t } = useTranslation("makzanReceipt");
+  const texts = getMakzanReceiptTexts(t);
   const [formData, setFormData] = useState({
-    no: "",
     docNo: "",
+    department: "",
     org: "",
     letterNo: "",
     letterDate: "",
@@ -56,7 +62,7 @@ export default function AddMakzanReceipt() {
         setOrgs(orgsRes.data);
       } catch (error) {
         console.error("Failed to load orgs", error);
-        toast.error("د ادارې معلوماتو لوډولو کې ستونزه");
+        toast.error(texts.loadError);
       }
     };
     loadData();
@@ -83,6 +89,12 @@ export default function AddMakzanReceipt() {
     }));
   };
 
+  const handleHijriDateChange = (field) => (hijriDate) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: hijriDate,
+    }));
+  };
   // Scan button - fetch fresh files from scanner folder
   const handleScan = async () => {
     try {
@@ -91,13 +103,13 @@ export default function AddMakzanReceipt() {
       setDetectedFiles(response.data);
 
       if (response.data.length === 0) {
-        toast.info("په سکینر پوښۍ کې فایلونه نشته");
+        toast.info(texts.noFilesInScanner);
       } else {
-        toast.success(`${response.data.length} فایل(ونه) وموندل شول`);
+        toast.success(`${response.data.length} ${texts.filesDetected}`);
       }
     } catch (error) {
       console.error("Failed to scan folder", error);
-      toast.error("سکین کولو کې ستونزه");
+      toast.error(texts.scanError);
     } finally {
       setIsScanning(false);
     }
@@ -106,7 +118,7 @@ export default function AddMakzanReceipt() {
   // Load files from scanner folder to form
   const handleLoadFromScanner = async () => {
     if (detectedFiles.length === 0) {
-      toast.error("په سکینر پوښۍ کې فایلونه نشته");
+      toast.error(texts.noFilesToLoad);
       return;
     }
 
@@ -115,7 +127,7 @@ export default function AddMakzanReceipt() {
       const filePromises = detectedFiles.map(async (fileInfo) => {
         const response = await api.get(
           `/scanner-folder/files/${fileInfo.name}/download`,
-          { responseType: "blob" }
+          { responseType: "blob" },
         );
 
         // Create a File object from the blob
@@ -133,10 +145,13 @@ export default function AddMakzanReceipt() {
         files: files,
       }));
 
-      toast.success(`${files.length} فایلونه د سکینر نه لوډ شول`);
+      // ✅ IMPORTANT: Clear detected files after loading
+      setDetectedFiles([]);
+
+      toast.success(`${files.length} ${texts.filesLoaded}`);
     } catch (error) {
       console.error("Failed to load files from scanner", error);
-      toast.error("د فایلونو لوډولو کې ستونزه");
+      toast.error(texts.loadError);
     }
   };
 
@@ -149,6 +164,7 @@ export default function AddMakzanReceipt() {
     }));
   };
 
+  // Remove individual file
   const handleRemoveFile = (index) => {
     setFormData((prev) => ({
       ...prev,
@@ -156,6 +172,7 @@ export default function AddMakzanReceipt() {
     }));
   };
 
+  // Remove all files
   const handleRemoveAllFiles = () => {
     setFormData((prev) => ({
       ...prev,
@@ -167,10 +184,10 @@ export default function AddMakzanReceipt() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["no", "org"];
+    const requiredFields = ["department", "org"];
     const missingFields = requiredFields.filter((field) => !formData[field]);
     if (missingFields.length > 0) {
-      toast.error("مهرباني وکړئ ټول اړین فیلډونه ډک کړئ");
+      toast.error(texts.requiredField);
       setIsSubmitting(false);
       return;
     }
@@ -179,17 +196,18 @@ export default function AddMakzanReceipt() {
       const formDataToSend = new FormData();
 
       const receiptData = {
-        no: formData.no,
         docNo: formData.docNo,
+        department: formData.department,
         org: { id: formData.org },
         letterNo: formData.letterNo,
-        letterDate: formData.letterDate,
+        letterDate: convertHijriToGregorian(formData.letterDate) || null,
         subjectType: formData.subjectType,
         description: formData.description,
       };
 
       formDataToSend.append("receipts", JSON.stringify(receiptData));
 
+      // ✅ Append multiple files
       if (formData.files.length > 0) {
         formData.files.forEach((file) => {
           formDataToSend.append("fileURL", file);
@@ -197,12 +215,12 @@ export default function AddMakzanReceipt() {
       }
 
       await createReceipt(formDataToSend);
-      toast.success("رسید په بریالیتوب سره ثبت شو");
+      toast.success(texts.receiptCreated);
       navigate("/makzan-receipts");
     } catch (error) {
       console.error("Failed to create receipt", error);
       toast.error(
-        "ثبت ناکام شو: " + (error.response?.data?.message || error.message)
+        texts.createError + (error.response?.data?.message || error.message),
       );
     } finally {
       setIsSubmitting(false);
@@ -218,26 +236,15 @@ export default function AddMakzanReceipt() {
           onClick={() => navigate("/makzan-receipts")}
           sx={{ color: "text.secondary" }}
         >
-          بیرته
+          {texts.back}
         </Button>
-        <Typography
-          variant="h4"
-          sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
-        >
-          د نوي مخزن رسید اضافه کول
+        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+          {texts.pageTitle}
         </Typography>
       </Box>
-
-      {/* Scanner Folder Info Alert */}
-      <Alert
-        severity="info"
-        sx={{ mb: 3, maxWidth: 1200, mx: "auto" }}
-        icon={<ScannerIcon />}
-      >
-        <Typography variant="body2" fontWeight="bold">
-          د سکینر پوښۍ: {scannerFolderPath}
-        </Typography>
-      </Alert>
+      <Box sx={{ mb: 3 }}>
+        <PageBreadcrumbs />
+      </Box>
 
       {/* Form Card */}
       <Card sx={{ maxWidth: 1200, mx: "auto" }}>
@@ -278,7 +285,7 @@ export default function AddMakzanReceipt() {
                       </Badge>
 
                       <Typography variant="h6" gutterBottom>
-                        د سکینر پوښۍ
+                        {texts.scannerFiles}
                       </Typography>
 
                       <Typography
@@ -287,8 +294,8 @@ export default function AddMakzanReceipt() {
                         sx={{ mb: 2 }}
                       >
                         {detectedFiles.length > 0
-                          ? `${detectedFiles.length} فایل(ونه) موجود دي`
-                          : "سکین تڼۍ کلیک کړئ"}
+                          ? `${detectedFiles.length} ${texts.filesDetected}`
+                          : texts.noFilesInScanner}
                       </Typography>
 
                       {/* Scan Button */}
@@ -311,10 +318,10 @@ export default function AddMakzanReceipt() {
                         {isScanning ? (
                           <>
                             <CircularProgress size={16} sx={{ mr: 1 }} />
-                            سکین کیږي...
+                            {texts.scanning}
                           </>
                         ) : (
-                          "سکین"
+                          texts.scan
                         )}
                       </Button>
 
@@ -326,11 +333,11 @@ export default function AddMakzanReceipt() {
                         onClick={handleLoadFromScanner}
                         disabled={detectedFiles.length === 0}
                         sx={{
-                          bgcolor: "success.main",
-                          "&:hover": { bgcolor: "success.dark" },
+                          bgcolor: "#4CAF50",
+                          "&:hover": { bgcolor: "#45a049" },
                         }}
                       >
-                        فایلونه لوډ کړئ
+                        {texts.loadFiles}
                       </Button>
                     </CardContent>
                   </Card>
@@ -343,7 +350,7 @@ export default function AddMakzanReceipt() {
                         fontWeight="bold"
                         sx={{ mb: 1 }}
                       >
-                        د سکینر فایلونه:
+                        {texts.filesDetected}
                       </Typography>
                       <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
                         <Stack spacing={0.5}>
@@ -377,7 +384,7 @@ export default function AddMakzanReceipt() {
                       size="small"
                       startIcon={<AttachFileIcon />}
                     >
-                      یا دستي فایل اضافه کړئ
+                      {texts.addManualFile}
                       <input
                         type="file"
                         hidden
@@ -400,7 +407,7 @@ export default function AddMakzanReceipt() {
                         }}
                       >
                         <Typography variant="subtitle2" fontWeight="bold">
-                          د اپلوډ لپاره چمتو ({formData.files.length})
+                          {texts.selectedFiles} ({formData.files.length})
                         </Typography>
                         <IconButton
                           size="small"
@@ -418,11 +425,19 @@ export default function AddMakzanReceipt() {
                               key={index}
                               label={file.name}
                               onDelete={() => handleRemoveFile(index)}
-                              deleteIcon={<DeleteIcon />}
                               size="small"
-                              color="primary"
                               sx={{
+                                backgroundColor: "#2196F3",
+                                color: "#ffffff",
                                 justifyContent: "space-between",
+
+                                "& .MuiChip-deleteIcon": {
+                                  color: "#ffffff",
+                                  "&:hover": {
+                                    color: "#ffffff",
+                                  },
+                                },
+
                                 "& .MuiChip-label": {
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
@@ -446,24 +461,25 @@ export default function AddMakzanReceipt() {
                     <TextField
                       fullWidth
                       size="small"
-                      name="no"
-                      label="د رسید نمبر"
-                      value={formData.no}
+                      name="docNo"
+                      label={texts.docNo}
+                      value={formData.docNo}
                       onChange={handleInputChange}
-                      required
-                      error={!formData.no}
-                      helperText={!formData.no ? "دا فیلد اړین دی" : ""}
                     />
                   </Grid>
-
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
                       size="small"
-                      name="docNo"
-                      label="د سند نمبر"
-                      value={formData.docNo}
+                      name="department"
+                      label={texts.department}
+                      value={formData.department}
                       onChange={handleInputChange}
+                      required
+                      error={!formData.department}
+                      helperText={
+                        !formData.department ? texts.requiredField : ""
+                      }
                     />
                   </Grid>
 
@@ -474,15 +490,15 @@ export default function AddMakzanReceipt() {
                       required
                       error={!formData.org}
                     >
-                      <InputLabel>اداره</InputLabel>
+                      <InputLabel>{texts.org}</InputLabel>
                       <Select
                         name="org"
                         value={formData.org}
                         onChange={handleInputChange}
-                        label="اداره"
+                        label={texts.org}
                       >
                         {orgs.length === 0 ? (
-                          <MenuItem disabled>لوډیږي...</MenuItem>
+                          <MenuItem disabled>...</MenuItem>
                         ) : (
                           orgs.map((org) => (
                             <MenuItem key={org.id} value={org.id}>
@@ -499,22 +515,22 @@ export default function AddMakzanReceipt() {
                       fullWidth
                       size="small"
                       name="letterNo"
-                      label="د مکتوب نمبر"
+                      label={texts.letterNo}
                       value={formData.letterNo}
                       onChange={handleInputChange}
                     />
                   </Grid>
 
                   <Grid item xs={12} md={6}>
-                    <TextField
+                    <HijriDatePicker
                       fullWidth
                       size="small"
                       name="letterDate"
                       type="date"
                       InputLabelProps={{ shrink: true }}
-                      label="د مکتوب نیټه"
+                      label={texts.letterDate}
                       value={formData.letterDate}
-                      onChange={handleInputChange}
+                      onChange={handleHijriDateChange("letterDate")}
                     />
                   </Grid>
 
@@ -523,7 +539,7 @@ export default function AddMakzanReceipt() {
                       fullWidth
                       size="small"
                       name="subjectType"
-                      label="د موضوع ډول"
+                      label={texts.subjectType}
                       value={formData.subjectType}
                       onChange={handleInputChange}
                     />
@@ -534,7 +550,7 @@ export default function AddMakzanReceipt() {
                       fullWidth
                       size="small"
                       name="description"
-                      label="ملاحظات"
+                      label={texts.description}
                       multiline
                       rows={4}
                       value={formData.description}
@@ -557,7 +573,7 @@ export default function AddMakzanReceipt() {
                         onClick={() => navigate("/makzan-receipts")}
                         disabled={isSubmitting}
                       >
-                        لغوه
+                        {texts.cancel}
                       </Button>
                       <Button
                         type="submit"
@@ -571,11 +587,11 @@ export default function AddMakzanReceipt() {
                         }
                         disabled={isSubmitting}
                         sx={{
-                          bgcolor: "black",
-                          "&:hover": { bgcolor: "#1d252e" },
+                          bgcolor: "#2196F3",
+                          "&:hover": { bgcolor: "#2196F3" },
                         }}
                       >
-                        {isSubmitting ? "ذخیره کیږي..." : "ذخیره کړئ"}
+                        {isSubmitting ? texts.saving : texts.save}
                       </Button>
                     </Box>
                   </Grid>

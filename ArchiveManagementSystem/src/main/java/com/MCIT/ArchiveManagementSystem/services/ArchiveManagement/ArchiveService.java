@@ -9,65 +9,69 @@ import org.springframework.stereotype.Service;
 import com.MCIT.ArchiveManagementSystem.models.ArchiveManagement.Archive;
 import com.MCIT.ArchiveManagementSystem.repositories.ArchiveManagement.ArchiveRepository;
 import com.MCIT.ArchiveManagementSystem.util.AuditLogHelper;
+
 @Service
 public class ArchiveService {
- private static final String TABLE_NAME = "archive";
+    private static final String TABLE_NAME = "archive";
 
     @Autowired
-   private final ArchiveRepository exportDocRepository;
-   private final AuditLogHelper auditLogHelper;
-    public ArchiveService(ArchiveRepository exportDocRepository, AuditLogHelper auditLogHelper) {
-        this.exportDocRepository = exportDocRepository;
+    private final ArchiveRepository archiveRepository;
+    private final AuditLogHelper auditLogHelper;
+    
+    public ArchiveService(ArchiveRepository archiveRepository, AuditLogHelper auditLogHelper) {
+        this.archiveRepository = archiveRepository;
         this.auditLogHelper = auditLogHelper;
     }
 
-public List<Archive> getAllArchives() {
-    return exportDocRepository.findAll();
-
-
-}
-
-public Optional<Archive> getArchiveById(Integer id) {
-  
-    return exportDocRepository.findById(id);
-}
-
-public Archive createExportDoc(Archive exportDoc) {
-    // Save FIRST to generate the ID
-    Archive savedArchive = exportDocRepository.save(exportDoc);
-    
-    // THEN log with the generated ID
-    auditLogHelper.logCreate(TABLE_NAME, savedArchive.getId().longValue(), 
-        savedArchive.getDescription());
-    
-    return savedArchive;
-}
-
-public Archive updateArchive(Integer id, Archive exportDocDetails) {
-    Archive existingDoc = exportDocRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("ExportDoc not found with id: " + id));
-
-    existingDoc.setDocNo(exportDocDetails.getDocNo());
-    existingDoc.setIncommingDate(exportDocDetails.getIncommingDate());
-    existingDoc.setOutgoingDate(exportDocDetails.getOutgoingDate());
-    existingDoc.setOrg(exportDocDetails.getOrg());
-    existingDoc.setDocType(exportDocDetails.getDocType());
-    existingDoc.setYear(exportDocDetails.getYear());
-    existingDoc.setDescription(exportDocDetails.getDescription());
-    existingDoc.setIsIncoming(exportDocDetails.getIsIncoming());
-auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(), existingDoc.getDescription());
-    return exportDocRepository.save(existingDoc);
-}
-
-   public void deleteArchive(Integer id) {
-        Archive exportDoc = exportDocRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ExportDoc not found with id: " + id));
-                auditLogHelper.logDelete(TABLE_NAME, id.longValue(), exportDoc.getDescription());
-        exportDocRepository.delete(exportDoc);
-        
+    public List<Archive> getAllArchives() {
+        return archiveRepository.findAll();
     }
 
+    public Optional<Archive> getArchiveById(Integer id) {
+        return archiveRepository.findById(id);
+    }
 
+    public Archive createExportDoc(Archive archive) {
+        // Validate that both sender and receiver are provided
+        if (archive.getSenderOrg() == null || archive.getSenderOrg().getId() == null) {
+            throw new RuntimeException("Sender organization is required");
+        }
+        if (archive.getReceiverOrg() == null || archive.getReceiverOrg().getId() == null) {
+            throw new RuntimeException("Receiver organization is required");
+        }
+        
+        // Save FIRST to generate the ID
+        Archive savedArchive = archiveRepository.save(archive);
+        
+        // THEN log with the generated ID
+        auditLogHelper.logCreate(TABLE_NAME, savedArchive.getId().longValue(), 
+            savedArchive.getDescription());
+        
+        return savedArchive;
+    }
 
+    public Archive updateArchive(Integer id, Archive archiveDetails) {
+        Archive existingDoc = archiveRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Archive not found with id: " + id));
+
+        // Update all fields - REMOVED externalOrg reference
+        existingDoc.setDocNo(archiveDetails.getDocNo());
+        existingDoc.setSendDate(archiveDetails.getSendDate());
+        existingDoc.setDepartmentDate(archiveDetails.getDepartmentDate());
+        existingDoc.setSenderOrg(archiveDetails.getSenderOrg());
+        existingDoc.setReceiverOrg(archiveDetails.getReceiverOrg());
+        existingDoc.setDocType(archiveDetails.getDocType());
+        existingDoc.setDescription(archiveDetails.getDescription());
+        existingDoc.setDirection(archiveDetails.getDirection());
+        
+        auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(), existingDoc.getDescription());
+        return archiveRepository.save(existingDoc);
+    }
+
+    public void deleteArchive(Integer id) {
+        Archive archive = archiveRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Archive not found with id: " + id));
+        auditLogHelper.logDelete(TABLE_NAME, id.longValue(), archive.getDescription());
+        archiveRepository.delete(archive);
+    }
 }
-

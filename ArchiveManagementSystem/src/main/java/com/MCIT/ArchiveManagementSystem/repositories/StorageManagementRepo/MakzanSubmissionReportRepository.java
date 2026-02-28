@@ -12,14 +12,7 @@ public interface MakzanSubmissionReportRepository extends JpaRepository<MakzanSu
      List<MakzanSubmissionReport> findByManagement(Management management);
     Long countByManagement(Management management);
 
-    //  List<MakzanSubmissionReport> findByBookNumberContainingIgnoreCaseOrProvinceContainingIgnoreCaseOrDistrictContainingIgnoreCase(
-    //     String bookNumber, String province, String district
-    // );
 
-    // // 🔹 د هر فیلډ لپاره جلا methods (د فلټر لپاره)
-    // List<MakzanSubmissionReport> findByBookNumberContainingIgnoreCase(String keyword);
-    // List<MakzanSubmissionReport> findByProvinceContainingIgnoreCase(String keyword);
-    // List<MakzanSubmissionReport> findByDistrictContainingIgnoreCase(String keyword);
 
     
 }

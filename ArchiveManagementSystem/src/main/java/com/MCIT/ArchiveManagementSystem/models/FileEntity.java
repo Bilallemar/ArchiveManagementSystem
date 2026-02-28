@@ -3,7 +3,11 @@ package com.MCIT.ArchiveManagementSystem.models;
 
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazari;
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaWaradaSadera;
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih;
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakhzanWaradaSadera;
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanSubmissionReport;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
@@ -43,6 +47,34 @@ public class FileEntity {
     @ToString.Exclude         
     @EqualsAndHashCode.Exclude 
     private HifziyaHazari hifziyaHazari;
+
+        @ManyToOne
+    @JoinColumn(name = "makhzan_warada_sadera_id")
+    @JsonIgnore
+    @ToString.Exclude         
+    @EqualsAndHashCode.Exclude 
+    private MakhzanWaradaSadera makhzanWaradaSadera;
+            @ManyToOne
+    @JoinColumn(name = "sawanih_id")
+    @JsonIgnore
+    @ToString.Exclude         
+    @EqualsAndHashCode.Exclude 
+    private Sawanih sawanih;
+
+            @ManyToOne
+    @JoinColumn(name = "makzan_annual_report_id")
+    @JsonIgnore
+    @ToString.Exclude         
+    @EqualsAndHashCode.Exclude 
+    private MakzanAnnualReport makzanAnnualReport;
+
+
+            @ManyToOne
+    @JoinColumn(name = "makzan_submission_report_id")
+    @JsonIgnore
+    @ToString.Exclude         
+    @EqualsAndHashCode.Exclude 
+    private MakzanSubmissionReport makzanSubmissionReport;
 }
 
     // @ManyToOne

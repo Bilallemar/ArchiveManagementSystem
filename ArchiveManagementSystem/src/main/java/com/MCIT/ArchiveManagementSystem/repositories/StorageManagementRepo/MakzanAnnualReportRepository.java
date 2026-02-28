@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.MCIT.ArchiveManagementSystem.models.Management;
-import com.MCIT.ArchiveManagementSystem.models.ArchiveManagement.Archive;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport;
 
 public interface MakzanAnnualReportRepository extends JpaRepository<MakzanAnnualReport, Integer> {

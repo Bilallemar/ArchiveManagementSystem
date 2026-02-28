@@ -1,0 +1,47 @@
+{
+  "title": "د سوانحو لېست",
+  "newRecord": "نوی ریکارډ",
+  "editRecord": "د سوانحو سمون",
+  "newSawanih": "د نوې سوانح ثبت",
+  "newIsteqdam": "د نوي استخدام ثبت",
+
+  "all": "ټول",
+  "sawanih": "سوانح",
+  "isteqdam": "استخدام",
+
+  "name": "نوم",
+  "fatherName": "د پلار نوم",
+  "qaidWarida": "قید وارده",
+  "incommingDate": "د وارده نېټه",
+  "outgoingDate": "د صادره نېټه",
+  "org": "مرسل",
+  "pageQuantity": "د پاڼو شمېر",
+  "description": "ملاحظات",
+  "recordStatus": "د ریکارډ ډول",
+
+  "actions": "عملیات",
+  "view": "کتل",
+  "edit": "سمون",
+  "delete": "حذف",
+  "cancel": "لغوه",
+  "close": "بندول",
+  "save": "ذخیره",
+  "saving": "د ذخیره کولو په حال کې...",
+  "back": "شاته",
+
+  "deleteDialogTitle": "د حذف تایید",
+  "deleteDialogText": "ایا تاسې ډاډه یاست چې دا ریکارډ حذف کړئ؟",
+  "deleteSuccess": "ریکارډ په بریالیتوب سره حذف شو",
+  "deleteError": "د حذف پر مهال ستونزه رامنځته شوه",
+
+  "search": "لټون",
+  "fieldOrg": "اداره",
+
+  "rowsPerPage": "په هر مخ کې قطارونه",
+
+  "loading": "معلومات پورته کېږي...",
+  "loadError": "د معلوماتو په پورته کولو کې ستونزه رامنځته شوه",
+  "noData": "هیڅ معلومات ونه موندل شول",
+  "notAvailable": "موجود نه دی",
+  "noArchiveSelected": "هیڅ سوانح نه ده ټاکل شوې"
+}

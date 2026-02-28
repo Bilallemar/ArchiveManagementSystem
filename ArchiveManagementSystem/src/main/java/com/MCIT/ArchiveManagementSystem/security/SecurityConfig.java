@@ -1,5 +1,10 @@
 package com.MCIT.ArchiveManagementSystem.security;
 
+import java.time.LocalDate;
+import java.util.Arrays;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -32,12 +37,6 @@ import com.MCIT.ArchiveManagementSystem.repositories.UserRepository;
 import com.MCIT.ArchiveManagementSystem.security.jwt.AuthEntryPointJwt;
 import com.MCIT.ArchiveManagementSystem.security.jwt.AuthTokenFilter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.LocalDate;
-import java.util.Arrays;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
@@ -58,48 +57,56 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                 .requestMatchers("/", "/health", "/error").permitAll()
-                 .requestMatchers("/favicon.*").permitAll()
-
-                .requestMatchers("/api/auth/public/**").permitAll()
-                .requestMatchers("/oauth2/**").permitAll()
-                .requestMatchers("/api/csrf-token").permitAll()
-                .requestMatchers("/uploads/**").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/user-management/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
-            .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/", "/health", "/error").permitAll()
+                        .requestMatchers("/favicon.*").permitAll()
+                        .requestMatchers(
+                                "/api/scanner-folder/**",
+                                "/api/documents/upload",
+                                "/api/documents/list",
+                                "/api/documents/{id}",
+                                "/api/documents/{id}/download")
+                        .permitAll()
+                        .requestMatchers("/api/auth/public/**").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/api/csrf-token").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/user-management/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2LoginSuccessHandler))
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-@Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration config = new CorsConfiguration();
-    
-    config.setAllowedOriginPatterns(Arrays.asList(
-        "http://localhost:*",      // ✅ Allows any localhost port
-        "http://127.0.0.1:*"       // ✅ Allows any 127.0.0.1 port
-    ));
-    
-    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-    config.setAllowedHeaders(Arrays.asList("*"));
-    config.setExposedHeaders(Arrays.asList("Authorization"));
-    config.setAllowCredentials(true);  // ✅ Works with patterns
-    config.setMaxAge(3600L);
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", config);
-    return source;
-}
+        config.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*", // ✅ Allows any localhost port
+                "http://127.0.0.1:*",
+                "http://localhost:9090",
+                "http://103.132.98.175",
+                "http://103.132.98.175:*" // ✅ Allows any 127.0.0.1 port
+        ));
+
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setExposedHeaders(Arrays.asList("Authorization"));
+        config.setAllowCredentials(true); // ✅ Works with patterns
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -113,32 +120,32 @@ public CorsConfigurationSource corsConfigurationSource() {
 
     @Bean
     public CommandLineRunner initData(RoleRepository roleRepository,
-                                      UserRepository userRepository,
-                                      PasswordEncoder passwordEncoder,
-                                      ManagementRepository managementRepository) {
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            ManagementRepository managementRepository) {
         return args -> {
             logger.info("Starting database initialization...");
-            
+
             // Create managements
             Management archiveManagement = createManagementIfNotExists(managementRepository, 1L, "Archive");
             Management hifziyaManagement = createManagementIfNotExists(managementRepository, 2L, "Hifziya");
             Management makhzanManagement = createManagementIfNotExists(managementRepository, 3L, "Makhzan");
-            
+
             logger.info("Managements initialized: Archive, Hifziya, Makhzan");
-            
+
             // Create roles
             Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_USER)));
-            
+
             Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
                     .orElseGet(() -> roleRepository.save(new Role(AppRole.ROLE_ADMIN)));
-            
+
             logger.info("Roles initialized: ROLE_USER, ROLE_ADMIN");
-            
+
             // Create or update admin user
             User admin = userRepository.findByUserName("admin")
                     .orElse(new User());
-            
+
             admin.setUserName("admin");
             admin.setEmail("admin@example.com");
             admin.setPassword(passwordEncoder.encode("adminPass"));
@@ -152,25 +159,25 @@ public CorsConfigurationSource corsConfigurationSource() {
             admin.setSignUpMethod("email");
             admin.setRole(adminRole);
             admin.setManagement(archiveManagement);
-            
+
             userRepository.save(admin);
             logger.info("Admin user created/updated: username=admin, management=Archive");
-            
+
             // Create test users
-            createUserIfNotExists(userRepository, passwordEncoder, "user1", "user1@example.com", 
-                                "password1", userRole, null);
-            createUserIfNotExists(userRepository, passwordEncoder, "archive_user", "archive@test.com", 
-                                "password123", userRole, archiveManagement);
-            createUserIfNotExists(userRepository, passwordEncoder, "tashkeel_user", "tashkeel@test.com", 
-                                "password123", userRole, hifziyaManagement);
-            createUserIfNotExists(userRepository, passwordEncoder, "makhzan_user", "makhzan@test.com", 
-                                "password123", userRole, makhzanManagement);
-            
+            createUserIfNotExists(userRepository, passwordEncoder, "user1", "user1@example.com",
+                    "password1", userRole, null);
+            createUserIfNotExists(userRepository, passwordEncoder, "archive_user", "archive@test.com",
+                    "password123", userRole, archiveManagement);
+            createUserIfNotExists(userRepository, passwordEncoder, "tashkeel_user", "tashkeel@test.com",
+                    "password123", userRole, hifziyaManagement);
+            createUserIfNotExists(userRepository, passwordEncoder, "makhzan_user", "makhzan@test.com",
+                    "password123", userRole, makhzanManagement);
+
             logger.info("Database initialization complete!");
             logger.info("Default credentials - Username: admin, Password: adminPass");
         };
     }
-    
+
     private Management createManagementIfNotExists(ManagementRepository repository, Long id, String name) {
         return repository.findById(id).orElseGet(() -> {
             Management m = new Management();
@@ -178,10 +185,10 @@ public CorsConfigurationSource corsConfigurationSource() {
             return repository.save(m);
         });
     }
-    
+
     private void createUserIfNotExists(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                                      String username, String email, String password,
-                                      Role role, Management management) {
+            String username, String email, String password,
+            Role role, Management management) {
         if (!userRepository.existsByUserName(username)) {
             User user = new User(username, email, passwordEncoder.encode(password));
             user.setAccountNonLocked(true);
@@ -195,7 +202,7 @@ public CorsConfigurationSource corsConfigurationSource() {
             user.setRole(role);
             user.setManagement(management);
             userRepository.save(user);
-            
+
             String mgmt = management != null ? management.getManagementName() : "none";
             logger.info("Created user: {} (management: {})", username, mgmt);
         }

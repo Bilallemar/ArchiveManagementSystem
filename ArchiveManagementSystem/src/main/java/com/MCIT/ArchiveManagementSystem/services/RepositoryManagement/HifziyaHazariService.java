@@ -86,6 +86,7 @@ auditLogHelper.logCreate(TABLE_NAME, hifziyaHazari.getId().longValue(),
     public HifziyaHazari updateHifziyaHazari(Integer id, HifziyaHazari hifziyaHazariDetails, MultipartFile[] fileURL) {
         HifziyaHazari existingDoc = hifziyaHazariRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("HifziyaHazari not found with id: " + id));
+        existingDoc.setVolume(hifziyaHazariDetails.getVolume());
 
         existingDoc.setType(hifziyaHazariDetails.getType());
         existingDoc.setSubType(hifziyaHazariDetails.getSubType());

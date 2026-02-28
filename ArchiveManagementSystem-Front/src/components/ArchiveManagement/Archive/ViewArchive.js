@@ -1,141 +1,3 @@
-// import React from "react";
-// import {
-//   Dialog,
-//   DialogTitle,
-//   DialogContent,
-//   DialogActions,
-//   Button,
-//   Box,
-//   Typography,
-//   Divider,
-// } from "@mui/material";
-
-// export default function ViewArchive({ open, onClose, archive }) {
-//   return (
-//     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-//       <DialogTitle
-//         sx={{
-//           fontWeight: "bold",
-//           textAlign: "right",
-//         }}
-//       >
-//         د آرشیف تفصیلات
-//       </DialogTitle>
-//       <DialogContent dividers>
-//         {archive ? (
-//           <Box sx={{ textAlign: "right", direction: "rtl" }}>
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 ډول:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.isIncomming ? "وارده" : "صادره"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 نمبر سند:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.docNo || "N/A"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 تاریخ وارده:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.incommingDate || "N/A"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 تاریخ صادره:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.outgoingDate || "N/A"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 اداره:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.org?.name || "N/A"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 تاریخ تسلیمی:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.submitedDate || "N/A"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 نوع سند:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.docType || "N/A"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 سال:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.year || "N/A"}
-//               </Typography>
-//             </Box>
-
-//             <Divider sx={{ my: 1 }} />
-
-//             <Box sx={{ mb: 2 }}>
-//               <Typography variant="subtitle2" color="text.secondary">
-//                 ملاحظات:
-//               </Typography>
-//               <Typography variant="body1" sx={{ mb: 1 }}>
-//                 {archive.description || "N/A"}
-//               </Typography>
-//             </Box>
-//           </Box>
-//         ) : (
-//           <Typography sx={{ textAlign: "right" }}>
-//             هیڅ آرشیف نه دی ټاکل شوی
-//           </Typography>
-//         )}
-//       </DialogContent>
-//       <DialogActions>
-//         <Button onClick={onClose} color="primary">
-//           بندول
-//         </Button>
-//       </DialogActions>
-//     </Dialog>
-//   );
-// }
-
 import React from "react";
 import {
   Dialog,
@@ -143,147 +5,127 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Box,
+  Grid,
   Typography,
+  Box,
   Divider,
+  Chip,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import ViewArchiveTexts from "./ViewArchiveTexts";
+import getArchiveTexts from "../../../helpers/archive/getArchiveTexts";
+import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 
 export default function ViewArchive({ open, onClose, archive }) {
-  const { t } = useTranslation("ViewArchive");
-  const text = ViewArchiveTexts(t);
+  const { t } = useTranslation("archive");
+  const texts = getArchiveTexts(t);
+
+  if (!archive) return null;
+
+  const InfoRow = ({ label, value }) => (
+    <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid item xs={4}>
+        <Typography variant="body2" color="text.secondary" fontWeight="bold">
+          {label}:
+        </Typography>
+      </Grid>
+      <Grid item xs={8}>
+        <Typography variant="body1">{value || "—"}</Typography>
+      </Grid>
+    </Grid>
+  );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle
-        sx={{
-          fontWeight: "bold",
-          textAlign: "right",
-        }}
-      >
-        {text.title}
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="h5" component="span">
+            {texts.viewTitle || "معلومات آرشیف"}
+          </Typography>
+          <Chip
+            label={
+              archive.direction === "INCOMING"
+                ? "وارده (Incoming)"
+                : "صادره (Outgoing)"
+            }
+            color={archive.direction === "INCOMING" ? "success" : "primary"}
+            size="small"
+          />
+        </Box>
       </DialogTitle>
 
-      <DialogContent dividers>
-        {archive ? (
-          <Box sx={{ textAlign: "right", direction: "rtl" }}>
-            {/* ===== Type ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.type}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.isIncomming ? text.incoming : text.outgoing}
-              </Typography>
-            </Box>
+      <DialogContent>
+        <Box sx={{ py: 2 }}>
+          {/* Document Number */}
+          <InfoRow
+            label={texts.docNo || "نمبر مکتوب / پارسل"}
+            value={archive.docNo}
+          />
 
-            <Divider sx={{ my: 1 }} />
+          {/* Sender */}
+          <InfoRow
+            label={texts.sender || "مرسل (Sender)"}
+            value={archive.senderOrg?.name}
+          />
 
-            {/* ===== Document Number ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.docNo}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.docNo || text.notAvailable}
-              </Typography>
-            </Box>
+          {/* Receiver */}
+          <InfoRow
+            label={texts.receiver || "مرسل الیه (Receiver)"}
+            value={archive.receiverOrg?.name}
+          />
 
-            <Divider sx={{ my: 1 }} />
+          <Divider sx={{ my: 2 }} />
 
-            {/* ===== Incoming Date ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.incomingDate}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.incommingDate || text.notAvailable}
-              </Typography>
-            </Box>
+          {/* Document Type */}
+          <InfoRow
+            label={texts.docType || "نوعیت پارسل"}
+            value={archive.docType?.name}
+          />
 
-            <Divider sx={{ my: 1 }} />
+          {/* Send Date */}
+          <InfoRow
+            label={texts.sendDate || "تاریخ ارسال"}
+            value={formatHijriDateForDisplay(archive.sendDate)}
+          />
 
-            {/* ===== Outgoing Date ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.outgoingDate}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.outgoingDate || text.notAvailable}
-              </Typography>
-            </Box>
+          {/* Department Date */}
+          <InfoRow
+            label={texts.departmentDate || "تاریخ شعبه"}
+            value={formatHijriDateForDisplay(archive.departmentDate)}
+          />
 
-            <Divider sx={{ my: 1 }} />
+          <Divider sx={{ my: 2 }} />
 
-            {/* ===== Organization ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.organization}:
+          {/* Description */}
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                fontWeight="bold"
+                sx={{ mb: 1 }}
+              >
+                {texts.description || "ملاحظات / Remarks"}:
               </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.org?.name || text.notAvailable}
+              <Typography
+                variant="body1"
+                sx={{
+                  backgroundColor: "#f5f5f5",
+                  p: 2,
+                  borderRadius: 1,
+                  minHeight: "80px",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {archive.description || "—"}
               </Typography>
-            </Box>
-
-            <Divider sx={{ my: 1 }} />
-
-            {/* ===== Submitted Date ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.submittedDate}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.submitedDate || text.notAvailable}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 1 }} />
-
-            {/* ===== Document Type ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.docType}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.docType || text.notAvailable}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 1 }} />
-
-            {/* ===== Year ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.year}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.year || text.notAvailable}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 1 }} />
-
-            {/* ===== Description ===== */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                {text.description}:
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                {archive.description || text.notAvailable}
-              </Typography>
-            </Box>
-          </Box>
-        ) : (
-          <Typography sx={{ textAlign: "right" }}>
-            {text.noArchiveSelected}
-          </Typography>
-        )}
+            </Grid>
+          </Grid>
+        </Box>
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} color="primary">
-          {text.close}
+        <Button onClick={onClose} variant="contained">
+          {texts.close || "تړل"}
         </Button>
       </DialogActions>
     </Dialog>

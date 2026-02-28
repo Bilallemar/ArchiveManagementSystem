@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -10,10 +10,13 @@ import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
 import { MANAGEMENTS } from "./utils/managementUtils";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import { useMemo, useState } from "react";
 import { createAppTheme } from "./theme";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  initializeDirection,
+  setDocumentDirection,
+  isRTLLanguage,
+} from "./utils/languageUtils";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./components/LandingPage";
 import AccessDenied from "./components/Auth/AccessDenied";
@@ -49,61 +52,65 @@ import MakzanAnnualReportList from "./components/StorageManagement/MakzanAnnualR
 import AddMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/AddMakzanAnnualReport";
 import EditMakzanAnnualReportDialog from "./components/StorageManagement/MakzanAnnualReport/EditMakzanAnnualReportDialog";
 import MasterDataManagement from "./components/MasterData/MasterDataManagement";
+import MakhzanWaradaSaderaList from "./components/StorageManagement/MakhzanWaradaSadera/MakhzanWaradaSaderaList";
+import AddMakhzanWaradaSadera from "./components/StorageManagement/MakhzanWaradaSadera/AddMakhzanWaradaSadera";
+import EditMakhzanWaradaSaderaDialog from "./components/StorageManagement/MakhzanWaradaSadera/EditMakhzanWaradaSaderaDialog";
+import AddShuraAaliResolution from "./components/Hifziya/ShuraAaliResolution/AddShuraAaliResolution";
+import EditShuraAaliResolutionDialog from "./components/Hifziya/ShuraAaliResolution/EditShuraAaliResolutionDialog";
+import ShuraAaliResolutionList from "./components/Hifziya/ShuraAaliResolution/ShuraAaliResolutionList";
 
 import { useMyContext } from "./store/ContextApi";
 import SidebarLayout from "./components/SidebarLayout";
 
 const App = () => {
   const { i18n } = useTranslation();
+  const { pathname } = useLocation();
+  const { mode, token } = useMyContext();
 
-  // Set RTL direction based on language
+  const [direction, setDirection] = useState("rtl");
+  const [themeKey, setThemeKey] = useState(0);
+
+  // Initialize direction on mount
   useEffect(() => {
-    // Set Pashto as default only once
-    if (!i18n.language) {
-      i18n.changeLanguage("ps");
+    const { language, direction: dir } = initializeDirection();
+    setDirection(dir);
+
+    // Set i18n language if different
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
     }
 
-    // Set document direction based on language (NOT on theme change)
-    const direction = ["ps", "fa"].includes(i18n.language) ? "rtl" : "ltr";
-    document.dir = direction;
-    document.documentElement.setAttribute("dir", direction);
-    document.body.setAttribute("dir", direction);
+    console.log("🚀 App initialized:", { language, direction: dir });
+  }, []);
 
-    // Force a small delay to ensure CSS is applied
-    setTimeout(() => {
-      document.body.style.direction = direction;
-    }, 0);
-  }, [i18n.language]); // Only depend on language, NOT mode
+  // Update direction when language changes
+  useEffect(() => {
+    const newDirection = setDocumentDirection(i18n.language);
+    setDirection(newDirection);
+    setThemeKey((prev) => prev + 1); // Force theme recreation
 
-  const location = useLocation();
-  const hideNavbarRoutes = [
+    console.log("🔄 Language changed:", {
+      language: i18n.language,
+      direction: newDirection,
+    });
+  }, [i18n.language]);
+
+  // Create theme with current direction
+  const theme = createAppTheme(mode, direction);
+
+  // Auth pages
+  const authPages = [
     "/login",
     "/signup",
     "/forgot-password",
     "/reset-password",
     "/oauth2/redirect",
   ];
-  const { mode } = useMyContext();
-
-  // Memoize theme creation to prevent unnecessary re-renders
-  const theme = useMemo(() => createAppTheme(mode), [mode]);
-
-  const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
-  const { token } = useMyContext();
-  const { pathname } = useLocation();
-
-  // Hide layout on auth pages
-  const authPages = [
-    "/login",
-    "/signup",
-    "/forgot-password",
-    "/reset-password",
-  ];
   const isAuthPage = authPages.includes(pathname);
 
   if (isAuthPage || !token) {
     return (
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={theme} key={themeKey}>
         <CssBaseline />
         <Toaster position="bottom-center" reverseOrder={false} />
         <Routes>
@@ -119,230 +126,276 @@ const App = () => {
   }
 
   return (
-    <>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Toaster position="bottom-center" reverseOrder={false} />
-        <SidebarLayout>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute requiresManagement={true}>
-                  <LandingPage />
-                </ProtectedRoute>
-              }
-            />
+    <ThemeProvider theme={theme} key={themeKey}>
+      <CssBaseline />
+      <Toaster position="bottom-center" reverseOrder={false} />
+      <SidebarLayout>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute requiresManagement={true}>
+                <LandingPage />
+              </ProtectedRoute>
+            }
+          />
 
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/master-data" element={<MasterDataManagement />} />
-            <Route
-              path="/sawanih/:id"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <EditSawanihDialog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sawanih/add-sawanih"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <AddSawanih />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sawanih"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <SawanihList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hifziya-warada-sadera/:id"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <EditHifziyaWaradaSaderaDialog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hifziya-warada-sadera/add-hifziya-warada-sadera"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <AddHifziyaWaradaSadera />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hifziya-warada-sadera"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <HifziyaWaradaSaderaList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hifziya-hazari/:id"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <EditHazariDialog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hifziya-hazari/add-hazari"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <AddHazari />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/hifziya-hazari"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-                  <HazariList />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/access-denied" element={<AccessDenied />} />
-            <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoute adminPage={true}>
-                  <Admin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/user-management"
-              element={
-                <ProtectedRoute adminPage={true}>
-                  <UserManagementPanel />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/annual-reports-info"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <MakzanSubmissionReportList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/annual-reports-info/add"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <AddMakzanSubmissionReport />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/annual-reports-info/:id"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <EditMakzanSubmissionReportDialog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/makzan-receipts"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <MakzanReceiptList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/makzan-receipts/add"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <AddMakzanReceipt />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/makzan-receipts/:id"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <EditReceiptDialog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/makzan-annual-reports"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <MakzanAnnualReportList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/makzan-annual-reports/add"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <AddMakzanAnnualReport />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/makzan-annual-reports/:id"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
-                  <EditMakzanAnnualReportDialog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/archive"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
-                  <ArchiveList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/archive/add"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
-                  <AddArchive />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/archive/:id"
-              element={
-                <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
-                  <EditArchiveDialog />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <UserProfile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/oauth2/redirect"
-              element={<OAuth2RedirectHandler />}
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </SidebarLayout>
-      </ThemeProvider>
-    </>
+          {/* Hifziya Routes */}
+          <Route
+            path="/sawanih/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <EditSawanihDialog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sawanih/add-sawanih"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <AddSawanih />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sawanih"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <SawanihList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hifziya-warada-sadera/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <EditHifziyaWaradaSaderaDialog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hifziya-warada-sadera/add-hifziya-warada-sadera"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <AddHifziyaWaradaSadera />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hifziya-warada-sadera"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <HifziyaWaradaSaderaList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hifziya-hazari/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <EditHazariDialog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hifziya-hazari/add-hazari"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <AddHazari />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hifziya-hazari"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <HazariList />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Archive Routes */}
+          <Route
+            path="/archive"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+                <ArchiveList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/archive/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+                <AddArchive />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/archive/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+                <EditArchiveDialog />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Makhzan Routes */}
+          <Route
+            path="/annual-reports-info"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <MakzanSubmissionReportList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/annual-reports-info/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <AddMakzanSubmissionReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/annual-reports-info/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <EditMakzanSubmissionReportDialog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makzan-receipts"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <MakzanReceiptList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makzan-receipts/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <AddMakzanReceipt />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makzan-receipts/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <EditReceiptDialog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makzan-annual-reports"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <MakzanAnnualReportList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makzan-annual-reports/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <AddMakzanAnnualReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makzan-annual-reports/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <EditMakzanAnnualReportDialog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makhzan-warada-sadera"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <MakhzanWaradaSaderaList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makhzan-warada-sadera/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <AddMakhzanWaradaSadera />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/makhzan-warada-sadera/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <EditMakhzanWaradaSaderaDialog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shura-aali-resolutions"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <ShuraAaliResolutionList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shura-aali-resolutions/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <AddShuraAaliResolution />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shura-aali-resolutions/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <EditShuraAaliResolutionDialog />
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin Routes */}
+          <Route path="/access-denied" element={<AccessDenied />} />
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute adminPage={true}>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/user-management"
+            element={
+              <ProtectedRoute adminPage={true}>
+                <UserManagementPanel />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Other Routes */}
+          <Route path="/master-data" element={<MasterDataManagement />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </SidebarLayout>
+    </ThemeProvider>
   );
 };
 

@@ -25,8 +25,8 @@ public class MakzanReceipt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private String no;
     private String docNo;
+    private String department ;
 
     @ManyToOne
     @JoinColumn(name = "org")

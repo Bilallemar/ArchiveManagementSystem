@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { FormControl, Select, MenuItem } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { setDocumentDirection } from "../utils/languageUtils";
 
 import {
   Box,
@@ -30,8 +31,6 @@ import {
   ExpandMore,
   Notifications,
   Settings,
-  DarkMode,
-  LightMode,
   Logout,
   Person,
   Archive,
@@ -47,7 +46,7 @@ import {
   clearUserManagement,
 } from "../utils/managementUtils";
 import api from "../services/api";
-import { getSidebarTexts } from "./SidebarLayoutTexts";
+import { getSidebarTexts } from "../helpers/SidebarLayoutTexts";
 
 const drawerWidth = 280;
 
@@ -66,11 +65,16 @@ const groupNavItems = (items, isAdmin) => {
       grouped.dashboard.push(item);
     } else if (item.path.includes("archive")) {
       grouped.archive.push(item);
-    } else if (item.path.includes("sawanih") || item.path.includes("hifziya")) {
+    } else if (
+      item.path.includes("sawanih") ||
+      item.path === "/shura-aali-resolutions" ||
+      item.path.includes("hifziya")
+    ) {
       grouped.hifziya.push(item);
     } else if (
       item.path.includes("makzan") ||
-      item.path.includes("annual-reports")
+      item.path.includes("annual-reports") ||
+      item.path === "/makhzan-warada-sadera"
     ) {
       grouped.makzan.push(item);
     } else if (item.path.includes("master-data")) {
@@ -169,11 +173,16 @@ export default function SidebarLayout({ children }) {
     navigationItems.forEach((item) => {
       if (item.path === "/") grouped.dashboard.push(item);
       else if (item.path.includes("archive")) grouped.archive.push(item);
-      else if (item.path.includes("sawanih") || item.path.includes("hifziya"))
+      else if (
+        item.path.includes("sawanih") ||
+        item.path === "/shura-aali-resolutions" ||
+        item.path.includes("hifziya")
+      )
         grouped.hifziya.push(item);
       else if (
         item.path.includes("makzan") ||
-        item.path.includes("annual-reports")
+        item.path.includes("annual-reports") ||
+        item.path === "/makhzan-warada-sadera"
       )
         grouped.makzan.push(item);
       // ✅ ADD THIS BLOCK
@@ -506,68 +515,70 @@ export default function SidebarLayout({ children }) {
           borderColor: "divider",
         }}
       >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: "none" } }}
-          >
-            <MenuIcon />
-          </IconButton>
-
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            {pathname === "/"
-              ? text.dashboard
-              : navigationItems.find((i) => i.path === pathname)?.label || ""}
-          </Typography>
-
-          {/* Language Switcher */}
-          <FormControl
-            size="small"
-            variant="outlined"
-            sx={{ mr: 1, minWidth: 90 }}
-          >
-            <Select
-              value={i18n.language}
-              onChange={(e) => i18n.changeLanguage(e.target.value)}
-              sx={{
-                fontWeight: 600,
-                height: 36,
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "divider",
-                },
-              }}
+        <Toolbar sx={{ justifyContent: "space-between" }}>
+          {/* Left Side Group */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { md: "none" } }}
             >
-              <MenuItem value="ps">پښتو</MenuItem>
-              <MenuItem value="fa">دری</MenuItem>
-              <MenuItem value="en">EN</MenuItem>
-            </Select>
-          </FormControl>
+              <MenuIcon />
+            </IconButton>
 
-          {/* <IconButton onClick={toggleTheme} sx={{ mr: 1 }}>
-            {mode === "dark" ? <LightMode /> : <DarkMode />}
-          </IconButton> */}
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {pathname === "/"
+                ? text.dashboard
+                : navigationItems.find((i) => i.path === pathname)?.label || ""}
+            </Typography>
+          </Box>
 
-          <IconButton sx={{ mr: 1 }}>
-            <Badge badgeContent={4} color="error">
-              <Notifications />
-            </Badge>
-          </IconButton>
+          {/* Right Side Group */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Language Switcher */}
+            <FormControl size="small" variant="outlined" sx={{ minWidth: 90 }}>
+              <Select
+                value={i18n.language}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  console.log("Changing language to:", newLang);
+                  i18n.changeLanguage(newLang);
+                }}
+                sx={{
+                  fontWeight: 600,
+                  height: 36,
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "divider",
+                  },
+                }}
+              >
+                <MenuItem value="ps">پښتو</MenuItem>
+                <MenuItem value="fa">دری</MenuItem>
+                <MenuItem value="en">EN</MenuItem>
+              </Select>
+            </FormControl>
 
-          <IconButton onClick={handleProfileMenuOpen}>
-            <Avatar
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: !userAvatar ? "primary.main" : undefined,
-              }}
-              src={userAvatar}
-              imgProps={{ onError: handleImageError }}
-            >
-              {!userAvatar && userInitial}
-            </Avatar>
-          </IconButton>
+            <IconButton>
+              <Badge badgeContent={4} color="error">
+                <Notifications />
+              </Badge>
+            </IconButton>
+
+            <IconButton onClick={handleProfileMenuOpen}>
+              <Avatar
+                sx={{
+                  width: 32,
+                  height: 32,
+                  bgcolor: !userAvatar ? "primary.main" : undefined,
+                }}
+                src={userAvatar}
+                imgProps={{ onError: handleImageError }}
+              >
+                {!userAvatar && userInitial}
+              </Avatar>
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 

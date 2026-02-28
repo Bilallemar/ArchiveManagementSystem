@@ -63,7 +63,7 @@ const Login = () => {
       toast.success(
         management
           ? `${texts.welcomeBack} ${management.managementName}`
-          : texts.welcomeBack
+          : texts.welcomeBack,
       );
       navigate("/");
     } catch (error) {
@@ -113,7 +113,7 @@ const Login = () => {
       const response = await api.post(
         "/auth/public/verify-2fa-login",
         formData,
-        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
       );
 
       handleSuccessfulLogin(response.data);
@@ -178,7 +178,7 @@ const Login = () => {
               <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
                 {texts.signIn}
               </Typography>
-
+              {/* 
               <Typography variant="body2" sx={{ mb: 3 }}>
                 {texts.dontHaveAccount}{" "}
                 <Link
@@ -187,7 +187,7 @@ const Login = () => {
                 >
                   {texts.getStarted}
                 </Link>
-              </Typography>
+              </Typography> */}
 
               {/* Demo Info */}
               <Alert severity="info" sx={{ mb: 3 }}>

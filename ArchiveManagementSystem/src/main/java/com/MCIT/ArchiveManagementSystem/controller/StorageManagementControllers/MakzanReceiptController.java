@@ -1,32 +1,38 @@
 package com.MCIT.ArchiveManagementSystem.controller.StorageManagementControllers;
 
-import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaWaradaSadera;
-import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
-import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanReceiptRepository;
-import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
-import com.MCIT.ArchiveManagementSystem.services.StorageManagementService.MakzanReceiptService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.MCIT.ArchiveManagementSystem.services.AuditLogService;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import org.springframework.security.core.Authentication;
-
-
-import java.io.IOException;
-import java.nio.file.Files;
-
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport;
+import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
+import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanReceiptRepository;
+import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
+import com.MCIT.ArchiveManagementSystem.services.AuditLogService;
+import com.MCIT.ArchiveManagementSystem.services.FileService;
+import com.MCIT.ArchiveManagementSystem.services.StorageManagementService.MakzanReceiptService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @RestController
 @RequestMapping("/api/makzan-receipts")
@@ -35,20 +41,22 @@ public class MakzanReceiptController {
     private final MakzanReceiptService receiptsService;
     private final Path fileStorageLocation;
     private final AuditLogService auditLogService;
-        @Autowired
+    private final FileService fileService;
+    @Autowired
     private ManagementSecurityService managementSecurity;
-        private static final Long MAKHZAN_MANAGEMENT_ID = 3L; // Makhzan management ID
+    private static final Long MAKHZAN_MANAGEMENT_ID = 3L; // Makhzan management ID
 
     // private final FileService fileService;
 
-    
-    public MakzanReceiptController(MakzanReceiptService receiptsService,  
-                              MakzanReceiptRepository receiptsRepository,
-                              AuditLogService auditLogService) {
+    public MakzanReceiptController(MakzanReceiptService receiptsService,
+            MakzanReceiptRepository receiptsRepository,
+            AuditLogService auditLogService,
+            FileService fileService) {
         this.receiptsService = receiptsService;
         this.auditLogService = auditLogService;
+        this.fileService = fileService;
         this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
-        
+
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (IOException ex) {
@@ -58,70 +66,90 @@ public class MakzanReceiptController {
 
     @GetMapping
     public List<MakzanReceipt> getAllReceipts() {
-                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+        managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
         return receiptsService.getAllReceipts();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<MakzanReceipt> getReceiptById(@PathVariable Integer id) {
-                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+        managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
         return receiptsService.getReceiptById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public MakzanReceipt createReceipt(
+            @RequestPart("receipts") String receipts,
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
 
+    ) throws IOException {
+        managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
-
-@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public MakzanReceipt createReceipt(
-        @RequestPart("receipts") String receipts,
-    @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
-       
-) throws IOException {
-                    managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
-
-    
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-    MakzanReceipt recivedrMakzanReceipt = mapper.readValue(receipts, MakzanReceipt.class);
-
-    return receiptsService.createReceipt(recivedrMakzanReceipt, fileURL);
-}
-
-
-
-
-
-@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<MakzanReceipt> updateReceipt(
-        @PathVariable Integer id,
-        @RequestPart("receipts") String receiptsJson,              // JSON string د Receipts object لپاره
-        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
-                    managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
-
-
-    try {
-        // JSON string parse کوو
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        MakzanReceipt recivedReceipts = mapper.readValue(receiptsJson, MakzanReceipt.class);
+        MakzanReceipt recivedrMakzanReceipt = mapper.readValue(receipts, MakzanReceipt.class);
 
-        // service ته پاس کوو
-        MakzanReceipt updatedReceipt = receiptsService.updateReceipt(id, recivedReceipts, fileURL);
-
-        return ResponseEntity.ok(updatedReceipt);
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        return receiptsService.createReceipt(recivedrMakzanReceipt, fileURL);
     }
-}
 
+    // @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    // public ResponseEntity<MakzanReceipt> updateReceipt(
+    //         @PathVariable Integer id,
+    //         @RequestPart("receipts") String receiptsJson, // JSON string د Receipts object لپاره
+    //         @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
+    //     managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+
+    //     try {
+    //         // JSON string parse کوو
+    //         ObjectMapper mapper = new ObjectMapper();
+    //         mapper.registerModule(new JavaTimeModule());
+    //         MakzanReceipt recivedReceipts = mapper.readValue(receiptsJson, MakzanReceipt.class);
+
+    //         // service ته پاس کوو
+    //         MakzanReceipt updatedReceipt = receiptsService.updateReceipt(id, recivedReceipts, fileURL);
+
+    //         return ResponseEntity.ok(updatedReceipt);
+    //     } catch (Exception e) {
+    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    //     }
+    // }
+ @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<?> updateReceipt(
+
+                        @PathVariable Integer id,
+
+                        @RequestPart("receipts") String receiptsJson,
+
+                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+
+        ) {
+                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+
+                try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.registerModule(new JavaTimeModule());
+
+                        MakzanReceipt report = mapper.readValue(
+                                        receiptsJson,
+                                        MakzanReceipt.class);
+
+                        receiptsService.updateReceipt(id, report, fileURL);
+
+                        // ✅ Return success message only — no entity serialization
+                        return ResponseEntity.ok("Updated successfully");
+
+                } catch (Exception e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                        .body("Update failed: " + e.getMessage());
+                }
+        }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteReceipt(@PathVariable Integer id) {
-                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+        managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
         try {
             // Optional: Add file deletion logic here if you want to delete associated files
@@ -133,26 +161,87 @@ public ResponseEntity<MakzanReceipt> updateReceipt(
         }
     }
 
-// @GetMapping("/download/{filename:.+}")
-// public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
-//     try {
-//         Resource resource = fileService.loadFileAsResource(filename);
-//         return ResponseEntity.ok()
-//                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-//                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-//                 .body(resource);
-//     } catch (RuntimeException e) {
-//         return ResponseEntity.notFound().build();
-//     }
-// }
+    @GetMapping("/download/{filename:.+}")
+    public ResponseEntity<?> download(@PathVariable String filename) {
+        try {
+            managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
-@GetMapping("/search")
-public List<MakzanReceipt> searchReceipts(
-        @RequestParam(required = false) String keyword,
-        @RequestParam(required = false) String field) {
-    return receiptsService.searchByKeyword(field, keyword);
-}
+            Resource resource = fileService.loadFileAsResource(filename);
 
+            // Detect content type
+            String contentType = "application/octet-stream";
+            try {
+                Path filePath = resource.getFile().toPath();
+                String detectedType = Files.probeContentType(filePath);
+                if (detectedType != null) {
+                    contentType = detectedType;
+                }
+            } catch (IOException e) {
+                // Fallback: guess from extension
+                String fileName = resource.getFilename();
+                if (fileName != null) {
+                    if (fileName.endsWith(".pdf")) {
+                        contentType = "application/pdf";
+                    } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                        contentType = "image/jpeg";
+                    } else if (fileName.endsWith(".png")) {
+                        contentType = "image/png";
+                    } else if (fileName.endsWith(".gif")) {
+                        contentType = "image/gif";
+                    } else if (fileName.endsWith(".webp")) {
+                        contentType = "image/webp";
+                    } else if (fileName.endsWith(".svg")) {
+                        contentType = "image/svg+xml";
+                    } else if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
+                        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                    } else if (fileName.endsWith(".xls") || fileName.endsWith(".xlsx")) {
+                        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    }
+                }
+            }
 
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+
+        } catch (RuntimeException e) {
+            // Check if it's a file not found error
+            String errorMessage = e.getMessage();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+
+            if (errorMessage != null && errorMessage.contains("فایل په سرور کې نشته")) {
+                // File not found - return 404 with clear Pashto message
+                errorResponse.put("message", errorMessage);
+                errorResponse.put("error", "FILE_NOT_FOUND");
+                errorResponse.put("filename", filename);
+
+                System.err.println("❌ فایل ونه موندل شو: " + filename);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+
+            } else {
+                // Other errors - return 500
+                errorResponse.put("message", "د فایل د لوډ کولو کې ستونزه: " + errorMessage);
+                errorResponse.put("error", "INTERNAL_ERROR");
+
+                System.err.println("❌ د فایل لوډ کولو کې ستونزه '" + filename + "': " + errorMessage);
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            }
+        } catch (Exception e) {
+            // Unexpected errors
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "نامعلومه ستونزه: " + e.getMessage());
+            errorResponse.put("error", "UNKNOWN_ERROR");
+
+            System.err.println("❌ نامعلومه ستونزه '" + filename + "': " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 
 }

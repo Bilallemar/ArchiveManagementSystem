@@ -4,11 +4,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.time.LocalDate;
 
 import com.MCIT.ArchiveManagementSystem.models.DocType;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
-
+import com.MCIT.ArchiveManagementSystem.models.enums.ArchiveDirection;
 
 @Entity
 @Table(name = "archive")
@@ -19,25 +22,40 @@ public class Archive {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Integer id; // نمره مسلسل
 
-    private String docNo;
-    private String incommingDate;
-    private String outgoingDate;
+    @Column(nullable = false)
+    private String docNo; // نمبر مکتوب / پارسل
 
-    @ManyToOne
-    @JoinColumn(name = "org")
-    private Org org;
-  @ManyToOne
+    // Sender Organization (مرسل) - REMOVED externalOrg completely
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "sender_org_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Org senderOrg;
+
+    // Receiver Organization (مرسل الیه)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "receiver_org_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Org receiverOrg;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "management_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Management management;
-    
-    private String submitedDate;
-    private String description;
-  @ManyToOne
-    @JoinColumn(name = "doc_type_id")
-    private DocType docType;
-    private Integer year;
-    private Boolean isIncoming;
-}
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "doc_type_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private DocType docType; // نوعیت پارسل
+
+    private LocalDate sendDate;       // تاریخ ارسال
+    private LocalDate departmentDate; // تاریخ شعبه
+
+    @Column(length = 1000)
+    private String description; // ملاحظات
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ArchiveDirection direction; // وارده / صادره
+}

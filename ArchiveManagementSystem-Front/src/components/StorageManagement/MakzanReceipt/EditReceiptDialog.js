@@ -1,40 +1,54 @@
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Box,
-  Grid,
-  Button,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  Stack,
-  Typography,
-  IconButton,
-} from "@mui/material";
-import { toast } from "react-hot-toast";
-import { updateReceipt } from "../../../services/StorageManagement/MakzanReceiptAPI";
-import SaveIcon from "@mui/icons-material/Save";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
-import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
-import api from "../../../services/api";
+import DeleteIcon from "@mui/icons-material/Delete";
+import FolderIcon from "@mui/icons-material/Folder";
+import FolderOffIcon from "@mui/icons-material/FolderOff";
+import SaveIcon from "@mui/icons-material/Save";
+import ScannerIcon from "@mui/icons-material/Scanner";
+import {
+  Alert,
+  Badge,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import getMakzanReceiptTexts from "../../../helpers/Storage/MakzanReceipt/MakzanReceiptText";
+import api from "../../../services/api";
+import { updateReceipt } from "../../../services/StorageManagement/MakzanReceiptAPI";
+import { convertGregorianToHijri, convertHijriToGregorian } from "../../../utils/hijriDateUtils";
+import HijriDatePicker from "../../HijriDatePicker";
 export default function EditReceiptDialog({
   open,
   onClose,
   receipt,
   onSuccess,
 }) {
+  const { t } = useTranslation("makzanReceipt");
+  const texts = getMakzanReceiptTexts(t);
+
   const [formData, setFormData] = useState({
-    no: "",
     docNo: "",
+    department: "",
     org: "",
     letterNo: "",
     letterDate: "",
@@ -44,433 +58,568 @@ export default function EditReceiptDialog({
   });
 
   const [orgs, setOrgs] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingFiles, setExistingFiles] = useState([]);
 
-  // Load organizations on mount
+  const [detectedFiles, setDetectedFiles] = useState([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannerFolderPath, setScannerFolderPath] = useState("");
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isInitialLoad = useRef(true);
+
+  // ─── Load data when dialog opens ───────────────────────────────────────────
   useEffect(() => {
-    const loadOrgs = async () => {
+    if (!open || !receipt) return;
+
+    isInitialLoad.current = true;
+
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        const response = await api.get("/org");
-        setOrgs(response.data);
+        const [orgsRes, scannerPathRes] = await Promise.all([
+          api.get("/org"),
+          api.get("/scanner-folder/path").catch(() => ({ data: { path: "" } })),
+        ]);
+
+        setOrgs(orgsRes.data || []);
+        setScannerFolderPath(scannerPathRes.data?.path || "");
+
+        setFormData({
+          docNo: receipt.docNo || "",
+          department: receipt.department || "",
+          org: receipt.org?.id || "",
+          letterNo: receipt.letterNo || "",
+          letterDate: convertGregorianToHijri(receipt.letterDate) || "",
+          subjectType: receipt.subjectType || "",
+          description: receipt.description || "",
+          newFiles: [],
+        });
+
+        setExistingFiles(receipt.files || []);
       } catch (error) {
-        console.error("Failed to load organizations:", error);
-        toast.error("د ادارو لوډولو کې ستونزه");
+        console.error("Error loading edit dialog data:", error);
+        toast.error(texts.loadError || "د معلوماتو لوستل ناکام شول");
+      } finally {
+        setIsLoading(false);
       }
     };
-    loadOrgs();
-  }, []);
 
-  // Populate form when receipt changes
-  useEffect(() => {
-    if (receipt && open) {
-      setFormData({
-        no: receipt.no || "",
-        docNo: receipt.docNo || "",
-        org: receipt.org?.id || "",
-        letterNo: receipt.letterNo || "",
-        letterDate: receipt.letterDate || "",
-        subjectType: receipt.subjectType || "",
-        description: receipt.description || "",
-        newFiles: [],
-      });
+    loadData();
+  }, [open, receipt]);
 
-      if (receipt.files && receipt.files.length > 0) {
-        setExistingFiles(receipt.files);
-      } else {
-        setExistingFiles([]);
-      }
-    }
-  }, [receipt, open]);
-
+  // ─── Input change ───────────────────────────────────────────────────────────
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ─── Scanner ────────────────────────────────────────────────────────────────
+  const handleScan = async () => {
+    setIsScanning(true);
+    try {
+      const response = await api.get("/scanner-folder/files");
+      setDetectedFiles(response.data || []);
+      if (response.data.length === 0) {
+        toast.info(texts.noFilesFound || "هیڅ فایل ونه موندل شو");
+      } else {
+        toast.success(
+          `${response.data.length} ${texts.filesDetected || "فایلونه وموندل شول"}`,
+        );
+      }
+    } catch (error) {
+      toast.error(texts.scanError || "د سکین کولو کې ستونزه");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+  const handleHijriDateChange = (field) => (hijriDate) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: hijriDate,
+    }));
+  };
+  const handleLoadFromScanner = async () => {
+    if (detectedFiles.length === 0) {
+      toast.error(texts.noFilesToLoad || "د لوستلو لپاره فایل نشته");
+      return;
+    }
+    try {
+      const filePromises = detectedFiles.map(async (fileInfo) => {
+        const response = await api.get(
+          `/scanner-folder/files/${fileInfo.name}/download`,
+          { responseType: "blob" },
+        );
+        return new File([response.data], fileInfo.name, {
+          type: response.headers["content-type"] || "application/octet-stream",
+        });
+      });
+      const files = await Promise.all(filePromises);
+      setFormData((prev) => ({
+        ...prev,
+        newFiles: [...prev.newFiles, ...files],
+      }));
+      setDetectedFiles([]);
+      toast.success(
+        `${files.length} ${texts.filesLoaded || "فایلونه لوډ شول"}`,
+      );
+    } catch (error) {
+      toast.error(texts.filesLoadError || "د فایلونو لوډولو کې ستونزه");
+    }
+  };
+
+  // ─── File handlers ──────────────────────────────────────────────────────────
   const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
+    const selected = Array.from(e.target.files);
     setFormData((prev) => ({
       ...prev,
-      newFiles: [...prev.newFiles, ...selectedFiles],
+      newFiles: [...prev.newFiles, ...selected],
     }));
   };
 
-  const handleRemoveNewFile = (index) => {
+  const handleRemoveNewFile = (index) =>
     setFormData((prev) => ({
       ...prev,
       newFiles: prev.newFiles.filter((_, i) => i !== index),
     }));
+
+  const handleRemoveExistingFile = (fileId) => {
+    setExistingFiles((prev) => prev.filter((f) => f.id !== fileId));
+    toast.success(
+      texts.fileRemovedLocally ||
+        "فایل له لیست لرې شو (له سرور نه نه دی حذف شوی)",
+    );
   };
 
+  // ─── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validation
-    if (!formData.no || !formData.org) {
-      toast.error("لطفاً د رسید نمبر او اداره ضروری دي");
+    if (!formData.department || !formData.org) {
+      toast.error(texts.requiredField || "شعبه او اداره اړین دي");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const formDataToSend = new FormData();
-
       const receiptData = {
-        no: formData.no,
         docNo: formData.docNo,
+        department: formData.department,
         org: { id: formData.org },
         letterNo: formData.letterNo,
-        letterDate: formData.letterDate,
+        letterDate: convertHijriToGregorian(
+          formData.letterDate,
+        ),
         subjectType: formData.subjectType,
         description: formData.description,
       };
 
+      const formDataToSend = new FormData();
       formDataToSend.append("receipts", JSON.stringify(receiptData));
 
-      if (formData.newFiles.length > 0) {
-        formData.newFiles.forEach((file) => {
-          formDataToSend.append("fileURL", file);
-        });
-      }
+      formData.newFiles.forEach((file) => {
+        formDataToSend.append("fileURL", file);
+      });
 
       await updateReceipt(receipt.id, formDataToSend);
-      toast.success("رسید په بریالیتوب سره تازه شو");
-      onSuccess();
+      toast.success(texts.updateSuccess || "معلومات په بریالیتوب سره تازه شول");
+      onSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Failed to update receipt", error);
-      toast.error("تازه کول ناکام شو");
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "د تازه کولو پر مهال ستونزه رامنځته شوه";
+      toast.error(errorMsg);
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    if (!isSubmitting) {
-      onClose();
-    }
-  };
+  if (!open) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+      {/* Title */}
       <DialogTitle
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          pb: 1,
         }}
       >
-        <Box>
-          د مخزن رسید تازه کول
-          {receipt?.id && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="h5" fontWeight="bold">
+            {texts.editReceiptTitle || "د مخزن رسید تازه کول"}
+          </Typography>
+          {receipt && (
             <Chip
               label={`ID: ${receipt.id}`}
               size="small"
               color="primary"
               variant="outlined"
-              sx={{ ml: 2 }}
             />
           )}
         </Box>
-        <IconButton onClick={handleClose} disabled={isSubmitting}>
+        <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers>
-        <Box component="form" onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {/* LEFT SIDE - File Upload Section */}
-            <Grid item xs={12} md={4}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 2,
-                }}
-              >
-                {/* File Upload Area */}
-                <Box
-                  sx={{
-                    width: 180,
-                    height: 180,
-                    borderRadius: "50%",
-                    border: "2px dashed",
-                    borderColor: "divider",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: "background.neutral",
-                    cursor: "pointer",
-                    position: "relative",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                      borderColor: "primary.main",
-                    },
-                  }}
-                  component="label"
-                >
-                  <AttachFileIcon
-                    sx={{ fontSize: 40, color: "text.secondary" }}
-                  />
-                  <Typography
-                    sx={{ mt: 1, color: "text.secondary", fontSize: 13 }}
-                  >
-                    نوي فایلونه اضافه کړئ
-                  </Typography>
-                  <Typography
-                    sx={{
-                      mt: 0.5,
-                      color: "primary.main",
-                      fontSize: 12,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {formData.newFiles.length} نوي فایلونه
-                  </Typography>
-                  <input
-                    type="file"
-                    hidden
-                    multiple
-                    onChange={handleFileChange}
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    disabled={isSubmitting}
-                  />
-                </Box>
-
-                {/* Existing Files Info */}
-                {existingFiles.length > 0 && (
-                  <Box
-                    sx={{
-                      textAlign: "center",
-                      p: 1.5,
-                      bgcolor: "info.lighter",
-                      borderRadius: 1,
-                      width: "100%",
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "info.dark", fontWeight: "bold" }}
-                    >
-                      موجوده فایلونه: {existingFiles.length}
-                    </Typography>
-                    <Box sx={{ mt: 1, maxHeight: 100, overflowY: "auto" }}>
-                      {existingFiles.map((file, index) => (
+      {/* Content */}
+      <DialogContent dividers sx={{ p: 3 }}>
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              {/* ── LEFT: Scanner + Files ── */}
+              <Grid item xs={12} md={4}>
+                <Stack spacing={3}>
+                  {/* Scanner Card */}
+                  {scannerFolderPath && (
+                    <Card variant="outlined">
+                      <CardContent sx={{ textAlign: "center", py: 3 }}>
+                        <Badge
+                          badgeContent={detectedFiles.length}
+                          color="success"
+                          sx={{ mb: 2 }}
+                        >
+                          <FolderIcon
+                            sx={{ fontSize: 50, color: "primary.main" }}
+                          />
+                        </Badge>
+                        <Typography variant="h6" gutterBottom>
+                          {texts.scannerFolderTitle || "د سکینر فولدر"}
+                        </Typography>
                         <Typography
-                          key={index}
-                          variant="caption"
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 2 }}
+                        >
+                          {detectedFiles.length > 0
+                            ? `${detectedFiles.length} ${texts.filesDetected || "فایلونه وموندل شول"}`
+                            : texts.clickToScan || "د فایلونو لپاره سکین کړئ"}
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<ScannerIcon />}
+                          onClick={handleScan}
+                          disabled={isScanning}
+                          sx={{ mb: 1 }}
+                        >
+                          {isScanning ? (
+                            <>
+                              <CircularProgress size={16} sx={{ mr: 1 }} />
+                              {texts.scanning || "سکین کیږي..."}
+                            </>
+                          ) : (
+                            texts.scanButton || "سکین کړئ"
+                          )}
+                        </Button>
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          startIcon={<AttachFileIcon />}
+                          onClick={handleLoadFromScanner}
+                          disabled={detectedFiles.length === 0}
                           sx={{
-                            display: "block",
-                            color: "text.secondary",
-                            mt: 0.5,
+                            bgcolor: "#4CAF50",
+                            "&:hover": { bgcolor: "#45a049" },
                           }}
                         >
-                          📎{" "}
-                          {file.filePath?.split("/").pop() ||
-                            `فایل ${index + 1}`}
-                        </Typography>
-                      ))}
+                          {texts.loadFiles || "فایلونه پورته کړئ"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Detected Files from Scanner */}
+                  {detectedFiles.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight="bold"
+                        sx={{ mb: 1 }}
+                      >
+                        {texts.detectedFiles || "موندل شوي فایلونه"}
+                      </Typography>
+                      <Box sx={{ maxHeight: 180, overflowY: "auto" }}>
+                        <Stack spacing={0.5}>
+                          {detectedFiles.map((file, idx) => (
+                            <Chip
+                              key={idx}
+                              label={file.name}
+                              size="small"
+                              icon={<AttachFileIcon />}
+                              sx={{ justifyContent: "flex-start" }}
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
                     </Box>
-                  </Box>
-                )}
+                  )}
 
-                {/* New Files List */}
-                {formData.newFiles.length > 0 && (
-                  <Box
-                    sx={{ width: "100%", maxHeight: 150, overflowY: "auto" }}
+                  {/* Existing Files on Server */}
+                  {existingFiles.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        {texts.existingFiles || "موجوده فایلونه"} (
+                        {existingFiles.length})
+                      </Typography>
+                      <Stack
+                        spacing={0.8}
+                        sx={{ maxHeight: 180, overflowY: "auto" }}
+                      >
+                        {existingFiles.map((file) => (
+                          <Chip
+                            key={file.id}
+                            label={
+                              file.filePath?.split("/").pop() ||
+                              file.fileName ||
+                              file.name ||
+                              "file"
+                            }
+                            size="small"
+                            icon={<AttachFileIcon />}
+                            onDelete={() => handleRemoveExistingFile(file.id)}
+                            color="default"
+                            sx={{ justifyContent: "flex-start" }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  {/* Manual Upload Button */}
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    fullWidth
+                    startIcon={<AttachFileIcon />}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: "bold", mb: 1, display: "block" }}
-                    >
-                      نوي فایلونه:
-                    </Typography>
-                    <Stack spacing={1}>
-                      {formData.newFiles.map((file, index) => (
-                        <Chip
-                          key={index}
-                          label={file.name}
-                          onDelete={() => handleRemoveNewFile(index)}
-                          deleteIcon={<DeleteIcon />}
+                    {texts.addNewFiles || "نوي فایلونه اضافه کړئ"}
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      onChange={handleFileChange}
+                      accept="image/*,.pdf,.doc,.docx"
+                    />
+                  </Button>
+
+                  {/* New Files to Upload */}
+                  {formData.newFiles.length > 0 && (
+                    <Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2" gutterBottom>
+                          {texts.readyToUpload || "د اپلوډ لپاره چمتو"} (
+                          {formData.newFiles.length})
+                        </Typography>
+                        <IconButton
                           size="small"
-                          color="success"
-                          disabled={isSubmitting}
-                          sx={{
-                            justifyContent: "space-between",
-                            "& .MuiChip-label": {
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              maxWidth: 120,
-                            },
-                          }}
-                        />
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
+                          color="error"
+                          onClick={() =>
+                            setFormData((prev) => ({ ...prev, newFiles: [] }))
+                          }
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                      <Stack
+                        spacing={0.8}
+                        sx={{ maxHeight: 180, overflowY: "auto" }}
+                      >
+                        {formData.newFiles.map((file, idx) => (
+                          <Chip
+                            key={idx}
+                            label={file.name}
+                            size="small"
+                            color="success"
+                            onDelete={() => handleRemoveNewFile(idx)}
+                            sx={{
+                              justifyContent: "flex-start",
+                              "& .MuiChip-label": {
+                                maxWidth: 150,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              },
+                            }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
 
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  textAlign="center"
-                  sx={{ fontSize: 10 }}
-                >
-                  اجازه شوي: PDF, DOC, DOCX, JPG, PNG
-                  <br />
-                  اعظمي اندازه: 5 MB
-                  <br />
-                  <span style={{ color: "red" }}>
-                    ⚠ نوي فایلونه زاړه فایلونه بدلوي
-                  </span>
-                </Typography>
-              </Box>
-            </Grid>
+                  {/* No files at all */}
+                  {existingFiles.length === 0 &&
+                    formData.newFiles.length === 0 && (
+                      <Alert severity="info" icon={<FolderOffIcon />}>
+                        {texts.noFilesAttached || "هیڅ فایل ضمیمه شوی نه دی"}
+                      </Alert>
+                    )}
+                </Stack>
+              </Grid>
 
-            {/* RIGHT SIDE - Form Fields */}
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={2.5}>
-                {/* Receipt Number */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="no"
-                    label="د رسید نمبر"
-                    value={formData.no}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isSubmitting}
-                    error={!formData.no}
-                  />
-                </Grid>
-
-                {/* Document Number */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="docNo"
-                    label="د سند نمبر"
-                    value={formData.docNo}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
-
-                {/* Organization */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl
-                    fullWidth
-                    size="small"
-                    required
-                    error={!formData.org}
-                  >
-                    <InputLabel>اداره</InputLabel>
-                    <Select
-                      name="org"
-                      value={formData.org}
+              {/* ── RIGHT: Form Fields ── */}
+              <Grid item xs={12} md={8}>
+                <Grid container spacing={2.5}>
+                  {/* Department */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="department"
+                      label={texts.department || "شعبه"}
+                      value={formData.department}
                       onChange={handleInputChange}
-                      label="اداره"
-                      disabled={isSubmitting}
+                      required
+                      error={!formData.department}
+                      helperText={
+                        !formData.department ? texts.required || "اړین دی" : ""
+                      }
+                    />
+                  </Grid>
+
+                  {/* Document Number */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="docNo"
+                      label={texts.documentNo || "د آرشیف نمبر"}
+                      value={formData.docNo}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+
+                  {/* Letter Number */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="letterNo"
+                      label={texts.letterNumber || "د مکتوب نمبر"}
+                      value={formData.letterNo}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+
+                  {/* Organization */}
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      required
+                      error={!formData.org}
                     >
-                      {orgs.length === 0 ? (
-                        <MenuItem disabled>لوډیږي...</MenuItem>
-                      ) : (
-                        orgs.map((org) => (
-                          <MenuItem key={org.id} value={org.id}>
-                            {org.name}
+                      <InputLabel>{texts.organization || "اداره"}</InputLabel>
+                      <Select
+                        name="org"
+                        value={formData.org}
+                        onChange={handleInputChange}
+                        label={texts.organization || "اداره"}
+                      >
+                        <MenuItem value="">
+                          <em>{texts.selectOrg || "اداره وټاکئ"}</em>
+                        </MenuItem>
+                        {orgs.length === 0 ? (
+                          <MenuItem disabled>
+                            {texts.loading || "بارول..."}
                           </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                        ) : (
+                          orgs.map((org) => (
+                            <MenuItem key={org.id} value={org.id}>
+                              {org.name}
+                            </MenuItem>
+                          ))
+                        )}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                {/* Letter Number */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="letterNo"
-                    label="د مکتوب نمبر"
-                    value={formData.letterNo}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
+                  {/* Subject Type */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="subjectType"
+                      label={texts.subjectTypeLabel || "د موضوع ډول"}
+                      value={formData.subjectType}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
 
-                {/* Letter Date */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="letterDate"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    label="د مکتوب نیټه"
-                    value={formData.letterDate}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
+                  {/* Letter Date */}
+                  <Grid item xs={12} sm={6}>
+                    <HijriDatePicker
+                      fullWidth
+                      size="small"
+                      name="letterDate"
+                      type="date"
+                      InputLabelProps={{ shrink: true }}
+                      label={texts.letterDateLabel || "د مکتوب نیټه"}
+                      value={formData.letterDate}
+                      onChange={handleHijriDateChange("letterDate")}
+                    />
+                  </Grid>
 
-                {/* Subject Type */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="subjectType"
-                    label="د موضوع ډول"
-                    value={formData.subjectType}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
-                </Grid>
-
-                {/* Description */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="description"
-                    label="ملاحظات"
-                    multiline
-                    rows={3}
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                  />
+                  {/* Description */}
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      multiline
+                      rows={4}
+                      name="description"
+                      label={texts.description || "ملاحظات"}
+                      value={formData.description}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        </Box>
+          </Box>
+        )}
       </DialogContent>
 
+      {/* Actions */}
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} disabled={isSubmitting}>
-          لغوه
+        <Button onClick={onClose} variant="outlined" disabled={isSubmitting}>
+          {texts.cancel || "لغوه"}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={isSubmitting}
-          endIcon={isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />}
-          sx={{
-            bgcolor: "black",
-            "&:hover": { bgcolor: "#1d252e" },
-          }}
+          disabled={isSubmitting || isLoading}
+          startIcon={
+            isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />
+          }
+          sx={{ bgcolor: "#2196F3", "&:hover": { bgcolor: "#1976D2" } }}
         >
-          {isSubmitting ? "ذخیره کیږي..." : "تازه کول"}
+          {isSubmitting
+            ? texts.saving || "ذخیره کیږي..."
+            : texts.save || "ذخیره کول"}
         </Button>
       </DialogActions>
     </Dialog>

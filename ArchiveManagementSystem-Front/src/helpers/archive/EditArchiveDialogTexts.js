@@ -1,0 +1,22 @@
+const getArchiveListTexts = (t) => ({
+  title: t("title"),
+  docNo: t("docNo"),
+  incommingDate: t("incommingDate"),
+  outgoingDate: t("outgoingDate"),
+  org: t("organization"),
+  submitedDate: t("submitedDate"),
+  docType: t("docType"),
+  year: t("year"),
+  description: t("description"),
+  actions: t("actions"),
+  view: t("view"),
+  edit: t("edit"),
+  delete: t("delete"),
+  cancel: t("cancel"),
+  newArchive: t("newArchive"),
+
+  // ✅ You MUST add these:
+  deleteDialogTitle: t("deleteDialogTitle"),
+  deleteDialogText: t("deleteDialogText"),
+});
+export default getArchiveListTexts;

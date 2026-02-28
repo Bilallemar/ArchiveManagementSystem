@@ -1,309 +1,32 @@
-// import React, { useState, useEffect } from "react";
-// import {
-//   Dialog,
-//   DialogTitle,
-//   DialogContent,
-//   DialogActions,
-//   Box,
-//   Grid,
-//   TextField,
-//   Button,
-//   CircularProgress,
-//   FormControl,
-//   InputLabel,
-//   Select,
-//   MenuItem,
-// } from "@mui/material";
-// import SaveIcon from "@mui/icons-material/Save";
-// import { toast } from "react-hot-toast";
-// import { updateArchive } from "../../../services/ArchiveManagement/ArchiveAPI";
-// import api from "../../../services/api";
-
-// export default function EditArchiveDialog({
-//   open,
-//   onClose,
-//   archive,
-//   onSuccess,
-// }) {
-//   const [formData, setFormData] = useState({
-//     docNo: "",
-//     incommingDate: "",
-//     outgoingDate: "",
-//     org: "",
-//     submitedDate: "",
-//     description: "",
-//     docType: "",
-//     year: "",
-//     isIncoming: true,
-//   });
-//   const [orgs, setOrgs] = useState([]);
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const [isLoading, setIsLoading] = useState(false);
-
-//   // Load organizations on mount
-//   useEffect(() => {
-//     const loadOrgs = async () => {
-//       try {
-//         const response = await api.get("/org");
-//         setOrgs(response.data);
-//       } catch (error) {
-//         console.error("Failed to load organizations:", error);
-//         toast.error("د ادارو لوډولو کې ستونزه");
-//       }
-//     };
-//     loadOrgs();
-//   }, []);
-
-//   // Populate form when archive changes
-//   useEffect(() => {
-//     if (archive && open) {
-//       setFormData({
-//         docNo: archive.docNo || "",
-//         incommingDate: archive.incommingDate || "",
-//         outgoingDate: archive.outgoingDate || "",
-//         org: archive.org?.id || "",
-//         submitedDate: archive.submitedDate || "",
-//         description: archive.description || "",
-//         docType: archive.docType || "",
-//         year: archive.year || "",
-//         isIncoming:
-//           archive.isIncoming !== undefined ? archive.isIncoming : true,
-//       });
-//     }
-//   }, [archive, open]);
-
-//   const handleInputChange = (e) => {
-//     const { name, value } = e.target;
-
-//     // Clear outgoing date when switching to incoming
-//     if (name === "isIncoming" && value === true) {
-//       setFormData((prev) => ({ ...prev, [name]: value, outgoingDate: "" }));
-//     } else {
-//       setFormData((prev) => ({ ...prev, [name]: value }));
-//     }
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setIsSubmitting(true);
-
-//     // Validation
-//     if (!formData.docNo || !formData.org) {
-//       toast.error("لطفاً نمبر سند او اداره ضروری دي");
-//       setIsSubmitting(false);
-//       return;
-//     }
-
-//     try {
-//       const payload = {
-//         docNo: formData.docNo,
-//         incommingDate: formData.incommingDate,
-//         outgoingDate: formData.outgoingDate,
-//         org: { id: formData.org },
-//         submitedDate: formData.submitedDate,
-//         description: formData.description,
-//         docType: formData.docType,
-//         year: formData.year ? parseInt(formData.year) : null,
-//         isIncoming: formData.isIncoming,
-//       };
-
-//       await updateArchive(archive.id, payload);
-//       toast.success("آرشیف په بریالیتوب سره تازه شو");
-//       onSuccess();
-//       onClose();
-//     } catch (error) {
-//       console.error("Update failed:", error);
-//       toast.error("تازه کول ناکام شو");
-//     } finally {
-//       setIsSubmitting(false);
-//     }
-//   };
-
-//   const handleClose = () => {
-//     if (!isSubmitting) {
-//       onClose();
-//     }
-//   };
-
-//   return (
-//     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-//       <DialogTitle>تازه کول</DialogTitle>
-//       <DialogContent>
-//         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-//           <Grid container spacing={2.5}>
-//             <Grid item xs={12} sm={6}>
-//               <FormControl fullWidth>
-//                 <InputLabel>ډول</InputLabel>
-//                 <Select
-//                   name="isIncoming"
-//                   value={formData.isIncoming}
-//                   onChange={handleInputChange}
-//                   label="ډول"
-//                   disabled={isSubmitting}
-//                 >
-//                   <MenuItem value={true}>وارده</MenuItem>
-//                   <MenuItem value={false}>صادره</MenuItem>
-//                 </Select>
-//               </FormControl>
-//             </Grid>
-
-//             <Grid item xs={12} sm={6}>
-//               <TextField
-//                 fullWidth
-//                 name="docNo"
-//                 label="نمبر سند"
-//                 value={formData.docNo}
-//                 onChange={handleInputChange}
-//                 required
-//                 disabled={isSubmitting}
-//                 error={!formData.docNo}
-//               />
-//             </Grid>
-
-//             <Grid item xs={12} sm={6}>
-//               <TextField
-//                 fullWidth
-//                 name="incommingDate"
-//                 type="date"
-//                 label="تاریخ وارده"
-//                 value={formData.incommingDate}
-//                 onChange={handleInputChange}
-//                 disabled={isSubmitting}
-//                 InputLabelProps={{ shrink: true }}
-//               />
-//             </Grid>
-
-//             {/* Only show outgoing date for صادره (outgoing) documents */}
-//             {!formData.isIncoming && (
-//               <Grid item xs={12} sm={6}>
-//                 <TextField
-//                   fullWidth
-//                   name="outgoingDate"
-//                   type="date"
-//                   label="تاریخ صادره"
-//                   value={formData.outgoingDate}
-//                   onChange={handleInputChange}
-//                   disabled={isSubmitting}
-//                   InputLabelProps={{ shrink: true }}
-//                 />
-//               </Grid>
-//             )}
-
-//             <Grid item xs={12} sm={6}>
-//               <FormControl fullWidth required error={!formData.org}>
-//                 <InputLabel>اداره</InputLabel>
-//                 <Select
-//                   name="org"
-//                   value={formData.org}
-//                   onChange={handleInputChange}
-//                   label="اداره"
-//                   disabled={isSubmitting}
-//                 >
-//                   {orgs.length === 0 ? (
-//                     <MenuItem disabled>Loading...</MenuItem>
-//                   ) : (
-//                     orgs.map((org) => (
-//                       <MenuItem key={org.id} value={org.id}>
-//                         {org.name}
-//                       </MenuItem>
-//                     ))
-//                   )}
-//                 </Select>
-//               </FormControl>
-//             </Grid>
-
-//             <Grid item xs={12} sm={6}>
-//               <TextField
-//                 fullWidth
-//                 name="submitedDate"
-//                 type="date"
-//                 label="تاریخ تسلیمی"
-//                 value={formData.submitedDate}
-//                 onChange={handleInputChange}
-//                 disabled={isSubmitting}
-//                 InputLabelProps={{ shrink: true }}
-//               />
-//             </Grid>
-
-//             <Grid item xs={12} sm={6}>
-//               <TextField
-//                 fullWidth
-//                 name="docType"
-//                 label="نوع سند"
-//                 value={formData.docType}
-//                 onChange={handleInputChange}
-//                 disabled={isSubmitting}
-//               />
-//             </Grid>
-
-//             <Grid item xs={12} sm={6}>
-//               <TextField
-//                 fullWidth
-//                 name="year"
-//                 type="number"
-//                 label="سال"
-//                 value={formData.year}
-//                 onChange={handleInputChange}
-//                 disabled={isSubmitting}
-//               />
-//             </Grid>
-
-//             <Grid item xs={12}>
-//               <TextField
-//                 fullWidth
-//                 name="description"
-//                 label="ملاحظات"
-//                 multiline
-//                 rows={3}
-//                 value={formData.description}
-//                 onChange={handleInputChange}
-//                 disabled={isSubmitting}
-//               />
-//             </Grid>
-//           </Grid>
-//         </Box>
-//       </DialogContent>
-//       <DialogActions sx={{ px: 3, pb: 2 }}>
-//         <Button onClick={handleClose} disabled={isSubmitting}>
-//           لغوه
-//         </Button>
-//         <Button
-//           onClick={handleSubmit}
-//           variant="contained"
-//           disabled={isSubmitting}
-//           endIcon={isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />}
-//           sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
-//         >
-//           {isSubmitting ? "ذخیره کیږي..." : "ذخیره تغییرات"}
-//         </Button>
-//       </DialogActions>
-//     </Dialog>
-//   );
-// }
-
-import React, { useState, useEffect } from "react";
+import SaveIcon from "@mui/icons-material/Save";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Box,
-  Grid,
-  TextField,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
+  Grid,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
+  TextField,
+  Typography,
 } from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 
+import getArchiveTexts from "../../../helpers/archive/getArchiveTexts";
 import { updateArchive } from "../../../services/ArchiveManagement/ArchiveAPI";
 import api from "../../../services/api";
-import EditArchiveDialogTexts from "./EditArchiveDialogTexts";
+import {
+  convertGregorianToHijri,
+  convertHijriToGregorian,
+} from "../../../utils/hijriDateUtils";
+import HijriDatePicker from "../../HijriDatePicker";
 
 export default function EditArchiveDialog({
   open,
@@ -311,234 +34,298 @@ export default function EditArchiveDialog({
   archive,
   onSuccess,
 }) {
-  const { t } = useTranslation("editArchiveDialog");
-  const text = EditArchiveDialogTexts(t);
+  const { t } = useTranslation("archive");
+  const text = getArchiveTexts(t);
 
   const [formData, setFormData] = useState({
     docNo: "",
-    incommingDate: "",
-    outgoingDate: "",
-    org: "",
-    submitedDate: "",
+    sendDate: "",
+    departmentDate: "",
+    senderOrgId: "",
+    receiverOrgId: "",
     description: "",
-    docType: "",
-    year: "",
-    isIncoming: true,
+    docTypeId: "",
   });
 
   const [orgs, setOrgs] = useState([]);
+  const [docTypes, setDocTypes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load organizations
+  // Load organizations and doc types
   useEffect(() => {
-    const loadOrgs = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        const response = await api.get("/org");
-        setOrgs(response.data);
+        const [orgsRes, docTypesRes] = await Promise.all([
+          api.get("/org"),
+          api.get("/doc-type/active"),
+        ]);
+        setOrgs(orgsRes.data || []);
+        setDocTypes(docTypesRes.data || []);
       } catch (error) {
-        console.error(error);
-        toast.error(text.loadOrgError);
+        console.error("Error loading data:", error);
+        toast.error(text.loadError || "د معلوماتو لوستل ناکام شول");
+      } finally {
+        setIsLoading(false);
       }
     };
-    loadOrgs();
-  }, [text.loadOrgError]);
+    loadData();
+  }, [text.loadError]);
 
-  // Populate form
+  // Populate form when archive changes and dialog opens
   useEffect(() => {
     if (archive && open) {
       setFormData({
         docNo: archive.docNo || "",
-        incommingDate: archive.incommingDate || "",
-        outgoingDate: archive.outgoingDate || "",
-        org: archive.org?.id || "",
-        submitedDate: archive.submitedDate || "",
+        sendDate: convertGregorianToHijri(archive.sendDate) || "",
+        departmentDate: convertGregorianToHijri(archive.departmentDate) || "",
+        senderOrgId: archive.senderOrg?.id || "",
+        receiverOrgId: archive.receiverOrg?.id || "",
         description: archive.description || "",
-        docType: archive.docType || "",
-        year: archive.year || "",
-        isIncoming:
-          archive.isIncoming !== undefined ? archive.isIncoming : true,
+        docTypeId: archive.docType?.id || "",
       });
     }
   }, [archive, open]);
 
+  const handleHijriDateChange = (field) => (hijriDate) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: hijriDate,
+    }));
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === "isIncoming" && value === true) {
-      setFormData((prev) => ({ ...prev, isIncoming: true, outgoingDate: "" }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!formData.docNo || !formData.org) {
-      toast.error(text.validationError);
+    if (!formData.docNo?.trim()) {
+      toast.error(text.docNoRequired || "د مکتوب شمېره اړینه ده");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.senderOrgId) {
+      toast.error("Sender is required");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.receiverOrgId) {
+      toast.error("Receiver is required");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.docTypeId) {
+      toast.error(text.docTypeRequired || "ډاکټر ډول اړین دی");
       setIsSubmitting(false);
       return;
     }
 
     try {
       const payload = {
-        docNo: formData.docNo,
-        incommingDate: formData.incommingDate,
-        outgoingDate: formData.outgoingDate,
-        org: { id: formData.org },
-        submitedDate: formData.submitedDate,
-        description: formData.description,
-        docType: formData.docType,
-        year: formData.year ? parseInt(formData.year) : null,
-        isIncoming: formData.isIncoming,
+        docNo: formData.docNo.trim(),
+        sendDate: convertHijriToGregorian(formData.sendDate) || null,
+        departmentDate:
+          convertHijriToGregorian(formData.departmentDate) || null,
+        senderOrg: { id: Number(formData.senderOrgId) },
+        receiverOrg: { id: Number(formData.receiverOrgId) },
+        description: formData.description?.trim() || null,
+        docType: { id: Number(formData.docTypeId) },
+        direction: archive.direction, // ← direction نه بدلوو (read-only)
       };
 
       await updateArchive(archive.id, payload);
-      toast.success(text.updateSuccess);
+      toast.success(text.updateSuccess || "معلومات په بریالیتوب تازه شول");
       onSuccess();
       onClose();
     } catch (error) {
-      console.error(error);
-      toast.error(text.updateFailed);
+      console.error("Update error:", error);
+      const msg =
+        error.response?.data?.message ||
+        text.updateFailed ||
+        "تازه کول ناکام شول";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!archive) return null;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{text.title}</DialogTitle>
+      <DialogTitle>{text.title || "د آرشیف معلومات اصلاح کول"}</DialogTitle>
 
       <DialogContent>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-          <Grid container spacing={2.5}>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>{text.type}</InputLabel>
-                <Select
-                  name="isIncoming"
-                  value={formData.isIncoming}
-                  onChange={handleInputChange}
-                  label={text.type}
-                >
-                  <MenuItem value={true}>{text.incoming}</MenuItem>
-                  <MenuItem value={false}>{text.outgoing}</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+        {/* Direction info (read-only) */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary">
+            ډول (Direction):{" "}
+            <strong>
+              {archive.direction === "INCOMING"
+                ? "وارده (Incoming)"
+                : "صادره (Outgoing)"}
+            </strong>
+          </Typography>
+        </Box>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="docNo"
-                label={text.docNo}
-                value={formData.docNo}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="date"
-                name="incommingDate"
-                label={text.incomingDate}
-                InputLabelProps={{ shrink: true }}
-                value={formData.incommingDate}
-                onChange={handleInputChange}
-              />
-            </Grid>
-
-            {!formData.isIncoming && (
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+            <Grid container spacing={2.5}>
+              {/* Document Number */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  type="date"
-                  name="outgoingDate"
-                  label={text.outgoingDate}
-                  InputLabelProps={{ shrink: true }}
-                  value={formData.outgoingDate}
+                  required
+                  name="docNo"
+                  label={text.docNo || "نمبر مکتوب / پارسل"}
+                  value={formData.docNo}
                   onChange={handleInputChange}
+                  error={!formData.docNo?.trim()}
+                  helperText={!formData.docNo?.trim() ? text.required : ""}
                 />
               </Grid>
-            )}
 
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>{text.organization}</InputLabel>
-                <Select
-                  name="org"
-                  value={formData.org}
-                  onChange={handleInputChange}
-                  label={text.organization}
-                >
-                  {orgs.map((org) => (
-                    <MenuItem key={org.id} value={org.id}>
-                      {org.name}
+              {/* Document Type */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={!formData.docTypeId}>
+                  <InputLabel id="doctype-edit-label">
+                    {text.docType || "نوعیت پارسل"}
+                  </InputLabel>
+                  <Select
+                    labelId="doctype-edit-label"
+                    name="docTypeId"
+                    value={formData.docTypeId}
+                    label={text.docType || "نوعیت پارسل"}
+                    onChange={handleInputChange}
+                  >
+                    <MenuItem value="">
+                      <em>{text.selectDocType || "ډول وټاکئ"}</em>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+                    {docTypes.map((dt) => (
+                      <MenuItem key={dt.id} value={dt.id}>
+                        {dt.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="date"
-                name="submitedDate"
-                label={text.submittedDate}
-                InputLabelProps={{ shrink: true }}
-                value={formData.submitedDate}
-                onChange={handleInputChange}
-              />
-            </Grid>
+              {/* Sender */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={!formData.senderOrgId}>
+                  <InputLabel id="sender-edit-label">
+                    {text.sender || "مرسل (Sender)"}
+                  </InputLabel>
+                  <Select
+                    labelId="sender-edit-label"
+                    name="senderOrgId"
+                    value={formData.senderOrgId}
+                    label={text.sender || "Sender"}
+                    onChange={handleInputChange}
+                  >
+                    <MenuItem value="">
+                      <em>{text.selectOrg || "سازمان وټاکئ"}</em>
+                    </MenuItem>
+                    {orgs.map((org) => (
+                      <MenuItem key={org.id} value={org.id}>
+                        {org.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="docType"
-                label={text.docType}
-                value={formData.docType}
-                onChange={handleInputChange}
-              />
-            </Grid>
+              {/* Receiver */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={!formData.receiverOrgId}>
+                  <InputLabel id="receiver-edit-label">
+                    {text.receiver || "مرسل الیه (Receiver)"}
+                  </InputLabel>
+                  <Select
+                    labelId="receiver-edit-label"
+                    name="receiverOrgId"
+                    value={formData.receiverOrgId}
+                    label={text.receiver || "Receiver"}
+                    onChange={handleInputChange}
+                  >
+                    <MenuItem value="">
+                      <em>{text.selectOrg || "سازمان وټاکئ"}</em>
+                    </MenuItem>
+                    {orgs.map((org) => (
+                      <MenuItem key={org.id} value={org.id}>
+                        {org.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                name="year"
-                type="number"
-                label={text.year}
-                value={formData.year}
-                onChange={handleInputChange}
-              />
-            </Grid>
+              {/* Send Date */}
+              <Grid item xs={12} sm={6}>
+                <HijriDatePicker
+                  fullWidth
+                  name="sendDate"
+                  type="date"
+                  label={text.sendDate || "تاریخ ارسال"}
+                  InputLabelProps={{ shrink: true }}
+                  value={formData.sendDate}
+                  onChange={handleHijriDateChange("sendDate")}
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                name="description"
-                label={text.description}
-                value={formData.description}
-                onChange={handleInputChange}
-              />
+              {/* Department Date */}
+              <Grid item xs={12} sm={6}>
+                <HijriDatePicker
+                  fullWidth
+                  name="departmentDate"
+                  type="date"
+                  label={text.departmentDate || "تاریخ شعبه"}
+                  InputLabelProps={{ shrink: true }}
+                  value={formData.departmentDate}
+                  onChange={handleHijriDateChange("departmentDate")}
+                />
+              </Grid>
+
+              {/* Description */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  name="description"
+                  label={text.description || "ملاحظات / Remarks"}
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder={text.remarksPlaceholder || "..."}
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        </Box>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>{text.cancel}</Button>
+        <Button onClick={onClose} disabled={isSubmitting}>
+          {text.cancel || "لغوه"}
+        </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
+          disabled={isSubmitting}
           endIcon={isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />}
         >
-          {isSubmitting ? text.saving : text.saveChanges}
+          {isSubmitting
+            ? text.saving || "په تمه..."
+            : text.saveChanges || "تغییرات خوندي کړئ"}
         </Button>
       </DialogActions>
     </Dialog>

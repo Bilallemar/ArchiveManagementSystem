@@ -180,9 +180,8 @@ public class DashboardService {
         
         for (Object doc : documents) {
             var archive = (com.MCIT.ArchiveManagementSystem.models.ArchiveManagement.Archive) doc;
-            
             // Use incommingDate or outgoingDate
-            String dateStr = archive.getIncommingDate() != null ? archive.getIncommingDate() : archive.getOutgoingDate();
+            String dateStr = archive.getSendDate() != null ? archive.getSendDate().toString() : archive.getDepartmentDate().toString();
             if (dateStr == null || dateStr.isEmpty()) continue;
 
             LocalDate docDate = parseDate(dateStr, formatters);
@@ -195,7 +194,7 @@ public class DashboardService {
             boolean isWithinWeek = !docDate.isBefore(weekAgo) && !docDate.isAfter(today);
 
             // Count as sender if has org
-            if (archive.getOrg() != null) {
+            if (archive.getSenderOrg() != null) {
                 count.sender++;
                 if (isWithinWeek) count.weeklySender++;
             }
@@ -227,7 +226,7 @@ public class DashboardService {
         for (Object doc : documents) {
             var sawanih = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih) doc;
             
-            String dateStr = sawanih.getIncommingDate() != null ? sawanih.getIncommingDate() : sawanih.getOutgoingDate();
+            String dateStr = sawanih.getIncommingDate() != null ? sawanih.getIncommingDate().toString() : sawanih.getOutgoingDate().toString();
             if (dateStr == null || dateStr.isEmpty()) {
                 logger.warn("⚠️ Sawanih id={} has no date", sawanih.getId());
                 continue;
@@ -253,7 +252,7 @@ public class DashboardService {
                 if (isWithinWeek) count.weeklySender++;
             }
 
-            if (sawanih.getQaidWarida() != null && !sawanih.getQaidWarida().isEmpty()) {
+            if (sawanih.getFiles() != null && !sawanih.getFiles().isEmpty()) {
                 count.recipient++;
                 if (isWithinWeek) count.weeklyRecipient++;
             }

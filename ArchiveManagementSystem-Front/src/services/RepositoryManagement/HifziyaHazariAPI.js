@@ -26,7 +26,7 @@ export const updateHifziyaHazari = (id, hazariData) => {
 export const deleteHifziyaHazari = (id) => api.delete(`/hifziya-hazari/${id}`);
 
 export const downloadFile = (filename) => {
-  return api.get(`/hifziya-hazari/upload/${filename}`, {
+  return api.get(`/hifziya-hazari/download/${encodeURIComponent(filename)}`, {
     responseType: "blob",
   });
 };

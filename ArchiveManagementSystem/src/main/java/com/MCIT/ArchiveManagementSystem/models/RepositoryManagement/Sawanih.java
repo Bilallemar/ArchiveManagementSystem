@@ -1,5 +1,10 @@
 package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
 
@@ -21,18 +26,21 @@ public class Sawanih {
 
     private String name;
     private String fatherName;
-    private String qaidWarida;
-    private String incommingDate;
-    private String outgoingDate;
+    private LocalDate  incommingDate;
+    private LocalDate  outgoingDate;
 
     @ManyToOne
     @JoinColumn(name = "org")
     private Org org;
+
   @ManyToOne
     @JoinColumn(name = "management_id")
     private Management management;
-    
+
+    @OneToMany(mappedBy = "sawanih", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FileEntity> files = new ArrayList<>();
     private String description;
     private Integer pageQuantity;
+     private Boolean isSawanih;
 }
 

@@ -1,4 +1,5 @@
 package com.MCIT.ArchiveManagementSystem.controller.RepositoryManagement;
+
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazari;
 import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
 import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.HifziyaHazariService;
@@ -16,7 +17,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/hifziya-hazari")
@@ -35,7 +40,6 @@ public class HifziyaHazariController {
         this.fileService = fileService;
     }
 
-    // ✅ UPDATED: Now accepts multiple files
     @PostMapping(consumes = {"multipart/form-data"})
     public HifziyaHazari createHifziyaHazari(
             @RequestPart("hifziyaHazari") String hifziyaHazari,
@@ -43,22 +47,9 @@ public class HifziyaHazariController {
     ) throws IOException {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
-        System.out.println("Received JSON: " + hifziyaHazari);
-
-        if (fileURL != null && fileURL.length > 0) {
-            System.out.println("Received " + fileURL.length + " files:");
-            for (MultipartFile file : fileURL) {
-                System.out.println("  - " + file.getOriginalFilename() + ", size=" + file.getSize());
-            }
-        } else {
-            System.out.println("No files received");
-        }
-
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         HifziyaHazari receivedHifziyaHazari = mapper.readValue(hifziyaHazari, HifziyaHazari.class);
-
-        System.out.println("Parsed HifziyaHazari: " + receivedHifziyaHazari);
 
         return hifziyaHazariService.createHifziyaHazari(receivedHifziyaHazari, fileURL);
     }
@@ -86,30 +77,17 @@ public class HifziyaHazariController {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         try {
-            System.out.println("🔄 UPDATE Request for ID: " + id);
-            System.out.println("📄 JSON Data: " + registrationJson);
-            
-            if (fileURL != null && fileURL.length > 0) {
-                System.out.println("📎 Files to upload: " + fileURL.length);
-                for (MultipartFile file : fileURL) {
-                    System.out.println("  - " + file.getOriginalFilename());
-                }
-            }
-            
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
             HifziyaHazari receivedHifziyaHazari = mapper.readValue(registrationJson, HifziyaHazari.class);
 
             HifziyaHazari updatedHifziyaHazari = hifziyaHazariService.updateHifziyaHazari(id, receivedHifziyaHazari, fileURL);
 
-            System.out.println("✅ Update successful for ID: " + id);
             return ResponseEntity.ok(updatedHifziyaHazari);
             
         } catch (Exception e) {
-            System.err.println("❌ Update failed for ID " + id + ": " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Update failed: " + e.getMessage());
+                    .body("د تازه کولو کې ستونزه: " + e.getMessage());
         }
     }
 
@@ -117,18 +95,92 @@ public class HifziyaHazariController {
     public ResponseEntity<String> deleteHifziyaHazari(@PathVariable Integer id) {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
         hifziyaHazariService.deleteHifziyaHazari(id);
-        return ResponseEntity.ok("HifziyaHazari with ID " + id + " has been deleted successfully.");
+        return ResponseEntity.ok("حاضري په بریالیتوب سره حذف شو");
     }
 
+    /**
+     * Download/Preview endpoint with clear Pashto error messages
+     */
     @GetMapping("/download/{filename:.+}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
-        managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
-        Resource resource = fileService.loadFileAsResource(filename);
+    public ResponseEntity<?> download(@PathVariable String filename) {
+        try {
+            managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
+            Resource resource = fileService.loadFileAsResource(filename);
+
+            // Detect content type
+            String contentType = "application/octet-stream";
+            try {
+                Path filePath = resource.getFile().toPath();
+                String detectedType = Files.probeContentType(filePath);
+                if (detectedType != null) {
+                    contentType = detectedType;
+                }
+            } catch (IOException e) {
+                // Fallback: guess from extension
+                String fileName = resource.getFilename();
+                if (fileName != null) {
+                    if (fileName.endsWith(".pdf")) {
+                        contentType = "application/pdf";
+                    } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                        contentType = "image/jpeg";
+                    } else if (fileName.endsWith(".png")) {
+                        contentType = "image/png";
+                    } else if (fileName.endsWith(".gif")) {
+                        contentType = "image/gif";
+                    } else if (fileName.endsWith(".webp")) {
+                        contentType = "image/webp";
+                    } else if (fileName.endsWith(".svg")) {
+                        contentType = "image/svg+xml";
+                    } else if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
+                        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                    } else if (fileName.endsWith(".xls") || fileName.endsWith(".xlsx")) {
+                        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    }
+                }
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+
+        } catch (RuntimeException e) {
+            // Check if it's a file not found error
+            String errorMessage = e.getMessage();
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            
+            if (errorMessage != null && errorMessage.contains("فایل په سرور کې نشته")) {
+                // File not found - return 404 with clear Pashto message
+                errorResponse.put("message", errorMessage);
+                errorResponse.put("error", "FILE_NOT_FOUND");
+                errorResponse.put("filename", filename);
+                
+                System.err.println("❌ فایل ونه موندل شو: " + filename);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+                
+            } else {
+                // Other errors - return 500
+                errorResponse.put("message", "د فایل د لوډ کولو کې ستونزه: " + errorMessage);
+                errorResponse.put("error", "INTERNAL_ERROR");
+                
+                System.err.println("❌ د فایل لوډ کولو کې ستونزه '" + filename + "': " + errorMessage);
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            }
+        } catch (Exception e) {
+            // Unexpected errors
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "نامعلومه ستونزه: " + e.getMessage());
+            errorResponse.put("error", "UNKNOWN_ERROR");
+            
+            System.err.println("❌ نامعلومه ستونزه '" + filename + "': " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }

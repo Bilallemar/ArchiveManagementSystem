@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
-  TextField,
   Box,
   Grid,
   Button,
   CircularProgress,
+  TextField,
   FormControl,
   InputLabel,
   Select,
@@ -12,10 +12,22 @@ import {
   Typography,
   Card,
   CardContent,
-  Stack,
+  Alert,
   Chip,
+  IconButton,
+  Stack,
+  Badge,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import FolderIcon from "@mui/icons-material/Folder";
+import ScannerIcon from "@mui/icons-material/Scanner";
+import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+import {
+  convertToEnglishNumbers,
+  convertToPersianNumbers,
+} from "../../../utils/numberUtils";
+import { convertHijriToGregorian } from "../../../utils/hijriDateUtils";
+import HijriDatePicker from "../../HijriDatePicker";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { createSawanih } from "../../../services/RepositoryManagement/SawanihAPI";
 import SaveIcon from "@mui/icons-material/Save";
@@ -23,12 +35,25 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DeleteIcon from "@mui/icons-material/Delete";
 import api from "../../../services/api";
+import getSawanihTexts from "../../../helpers/hifziya/sawanih/sawanihText";
+import { useTranslation } from "react-i18next";
 
 export default function AddSawanih() {
+  const [searchParams] = useSearchParams();
+  const recordType = searchParams.get("type"); // 'sawanih' or 'istekhdam'
+  const isSawanih = recordType === "sawanih";
+
+  const [detectedFiles, setDetectedFiles] = useState([]);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const { t } = useTranslation("sawanih");
+  const texts = getSawanihTexts(t);
+
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     fatherName: "",
-    qaidWarida: "",
     incommingDate: "",
     outgoingDate: "",
     org: "",
@@ -39,29 +64,79 @@ export default function AddSawanih() {
 
   const [orgs, setOrgs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/org").then((res) => setOrgs(res.data));
+    api.get("/org").then((res) => setOrgs(res.data || []));
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleHijriDateChange = (field) => (hijriDate) => {
+    setFormData((prev) => ({ ...prev, [field]: hijriDate }));
   };
 
   const handleFileChange = (e) => {
-    setFormData((p) => ({
-      ...p,
-      files: [...p.files, ...Array.from(e.target.files)],
+    const newFiles = Array.from(e.target.files || []);
+    setFormData((prev) => ({
+      ...prev,
+      files: [...prev.files, ...newFiles],
     }));
   };
 
   const handleRemoveFile = (index) => {
-    setFormData((p) => ({
-      ...p,
-      files: p.files.filter((_, i) => i !== index),
+    setFormData((prev) => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index),
     }));
+  };
+
+  const handleRemoveAllFiles = () => {
+    setFormData((prev) => ({ ...prev, files: [] }));
+  };
+
+  const handleScan = async () => {
+    setIsScanning(true);
+    try {
+      const res = await api.get("/scanner-folder/files");
+      setDetectedFiles(res.data || []);
+      toast[res.data.length ? "success" : "info"](
+        `${res.data.length} ${texts.filesFound || "فایلونه وموندل شول"}`,
+      );
+    } catch {
+      toast.error(texts.scanError || "سکین کولو کې ستونزه");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleLoadFromScanner = async () => {
+    if (!detectedFiles.length)
+      return toast.error(texts.noFiles || "هیڅ فایل نشته");
+
+    try {
+      const files = await Promise.all(
+        detectedFiles.map(async (f) => {
+          const res = await api.get(
+            `/scanner-folder/files/${f.name}/download`,
+            { responseType: "blob" },
+          );
+          return new File([res.data], f.name, {
+            type: res.headers["content-type"] || "application/octet-stream",
+          });
+        }),
+      );
+
+      setFormData((prev) => ({ ...prev, files }));
+      setDetectedFiles([]);
+      toast.success(
+        `${files.length} ${texts.scanner?.loadSuccess || "فایلونه لېږدول شول"}`,
+      );
+    } catch {
+      toast.error(texts.loadError || "فایلونو لېږدولو کې ستونزه");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -70,139 +145,348 @@ export default function AddSawanih() {
 
     try {
       const fd = new FormData();
+
       const payload = {
-        name: formData.name,
-        fatherName: formData.fatherName,
-        qaidWarida: formData.qaidWarida,
-        incommingDate: formData.incommingDate,
-        outgoingDate: formData.outgoingDate,
-        org: { id: formData.org },
-        description: formData.description,
-        pageQuantity: formData.pageQuantity
-          ? parseInt(formData.pageQuantity)
-          : null,
+        name: formData.name?.trim() || "",
+        fatherName: formData.fatherName?.trim() || null,
+        incommingDate: convertHijriToGregorian(formData.incommingDate),
+        outgoingDate: convertHijriToGregorian(formData.outgoingDate),
+        org: { id: Number(formData.org) },
+        description: formData.description?.trim() || null,
+        pageQuantity:
+          !isSawanih && formData.pageQuantity
+            ? parseInt(convertToEnglishNumbers(formData.pageQuantity))
+            : null,
+        isSawanih: isSawanih,
       };
 
-      fd.append("Sawanih", JSON.stringify(payload));
-      formData.files.forEach((f) => fd.append("fileURL", f));
+      fd.append("sawanih", JSON.stringify(payload));
+
+      if (!isSawanih) {
+        formData.files.forEach((file) => fd.append("fileURL", file));
+      }
 
       await createSawanih(fd);
-      toast.success("ریکارډ په بریالیتوب سره ثبت شو");
+      toast.success(texts.saveSuccess || "ثبت په بریالیتوب ترسره شو");
       navigate("/sawanih");
-    } catch (e) {
-      toast.error("ثبت ناکام شو");
+    } catch (err) {
+      console.error(err);
+      toast.error(texts.saveError || "د ثبت پر مهال ستونزه رامنځته شوه");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const recordTypeLabel = isSawanih
+    ? texts.newSawanih || "نوې سوانح"
+    : texts.newIstekhdam || "نوې استخدام";
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+    <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
+      {/* Header */}
+      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/sawanih")}
           sx={{ color: "text.secondary" }}
         >
-          بیرته
+          {texts.back || "بیرته"}
         </Button>
-        <Typography
-          variant="h4"
-          sx={{ fontFamily: "B Nazanin", fontWeight: "bold" }}
-        >
-          د نوي سوانح اضافه کول
+        <Typography variant="h4" fontWeight="bold">
+          {recordTypeLabel}
         </Typography>
       </Box>
 
-      <Card sx={{ maxWidth: 1200, mx: "auto" }}>
-        <CardContent sx={{ p: 4 }}>
-          <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
+      <Box sx={{ mb: 3 }}>
+        <PageBreadcrumbs />
+      </Box>
+
+      <Alert severity="info" sx={{ mb: 4 }} icon={false}>
+        <Typography variant="body1">
+          <strong>{texts.recordType || "ډول"}:</strong> {recordTypeLabel}
+        </Typography>
+      </Alert>
+
+      <Card elevation={3} sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ p: { xs: 3, md: 5 } }}>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={4}>
+              {/* File section – only for istekhdam */}
+              {!isSawanih && (
+                <Grid item xs={12} md={4}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+                  >
+                    {/* Scanner Card */}
+                    <Card
+                      variant="outlined"
+                      sx={{
+                        borderWidth: 2,
+                        borderColor: detectedFiles.length
+                          ? "success.main"
+                          : "divider",
+                        bgcolor: detectedFiles.length
+                          ? "success.lighter"
+                          : "background.paper",
+                      }}
+                    >
+                      <CardContent sx={{ textAlign: "center", py: 4 }}>
+                        <Badge
+                          badgeContent={detectedFiles.length}
+                          color="success"
+                          sx={{ mb: 2 }}
+                        >
+                          <FolderIcon
+                            sx={{ fontSize: 60, color: "primary.main" }}
+                          />
+                        </Badge>
+
+                        <Typography variant="h6" gutterBottom>
+                          {texts.folderTitle || "سکینر فولډر"}
+                        </Typography>
+
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 3 }}
+                        >
+                          {detectedFiles.length
+                            ? `${detectedFiles.length} ${texts.filesFound || "فایلونه وموندل شول"}`
+                            : texts.clickToScan || "د سکین لپاره کلیک وکړئ"}
+                        </Typography>
+
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<ScannerIcon />}
+                          onClick={handleScan}
+                          disabled={isScanning}
+                          sx={{ mb: 2 }}
+                        >
+                          {isScanning ? (
+                            <>
+                              <CircularProgress size={20} sx={{ mr: 1 }} />
+                              {texts.scanning || "په سکین کولو کې..."}
+                            </>
+                          ) : (
+                            texts.scanButton || "فولډر سکین کړئ"
+                          )}
+                        </Button>
+
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          startIcon={<AttachFileIcon />}
+                          onClick={handleLoadFromScanner}
+                          disabled={!detectedFiles.length}
+                          sx={{
+                            bgcolor: "#4CAF50",
+                            "&:hover": { bgcolor: "#45a049" },
+                          }}
+                        >
+                          {texts.loadFiles || "فایلونه لېږدول"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Detected Files List */}
+                    {detectedFiles.length > 0 && (
+                      <Box>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="bold"
+                          sx={{ mb: 1 }}
+                        >
+                          {texts.detectedFiles || "موندل شوي فایلونه"}
+                        </Typography>
+                        <Box sx={{ maxHeight: 180, overflowY: "auto" }}>
+                          <Stack spacing={0.5}>
+                            {detectedFiles.map((f, i) => (
+                              <Chip
+                                key={i}
+                                label={f.name}
+                                size="small"
+                                icon={<AttachFileIcon />}
+                              />
+                            ))}
+                          </Stack>
+                        </Box>
+                      </Box>
+                    )}
+
+                    {/* Manual Upload */}
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      startIcon={<AttachFileIcon />}
+                    >
+                      {texts.manualUpload || "دوهمه فایل اپلوډ کړئ"}
+                      <input
+                        type="file"
+                        hidden
+                        multiple
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      />
+                    </Button>
+
+                    {/* Selected / Ready Files */}
+                    {formData.files.length > 0 && (
+                      <Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="subtitle2" fontWeight="bold">
+                            {texts.readyToUpload || "د اپلوډ لپاره چمتو"} (
+                            {formData.files.length})
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={handleRemoveAllFiles}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                        <Box sx={{ maxHeight: 180, overflowY: "auto" }}>
+                          <Stack spacing={0.5}>
+                            {formData.files.map((file, index) => (
+                              <Chip
+                                key={index}
+                                label={file.name}
+                                onDelete={() => handleRemoveFile(index)}
+                                size="small"
+                                sx={{
+                                  backgroundColor: "#2196F3",
+                                  color: "#ffffff",
+                                  justifyContent: "space-between",
+                                  "& .MuiChip-deleteIcon": {
+                                    color: "#ffffff",
+                                    "&:hover": { color: "#e0e0e0" },
+                                  },
+                                  "& .MuiChip-label": {
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    maxWidth: 180,
+                                  },
+                                }}
+                              />
+                            ))}
+                          </Stack>
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+              )}
+
+              {/* Form Fields */}
+              <Grid item xs={12} md={!isSawanih ? 8 : 12}>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
-                      label="نوم"
+                      size="small"
+                      required
                       name="name"
+                      label={texts.name || "نوم"}
                       value={formData.name}
                       onChange={handleInputChange}
-                      required
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
-                      label="د پلار نوم"
+                      size="small"
                       name="fatherName"
+                      label={texts.fatherName || "د پلار نوم"}
                       value={formData.fatherName}
                       onChange={handleInputChange}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
                       fullWidth
-                      label="قید واریده"
-                      name="qaidWarida"
-                      value={formData.qaidWarida}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth required>
-                      <InputLabel>اداره</InputLabel>
+                      size="small"
+                      required
+                      error={!formData.org}
+                    >
+                      <InputLabel>{texts.org || "اداره"}</InputLabel>
                       <Select
                         name="org"
                         value={formData.org}
                         onChange={handleInputChange}
+                        label={texts.org || "اداره"}
                       >
-                        {orgs.map((o) => (
-                          <MenuItem key={o.id} value={o.id}>
-                            {o.name}
-                          </MenuItem>
-                        ))}
+                        {orgs.length === 0 ? (
+                          <MenuItem disabled>په بار کې دی...</MenuItem>
+                        ) : (
+                          orgs.map((org) => (
+                            <MenuItem key={org.id} value={org.id}>
+                              {org.name}
+                            </MenuItem>
+                          ))
+                        )}
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      type="date"
-                      name="incommingDate"
-                      label="تاریخ وارده"
-                      InputLabelProps={{ shrink: true }}
+
+                  <Grid item xs={12} sm={6}>
+                    <HijriDatePicker
+                      label={texts.incommingDate || "تاریخ وارده"}
                       value={formData.incommingDate}
-                      onChange={handleInputChange}
+                      onChange={handleHijriDateChange("incommingDate")}
+                      required
+                      size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      type="date"
-                      name="outgoingDate"
-                      label="تاریخ صادره"
-                      InputLabelProps={{ shrink: true }}
+
+                  <Grid item xs={12} sm={6}>
+                    <HijriDatePicker
+                      label={texts.outgoingDate || "تاریخ صادره"}
                       value={formData.outgoingDate}
-                      onChange={handleInputChange}
+                      onChange={handleHijriDateChange("outgoingDate")}
+                      required
+                      size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="تعداد صفحات"
-                      name="pageQuantity"
-                      value={formData.pageQuantity}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
+
+                  {!isSawanih && (
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        name="pageQuantity"
+                        label={texts.pageQuantity || "تعداد صفحات"}
+                        value={convertToPersianNumbers(formData.pageQuantity)}
+                        onChange={(e) => {
+                          const eng = convertToEnglishNumbers(e.target.value);
+                          if (eng === "" || /^\d+$/.test(eng)) {
+                            setFormData((p) => ({ ...p, pageQuantity: eng }));
+                          }
+                        }}
+                        inputProps={{ inputMode: "numeric", dir: "rtl" }}
+                      />
+                    </Grid>
+                  )}
+
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      multiline
-                      rows={3}
-                      label="ملاحظات"
+                      size="small"
                       name="description"
+                      label={texts.description || "ملاحظات / توضیحات"}
+                      multiline
+                      rows={4}
                       value={formData.description}
                       onChange={handleInputChange}
                     />
@@ -212,9 +496,9 @@ export default function AddSawanih() {
                     <Box
                       sx={{
                         display: "flex",
-                        gap: 2,
                         justifyContent: "flex-end",
-                        mt: 2,
+                        gap: 2,
+                        mt: 3,
                       }}
                     >
                       <Button
@@ -222,11 +506,12 @@ export default function AddSawanih() {
                         onClick={() => navigate("/sawanih")}
                         disabled={isSubmitting}
                       >
-                        لغوه
+                        {texts.cancel || "لغوه کول"}
                       </Button>
                       <Button
                         type="submit"
                         variant="contained"
+                        disabled={isSubmitting}
                         endIcon={
                           isSubmitting ? (
                             <CircularProgress size={20} />
@@ -234,20 +519,21 @@ export default function AddSawanih() {
                             <SaveIcon />
                           )
                         }
-                        disabled={isSubmitting}
                         sx={{
-                          bgcolor: "black",
-                          "&:hover": { bgcolor: "#1d252e" },
+                          bgcolor: "#2196F3",
+                          "&:hover": { bgcolor: "#1976d2" },
                         }}
                       >
-                        {isSubmitting ? "ذخیره کیږي..." : "ذخیره کړئ"}
+                        {isSubmitting
+                          ? texts.saving || "په ثبت کولو کې..."
+                          : texts.save || "ثبت کړئ"}
                       </Button>
                     </Box>
                   </Grid>
                 </Grid>
               </Grid>
             </Grid>
-          </Box>
+          </form>
         </CardContent>
       </Card>
     </Box>

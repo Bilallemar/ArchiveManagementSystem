@@ -1,35 +1,38 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-  Box,
-  IconButton,
-  Chip,
-  Typography,
-  Stack,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import {
-  getHifziyaWaradaSaderaById,
-  updateHifziyaWaradaSadera,
-} from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
-import React, { useState, useEffect } from "react";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-import SaveIcon from "@mui/icons-material/Save";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import CloseIcon from "@mui/icons-material/Close";
+import FolderIcon from "@mui/icons-material/Folder";
+import SaveIcon from "@mui/icons-material/Save";
+import ScannerIcon from "@mui/icons-material/Scanner";
+import {
+  Alert,
+  Badge,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import getHifziyaWaradaSaderaTexts from "../../../helpers/hifziya/waradaSadera/waradaSaderaListTexts";
+import { updateHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
 import api from "../../../services/api";
+import { convertGregorianToHijri } from "../../../utils/hijriDateUtils";
 
 export default function EditHifziyaWaradaSaderaDialog({
   open,
@@ -37,6 +40,9 @@ export default function EditHifziyaWaradaSaderaDialog({
   waradaSadara,
   onSuccess,
 }) {
+  const { t } = useTranslation("hifziyaWaradaSadera");
+  const text = getHifziyaWaradaSaderaTexts(t);
+
   const [formData, setFormData] = useState({
     no: "",
     org: "",
@@ -45,493 +51,580 @@ export default function EditHifziyaWaradaSaderaDialog({
     outgoingDate: "",
     summary: "",
     description: "",
-    isHifziya: true,
+    subjectType: "",
     newFiles: [],
   });
 
   const [orgs, setOrgs] = useState([]);
+  const [docTypes, setDocTypes] = useState([]);
+  const [existingFiles, setExistingFiles] = useState([]);
+  const [scannerFolderPath, setScannerFolderPath] = useState("");
+  const [detectedFiles, setDetectedFiles] = useState([]);
+  const [isScanning, setIsScanning] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
-  const [existingFiles, setExistingFiles] = useState([]);
 
-  // Load orgs and existing data
+  const direction = waradaSadara?.direction || "INCOMING";
+
+  // Load initial data
   useEffect(() => {
+    if (!open) return;
+
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [orgsRes] = await Promise.all([api.get("/org")]);
 
-        setOrgs(orgsRes.data);
-      } catch (error) {
-        console.error("Failed to load data", error);
-        toast.error("د معلوماتو لوډولو کې ستونزه");
+        const [orgsRes, docTypesRes, scannerPathRes, recordRes] =
+          await Promise.all([
+            api.get("/org"),
+            api.get("/doc-type/active"),
+            api
+              .get("/scanner-folder/path")
+              .catch(() => ({ data: { path: "" } })),
+            // We already have waradaSadara prop, but if needed you can re-fetch
+          ]);
+
+        setOrgs(orgsRes.data || []);
+        setDocTypes(docTypesRes.data || []);
+        setScannerFolderPath(scannerPathRes.data.path || "");
+
+        if (waradaSadara) {
+          const formatDate = (date) =>
+            date ? new Date(date).toISOString().split("T")[0] : "";
+
+          setFormData({
+            no: waradaSadara.no || "",
+            org: waradaSadara.org?.id || "",
+            letterNumber: waradaSadara.letterNumber || "",
+            incommingDate: formatDate(waradaSadara.incommingDate),
+            outgoingDate: formatDate(waradaSadara.outgoingDate),
+            summary: waradaSadara.summary || "",
+            description: waradaSadara.description || "",
+            subjectType: waradaSadara.subjectType || "",
+            newFiles: [],
+          });
+
+          setExistingFiles(waradaSadara.files || []);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error(text.loadError || "Error loading data");
+      } finally {
+        setIsLoading(false);
       }
     };
+
     loadData();
-  }, []);
-  useEffect(() => {
-    if (open && waradaSadara) {
-      const formattedIncoming = waradaSadara.incommingDate
-        ? new Date(waradaSadara.incommingDate).toISOString().split("T")[0]
-        : "";
+  }, [open, waradaSadara, text.loadError]);
 
-      const formattedOutgoing = waradaSadara.outgoingDate
-        ? new Date(waradaSadara.outgoingDate).toISOString().split("T")[0]
-        : "";
-
-      setFormData({
-        no: waradaSadara.no || "",
-        org: waradaSadara.org?.id || "",
-        letterNumber: waradaSadara.letterNumber || "",
-        incommingDate: formattedIncoming,
-        outgoingDate: formattedOutgoing,
-        summary: waradaSadara.summary || "",
-        description: waradaSadara.description || "",
-        isHifziya: waradaSadara.isHifziya ?? true,
-        newFiles: [],
-      });
-
-      if (waradaSadara.files && waradaSadara.files.length > 0) {
-        setExistingFiles(waradaSadara.files);
-      } else {
-        setExistingFiles([]);
-      }
-    }
-  }, [open, waradaSadara]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleHijriDateChange = (field) => (hijriDate) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [field]: hijriDate,
     }));
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleScan = async () => {
+    try {
+      setIsScanning(true);
+      const response = await api.get("/scanner-folder/files");
+      setDetectedFiles(response.data || []);
+      if (response.data.length === 0) {
+        toast.info(text.noFilesInScanner || "No files found in scanner folder");
+      } else {
+        toast.success(
+          `${response.data.length} ${text.filesDetected || "files detected"}`,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to scan folder", error);
+      toast.error(text.scanError || "Error scanning folder");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleLoadFromScanner = async () => {
+    if (detectedFiles.length === 0) {
+      toast.error(text.noFilesToLoad || "No files to load");
+      return;
+    }
+    try {
+      const filePromises = detectedFiles.map(async (fileInfo) => {
+        const response = await api.get(
+          `/scanner-folder/files/${fileInfo.name}/download`,
+          {
+            responseType: "blob",
+          },
+        );
+        return new File([response.data], fileInfo.name, {
+          type: response.headers["content-type"] || "application/octet-stream",
+        });
+      });
+
+      const files = await Promise.all(filePromises);
+      setFormData((prev) => ({
+        ...prev,
+        newFiles: [...prev.newFiles, ...files],
+      }));
+      setDetectedFiles([]);
+      toast.success(
+        `${files.length} ${text.filesLoadedSuccessfully || "files loaded"}`,
+      );
+    } catch (error) {
+      console.error("Failed to load files from scanner", error);
+      toast.error(text.loadFromScannerError || "Error loading files");
+    }
   };
 
   const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
+    const selected = Array.from(e.target.files);
     setFormData((prev) => ({
       ...prev,
-      newFiles: [...prev.newFiles, ...selectedFiles],
+      newFiles: [...prev.newFiles, ...selected],
     }));
   };
-  const handleRemoveNewFile = (index) => {
+
+  const handleRemoveNewFile = (index) =>
     setFormData((prev) => ({
       ...prev,
       newFiles: prev.newFiles.filter((_, i) => i !== index),
     }));
+
+  const handleRemoveExistingFile = (fileId) => {
+    setExistingFiles((prev) => prev.filter((f) => f.id !== fileId));
+
+    toast.success(
+      text.fileRemovedLocally ||
+        "File removed from list (not deleted from server yet)",
+      {
+        duration: 4000,
+        position: "top-right", // optional - adjust if needed
+      },
+    );
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const requiredFields = ["org"];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
-    if (missingFields.length > 0) {
-      toast.error("لطفاً تمام فیلدهای ضروری را پر کنید");
+    if (!formData.no.trim()) {
+      toast.error(text.missingFields || "Number is required");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.org) {
+      toast.error(text.missingFields || "Organization is required");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const formDataToSend = new FormData();
-
-      const waradaAndSadaraData = {
-        no: formData.no,
-        org: { id: formData.org },
-        letterNumber: formData.letterNumber,
-        incommingDate: formData.incommingDate,
-        outgoingDate: formData.outgoingDate,
-        summary: formData.summary,
-        description: formData.description,
-        isHifziya: formData.isHifziya,
+      const payload = {
+        no: formData.no.trim(),
+        org: { id: parseInt(formData.org) },
+        letterNumber: formData.letterNumber.trim() || null,
+        incommingDate: convertGregorianToHijri(formData.incommingDate) || null,
+        summary: formData.summary.trim() || null,
+        subjectType: formData.subjectType || null,
+        description: formData.description.trim() || null,
+        direction: direction,
       };
 
-      formDataToSend.append(
-        "hifziyaWaradaSadera",
-        JSON.stringify(waradaAndSadaraData)
-      );
-
-      // Only append file if a new one is selected
-      if (formData.newFiles.length > 0) {
-        formData.newFiles.forEach((file, index) => {
-          console.log(`📎 Appending file ${index + 1}:`, file.name);
-          formDataToSend.append("fileURL", file);
-        });
+      if (direction === "OUTGOING" && formData.outgoingDate) {
+        payload.outgoingDate = convertGregorianToHijri(formData.outgoingDate);
       }
 
-      const response = await updateHifziyaWaradaSadera(
-        waradaSadara.id,
-        formDataToSend
-      );
-      console.log("✅ Update response:", response);
+      if (formData.docTypeId && formData.docTypeId !== "") {
+        payload.docType = { id: parseInt(formData.docTypeId) };
+      }
 
-      toast.success("وارده او صادره راپور په بریالیتوب سره تازه شو");
+      const formDataToSend = new FormData();
+      formDataToSend.append("hifziyaWaradaSadera", JSON.stringify(payload));
+
+      formData.newFiles.forEach((file) => {
+        formDataToSend.append("fileURL", file);
+      });
+
+      await updateHifziyaWaradaSadera(waradaSadara.id, formDataToSend);
+
+      toast.success(text.updateSuccess || "Record updated successfully");
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("❌ Update failed:", error);
-      console.error("Error response:", error.response?.data);
-
-      const errorMsg =
-        error.response?.data?.message ||
-        error.response?.data ||
-        error.message ||
-        "Unknown error";
-
-      toast.error("تازه کول ناکام شو: " + errorMsg);
+      console.error("Update failed:", error);
+      const errMsg =
+        error.response?.data?.message || text.updateError || "Update failed";
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (!open) return null;
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-        },
-      }}
-    >
-      {/* Header */}
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          pb: 2,
+          pb: 1,
         }}
       >
-        <Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="h5" fontWeight="bold">
+            {text.editTitle || "Edit Record"}
+          </Typography>
           <Box
-            sx={{ fontFamily: "B Nazanin", fontWeight: "bold", fontSize: 20 }}
+            sx={{
+              px: 2,
+              py: 0.5,
+              borderRadius: "999px",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              backgroundColor: direction === "INCOMING" ? "#4CAF50" : "#2196F3",
+              color: "white",
+            }}
           >
-            ویرایش کتاب وارده و صادره
+            {direction === "INCOMING"
+              ? text.incoming || "وارده"
+              : text.outgoing || "صادره"}
           </Box>
-          {waradaSadara && (
-            <Chip
-              label={`ID: ${waradaSadara.id}`}
-              size="small"
-              sx={{ mt: 1 }}
-              color="primary"
-              variant="outlined"
-            />
-          )}
         </Box>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers sx={{ py: 3 }}>
-        <Box component="form" onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {/* LEFT SIDE - File Upload Section */}
-            <Grid item xs={12} sm={4}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 2,
-                }}
-              >
-                {/* File Upload Area */}
-                <Box
-                  sx={{
-                    width: 144,
-                    height: 144,
-                    borderRadius: "50%",
-                    border: "1px dashed",
-                    borderColor: "divider",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: "background.neutral",
-                    cursor: "pointer",
-                    position: "relative",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                    },
-                  }}
-                  component="label"
-                >
-                  <AttachFileIcon
-                    sx={{ fontSize: 32, color: "text.secondary" }}
-                  />
-                  <Box sx={{ mt: 1, color: "text.secondary", fontSize: 12 }}>
-                    نوي فایلونه اضافه کړئ
-                  </Box>
-                  <Box
-                    sx={{
-                      mt: 0.5,
-                      color: "primary.main",
-                      fontSize: 11,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {formData.newFiles.length} نوی
-                  </Box>
-                  <input
-                    type="file"
-                    hidden
-                    multiple
-                    onChange={handleFileChange}
-                  />
-                </Box>
-                {/* Existing Files Info */}
-                {existingFiles.length > 0 && (
-                  <Box
-                    sx={{
-                      textAlign: "center",
-                      p: 1.5,
-                      bgcolor: "info.lighter",
-                      borderRadius: 1,
-                      width: "100%",
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ color: "info.dark" }}>
-                      موجوده فایلونه: {existingFiles.length}
-                    </Typography>
-                  </Box>
-                )}
 
-                {/* New Files List */}
-                {formData.newFiles.length > 0 && (
-                  <Box
-                    sx={{ width: "100%", maxHeight: 150, overflowY: "auto" }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: "bold", mb: 1, display: "block" }}
-                    >
-                      نوي فایلونه:
-                    </Typography>
-                    <Stack spacing={0.5}>
-                      {formData.newFiles.map((file, index) => (
-                        <Chip
-                          key={index}
-                          label={file.name}
-                          onDelete={() => handleRemoveNewFile(index)}
-                          deleteIcon={<DeleteIcon />}
-                          size="small"
+      <DialogContent dividers sx={{ p: 3 }}>
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              {/* LEFT – Scanner + Files */}
+              <Grid item xs={12} md={4}>
+                <Stack spacing={3}>
+                  {/* Scanner Card */}
+                  {scannerFolderPath && (
+                    <Card variant="outlined">
+                      <CardContent sx={{ textAlign: "center", py: 3 }}>
+                        <Badge
+                          badgeContent={detectedFiles.length}
                           color="success"
+                          sx={{ mb: 2 }}
+                        >
+                          <FolderIcon
+                            sx={{ fontSize: 50, color: "primary.main" }}
+                          />
+                        </Badge>
+                        <Typography variant="h6" gutterBottom>
+                          {text.scannerStatus || "Scanner Status"}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 2 }}
+                        >
+                          {detectedFiles.length > 0
+                            ? `${detectedFiles.length} ${text.existingFiles || "files found"}`
+                            : text.scanButtonInfo ||
+                              "Click scan to detect files"}
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<ScannerIcon />}
+                          onClick={handleScan}
+                          disabled={isScanning}
+                          sx={{ mb: 1 }}
+                        >
+                          {isScanning ? (
+                            <>
+                              <CircularProgress size={16} sx={{ mr: 1 }} />
+                              {text.scanning || "Scanning..."}
+                            </>
+                          ) : (
+                            text.scan || "Scan"
+                          )}
+                        </Button>
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          startIcon={<AttachFileIcon />}
+                          onClick={handleLoadFromScanner}
+                          disabled={detectedFiles.length === 0}
                           sx={{
-                            justifyContent: "space-between",
-                            "& .MuiChip-label": {
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              maxWidth: 120,
-                            },
+                            bgcolor: "#4CAF50",
+                            "&:hover": { bgcolor: "#45a049" },
                           }}
-                        />
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
+                        >
+                          {text.loadFiles || "Load Files"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
 
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  textAlign="center"
-                >
-                  Allowed *.jpeg, *.jpg, *.png, *.pdf
-                  <br />
-                  max size of 5 MB
-                  <br />
-                  <span style={{ color: "red", fontSize: 10 }}>
-                    ⚠ نوي فایلونه زاړه فایلونه بدلوي
-                  </span>
-                </Typography>
-              </Box>
-            </Grid>
+                  {/* Detected Files */}
+                  {detectedFiles.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight="bold"
+                        sx={{ mb: 1 }}
+                      >
+                        {text.detectedFiles || "Detected Files"}
+                      </Typography>
+                      <Box sx={{ maxHeight: 180, overflowY: "auto" }}>
+                        <Stack spacing={0.5}>
+                          {detectedFiles.map((file, idx) => (
+                            <Chip
+                              key={idx}
+                              label={file.name}
+                              size="small"
+                              icon={<AttachFileIcon />}
+                              sx={{ justifyContent: "flex-start" }}
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
+                    </Box>
+                  )}
 
-            <Grid item xs={12} sm={8}>
-              <Grid container spacing={2.5}>
-                {/* Record Type */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>د ریکارډ ډول</InputLabel>
-                    <Select
-                      name="isHifziya"
-                      value={String(formData.isHifziya)}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          isHifziya: e.target.value === "true",
-                        }))
-                      }
-                    >
-                      <MenuItem value="true">حفظیه</MenuItem>
-                      <MenuItem value="false">مخزن</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
+                  {/* Existing Files */}
+                  {existingFiles.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        {text.existingFiles || "Existing Files"} (
+                        {existingFiles.length})
+                      </Typography>
+                      <Stack
+                        spacing={0.8}
+                        sx={{ maxHeight: 180, overflowY: "auto" }}
+                      >
+                        {existingFiles.map((file) => (
+                          <Chip
+                            key={file.id}
+                            label={file.fileName || file.name || "file"}
+                            size="small"
+                            icon={<AttachFileIcon />}
+                            onDelete={() => handleRemoveExistingFile(file.id)}
+                            color="default"
+                            sx={{ justifyContent: "flex-start" }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="no"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    label="تمبر"
+                  {/* New Files + Manual Upload */}
+                  <Button
                     variant="outlined"
-                    value={formData.no}
-                    onChange={handleInputChange}
-                    InputProps={{ sx: { height: 60 } }}
-                    required
-                    error={!formData.no}
-                    helperText={!formData.no ? "این فیلد ضروری است" : ""}
-                  />
-                </Grid>
-
-                {/* Org Dropdown */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl
+                    component="label"
                     fullWidth
-                    size="small"
-                    required
-                    error={!formData.org}
+                    startIcon={<AttachFileIcon />}
                   >
-                    <InputLabel>اداره</InputLabel>
-                    <Select
-                      name="org"
-                      value={formData.org}
+                    {text.addNewFiles || "Add New Files"}
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      onChange={handleFileChange}
+                      accept="image/*,.pdf,.doc,.docx"
+                    />
+                  </Button>
+
+                  {formData.newFiles.length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        {text.newFilesAdded || "New files to upload"} (
+                        {formData.newFiles.length})
+                      </Typography>
+                      <Stack
+                        spacing={0.8}
+                        sx={{ maxHeight: 180, overflowY: "auto" }}
+                      >
+                        {formData.newFiles.map((file, idx) => (
+                          <Chip
+                            key={idx}
+                            label={file.name}
+                            size="small"
+                            color="success"
+                            onDelete={() => handleRemoveNewFile(idx)}
+                            sx={{ justifyContent: "flex-start" }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  {existingFiles.length === 0 &&
+                    formData.newFiles.length === 0 && (
+                      <Alert
+                        severity="info"
+                        icon={<FolderIcon />}
+                        sx={{ mt: 2 }}
+                      >
+                        {text.noFilesAttached || "No files attached yet"}
+                      </Alert>
+                    )}
+                </Stack>
+              </Grid>
+
+              {/* RIGHT – Form Fields */}
+              <Grid item xs={12} md={8}>
+                <Grid container spacing={2.5}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="no"
+                      label={text.no || "شمېره"}
+                      value={formData.no}
                       onChange={handleInputChange}
-                      label="اداره"
+                      required
+                      error={!formData.no.trim()}
+                      helperText={!formData.no.trim() ? text.required : ""}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      required
+                      error={!formData.org}
                     >
-                      {orgs.length === 0 ? (
-                        <MenuItem disabled>Loading...</MenuItem>
-                      ) : (
-                        orgs.map((org) => (
+                      <InputLabel>{text.org || "اداره"}</InputLabel>
+                      <Select
+                        name="org"
+                        value={formData.org}
+                        label={text.org || "اداره"}
+                        onChange={handleInputChange}
+                      >
+                        {orgs.map((org) => (
                           <MenuItem key={org.id} value={org.id}>
                             {org.name}
                           </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                {/* Letter Number */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="letterNumber"
-                    InputLabelProps={{ shrink: true }}
-                    label="شماره مکتوب"
-                    variant="outlined"
-                    value={formData.letterNumber}
-                    onChange={handleInputChange}
-                    InputProps={{ sx: { height: 60 } }}
-                    required
-                    error={!formData.letterNumber}
-                    helperText={
-                      !formData.letterNumber ? "این فیلد ضروری است" : ""
-                    }
-                  />
-                </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="letterNumber"
+                      label={text.letterNumber || "شمېره مکتوب"}
+                      value={formData.letterNumber}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="incommingDate"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    label="تاریخ مرسل"
-                    variant="outlined"
-                    value={formData.incommingDate}
-                    onChange={handleInputChange}
-                    InputProps={{ sx: { height: 60 } }}
-                    required
-                    error={!formData.incommingDate}
-                    helperText={
-                      !formData.incommingDate ? "این فیلد ضروری است" : ""
-                    }
-                  />
-                </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="subjectType"
+                      label={text.subjectType || "د موضع ډول"}
+                      value={formData.subjectType}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="outgoingDate"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    label="تاریخ مرسل الیه"
-                    variant="outlined"
-                    value={formData.outgoingDate}
-                    onChange={handleInputChange}
-                    InputProps={{ sx: { height: 60 } }}
-                    required
-                    error={!formData.outgoingDate}
-                    helperText={
-                      !formData.outgoingDate ? "این فیلد ضروری است" : ""
-                    }
-                  />
-                </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="date"
+                      name="incommingDate"
+                      label={text.incommingDate || "تاریخ وارده"}
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.incommingDate}
+                      onChange={handleHijriDateChange("incommingDate")}
+                    />
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name="summary"
-                    InputLabelProps={{ shrink: true }}
-                    label="خلص مطلب"
-                    variant="outlined"
-                    value={formData.summary}
-                    onChange={handleInputChange}
-                    InputProps={{ sx: { height: 60 } }}
-                    required
-                    error={!formData.summary}
-                    helperText={!formData.summary ? "این فیلد ضروری است" : ""}
-                  />
-                </Grid>
+                  {direction === "OUTGOING" && (
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="date"
+                        name="outgoingDate"
+                        label={text.outgoingDate || "تاریخ صادره"}
+                        InputLabelProps={{ shrink: true }}
+                        value={formData.outgoingDate}
+                        onChange={handleHijriDateChange("outgoingDate")}
+                      />
+                    </Grid>
+                  )}
 
-                {/* Description */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    name="description"
-                    label="ملاحظات"
-                    variant="outlined"
-                    multiline
-                    rows={3}
-                    value={formData.description}
-                    onChange={handleInputChange}
-                  />
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="summary"
+                      label={text.summary || "لنډیز"}
+                      value={formData.summary}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      multiline
+                      rows={4}
+                      name="description"
+                      label={text.description || "ملاحظات"}
+                      value={formData.description}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        </Box>
+          </Box>
+        )}
       </DialogContent>
-      {/* Submit Button */}
-      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          disabled={isSubmitting}
-          sx={{ textTransform: "none" }}
-        >
-          لغوه
+
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={onClose} variant="outlined" disabled={isSubmitting}>
+          {text.cancel || "لغوه"}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={isSubmitting}
           startIcon={
-            isSubmitting ? <CircularProgress size={18} /> : <SaveIcon />
+            isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />
           }
           sx={{
-            bgcolor: "black",
-            "&:hover": { bgcolor: "#1d252e" },
-            textTransform: "none",
+            bgcolor: direction === "INCOMING" ? "#4CAF50" : "#2196F3",
+            "&:hover": {
+              bgcolor: direction === "INCOMING" ? "#45a049" : "#1976D2",
+            },
           }}
         >
-          {isSubmitting ? "ذخیره کیږي..." : "ذخیره تغییرات"}
+          {isSubmitting
+            ? text.saving || "ذخیره کیږي..."
+            : text.saveChanges || "ذخیره کول"}
         </Button>
       </DialogActions>
     </Dialog>
