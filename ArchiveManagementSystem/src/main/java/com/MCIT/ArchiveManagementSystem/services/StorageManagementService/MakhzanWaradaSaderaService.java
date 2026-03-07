@@ -6,11 +6,17 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.MCIT.ArchiveManagementSystem.dtos.MakhzanWaradaSaderaSummaryDTO;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakhzanWaradaSadera;
+import com.MCIT.ArchiveManagementSystem.models.enums.MakhzanWaradaSaderaDirection;
 import com.MCIT.ArchiveManagementSystem.repositories.AuditLogRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakhzanWaradaSaderaRepository;
@@ -43,8 +49,36 @@ public class MakhzanWaradaSaderaService {
         this.auditLogHelper = auditLogHelper;
     }
 
-    public List<MakhzanWaradaSadera> getAll() {
-        return repository.findAll();
+    // public List<MakhzanWaradaSadera> getAll() {
+    // return repository.findAll();
+    // }
+    public Page<MakhzanWaradaSaderaSummaryDTO> getAll(
+            Management management,
+            String direction,
+            String field,
+            String term,
+            int page,
+            int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        String cleanTerm = (term == null) ? "" : term.trim();
+
+        // Convert String → enum
+        MakhzanWaradaSaderaDirection directionEnum = null;
+        if (direction != null && !direction.isBlank()) {
+            directionEnum = MakhzanWaradaSaderaDirection.valueOf(direction.toUpperCase());
+        }
+
+        Page<MakhzanWaradaSadera> raw = repository.searchMakhzanWaradaSadera(
+                management, directionEnum, field, cleanTerm, pageable); // ← directionEnum not cleanDirection
+
+        return raw.map(a -> new MakhzanWaradaSaderaSummaryDTO(
+                a.getId(),
+                a.getLetterNumber(),
+                a.getIncommingDate(),
+                a.getSubjectType(),
+                a.getOrg() != null ? a.getOrg().getName() : null, // ← senderOrgName
+                a.getDirection() != null ? a.getDirection().name() : null));
     }
 
     public Optional<MakhzanWaradaSadera> getById(Integer id) {
@@ -79,48 +113,6 @@ public class MakhzanWaradaSaderaService {
         return entity;
     }
 
-    // @Transactional
-    // public MakhzanWaradaSadera update(Integer id, MakhzanWaradaSadera details,
-    // MultipartFile[] fileURL) {
-
-    // MakhzanWaradaSadera existing = repository.findById(id)
-    // .orElseThrow(() -> new RuntimeException("MakhzanWaradaSadera not found with
-    // id: " + id));
-
-    // existing.setNo(details.getNo());
-    // existing.setOrg(details.getOrg());
-    // existing.setLetterNumber(details.getLetterNumber());
-    // existing.setIncommingDate(details.getIncommingDate());
-    // existing.setOutgoingDate(details.getOutgoingDate());
-    // existing.setSubjectType(details.getSubjectType());
-    // existing.setSummary(details.getSummary());
-    // existing.setDescription(details.getDescription());
-    // existing.setDirection(details.getDirection());
-
-    // if (fileURL != null && fileURL.length > 0) {
-
-    // if (existing.getFiles() != null) {
-    // for (FileEntity old : new ArrayList<>(existing.getFiles())) {
-    // try {
-    // fileRepository.delete(old);
-    // fileService.deleteFile(old.getFilePath());
-    // } catch (Exception e) {
-    // logger.warn("File delete failed: {}", old.getFilePath(), e);
-    // }
-    // }
-    // existing.getFiles().clear();
-    // }
-
-    // fileService.savefiles(fileURL, existing);
-    // existing = repository.findById(id).orElseThrow();
-    // }
-
-    // MakhzanWaradaSadera updated = repository.save(existing);
-    // auditLogHelper.logUpdate(TABLE_NAME, updated.getId().longValue(),
-    // updated.getDescription());
-
-    // return updated;
-    // }
     @Transactional
     public MakhzanWaradaSadera updateMakhzanWaradaSadera(Integer id,
             MakhzanWaradaSadera makhzanWaradaSaderaDetails,

@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 
 import getArchiveTexts from "../../../helpers/archive/getArchiveTexts";
 import { updateArchive } from "../../../services/ArchiveManagement/ArchiveAPI";
@@ -36,9 +37,16 @@ export default function EditArchiveDialog({
 }) {
   const { t } = useTranslation("archive");
   const text = getArchiveTexts(t);
+  const location = useLocation();
 
+  const searchParams = new URLSearchParams(location.search);
+  const initialDirection = searchParams.get("direction") || "INCOMING";
+  const validDirection = ["INCOMING", "OUTGOING"].includes(initialDirection)
+    ? initialDirection
+    : "INCOMING";
   const [formData, setFormData] = useState({
     docNo: "",
+    receiveDate: "",
     sendDate: "",
     departmentDate: "",
     senderOrgId: "",
@@ -51,7 +59,10 @@ export default function EditArchiveDialog({
   const [docTypes, setDocTypes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
+  const pageTitle =
+    validDirection === "INCOMING"
+      ? text.newIncoming || "نوې وارده"
+      : text.newOutgoing || "نوی صادره";
   // Load organizations and doc types
   useEffect(() => {
     const loadData = async () => {
@@ -78,6 +89,7 @@ export default function EditArchiveDialog({
     if (archive && open) {
       setFormData({
         docNo: archive.docNo || "",
+        receiveDate: convertGregorianToHijri(archive.receiveDate) || "",
         sendDate: convertGregorianToHijri(archive.sendDate) || "",
         departmentDate: convertGregorianToHijri(archive.departmentDate) || "",
         senderOrgId: archive.senderOrg?.id || "",
@@ -128,7 +140,7 @@ export default function EditArchiveDialog({
     try {
       const payload = {
         docNo: formData.docNo.trim(),
-        sendDate: convertHijriToGregorian(formData.sendDate) || null,
+        receiveDate: convertHijriToGregorian(formData.receiveDate) || null,
         departmentDate:
           convertHijriToGregorian(formData.departmentDate) || null,
         senderOrg: { id: Number(formData.senderOrgId) },
@@ -137,7 +149,9 @@ export default function EditArchiveDialog({
         docType: { id: Number(formData.docTypeId) },
         direction: archive.direction, // ← direction نه بدلوو (read-only)
       };
-
+      if (validDirection === "OUTGOING" && formData.sendDate) {
+        payload.sendDate = convertHijriToGregorian(formData.sendDate);
+      }
       await updateArchive(archive.id, payload);
       toast.success(text.updateSuccess || "معلومات په بریالیتوب تازه شول");
       onSuccess();
@@ -158,17 +172,22 @@ export default function EditArchiveDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{text.title || "د آرشیف معلومات اصلاح کول"}</DialogTitle>
+      <DialogTitle>
+        {" "}
+        <Typography variant="h4" fontWeight="bold">
+          {pageTitle}
+        </Typography>
+      </DialogTitle>
 
       <DialogContent>
         {/* Direction info (read-only) */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" color="text.secondary">
-            ډول (Direction):{" "}
+            {text.recordTypeForDirection}:{" "}
             <strong>
-              {archive.direction === "INCOMING"
-                ? "وارده (Incoming)"
-                : "صادره (Outgoing)"}
+              {validDirection === "INCOMING"
+                ? text.incoming || "Incoming (وارده)"
+                : text.outgoing || "Outgoing (صادره)"}
             </strong>
           </Typography>
         </Box>
@@ -269,19 +288,34 @@ export default function EditArchiveDialog({
                 </FormControl>
               </Grid>
 
-              {/* Send Date */}
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} md={6}>
                 <HijriDatePicker
                   fullWidth
-                  name="sendDate"
+                  size="small"
                   type="date"
-                  label={text.sendDate || "تاریخ ارسال"}
+                  name="receiveDate"
+                  label={text.incomingDate || "تاریخ وارده"}
                   InputLabelProps={{ shrink: true }}
-                  value={formData.sendDate}
-                  onChange={handleHijriDateChange("sendDate")}
+                  value={formData.receiveDate}
+                  onChange={handleHijriDateChange("receiveDate")}
                 />
               </Grid>
 
+              {/* Send Date */}
+              {archive.direction === "OUTGOING" && (
+                <Grid item xs={12} sm={6}>
+                  <HijriDatePicker
+                    fullWidth
+                    size="small"
+                    type="date"
+                    name="sendDate"
+                    label={text.outgoingDate || "تاریخ صادره"}
+                    InputLabelProps={{ shrink: true }}
+                    value={formData.sendDate}
+                    onChange={handleHijriDateChange("sendDate")}
+                  />
+                </Grid>
+              )}
               {/* Department Date */}
               <Grid item xs={12} sm={6}>
                 <HijriDatePicker

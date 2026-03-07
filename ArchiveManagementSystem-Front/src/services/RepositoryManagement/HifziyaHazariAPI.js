@@ -1,6 +1,7 @@
 import api from "../api";
 
-export const getAllHifziyaHazaris = () => api.get("/hifziya-hazari");
+export const getAllHifziyaHazaris = (params) =>
+  api.get("/hifziya-hazari", { params });
 
 export const getHifziyaHazariById = (id) => api.get(`/hifziya-hazari/${id}`);
 

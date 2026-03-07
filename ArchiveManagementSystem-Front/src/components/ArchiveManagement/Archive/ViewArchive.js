@@ -1,15 +1,15 @@
-import React from "react";
+import CloseIcon from "@mui/icons-material/Close";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Grid,
-  Typography,
   Box,
-  Divider,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import getArchiveTexts from "../../../helpers/archive/getArchiveTexts";
@@ -18,7 +18,11 @@ import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 export default function ViewArchive({ open, onClose, archive }) {
   const { t } = useTranslation("archive");
   const texts = getArchiveTexts(t);
+  const isWarada = archive?.direction === "INCOMING";
 
+  const pageTitle = isWarada
+    ? texts.viewIncoming || "لیدل وارده"
+    : texts.viewOutgoing || "لیدل صادره";
   if (!archive) return null;
 
   const InfoRow = ({ label, value }) => (
@@ -35,97 +39,151 @@ export default function ViewArchive({ open, onClose, archive }) {
   );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 2 } }}
+    >
+      {/* Title */}
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          bgcolor: "primary.lighter",
+          pb: 2,
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="h5" component="span">
-            {texts.viewTitle || "معلومات آرشیف"}
+          <Typography variant="h5" fontWeight="bold">
+            {pageTitle}
           </Typography>
+
           <Chip
-            label={
-              archive.direction === "INCOMING"
-                ? "وارده (Incoming)"
-                : "صادره (Outgoing)"
-            }
-            color={archive.direction === "INCOMING" ? "success" : "primary"}
+            label={`ID: ${archive.id}`}
             size="small"
+            color="default"
+            variant="outlined"
           />
         </Box>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
 
-      <DialogContent>
-        <Box sx={{ py: 2 }}>
-          {/* Document Number */}
-          <InfoRow
-            label={texts.docNo || "نمبر مکتوب / پارسل"}
-            value={archive.docNo}
-          />
+      {/* Content */}
+      <DialogContent dividers sx={{ py: 4, px: 4 }}>
+        <Grid container spacing={3}>
+          {/* Province */}
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.docNo || "نمبر مکتوب / پارسل"}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {archive.docNo}
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.sender || "مرسل (Sender)"}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {archive.senderOrg?.name}
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.receiver || "مرسل الیه (Receiver)"}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {archive.receiverOrg?.name}
+              </Typography>
+            </Box>
+          </Grid>
 
-          {/* Sender */}
-          <InfoRow
-            label={texts.sender || "مرسل (Sender)"}
-            value={archive.senderOrg?.name}
-          />
+          {/* District */}
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.docType || "نوعیت پارسل"}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {archive.docType?.name}
+              </Typography>
+            </Box>
+          </Grid>
 
-          {/* Receiver */}
-          <InfoRow
-            label={texts.receiver || "مرسل الیه (Receiver)"}
-            value={archive.receiverOrg?.name}
-          />
-
-          <Divider sx={{ my: 2 }} />
+          {/* Year */}
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.incomingDate || "تاریخ دریافت"}
+              </Typography>
+              <Typography variant="body1">
+                {formatHijriDateForDisplay(archive.receiveDate)}
+              </Typography>
+            </Box>
+          </Grid>
 
           {/* Document Type */}
-          <InfoRow
-            label={texts.docType || "نوعیت پارسل"}
-            value={archive.docType?.name}
-          />
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.sendDate || "تاریخ ارسال"}
+              </Typography>
+              <Typography variant="body1">
+                {formatHijriDateForDisplay(archive.sendDate)}
+              </Typography>
+            </Box>
+          </Grid>
 
-          {/* Send Date */}
-          <InfoRow
-            label={texts.sendDate || "تاریخ ارسال"}
-            value={formatHijriDateForDisplay(archive.sendDate)}
-          />
-
-          {/* Department Date */}
-          <InfoRow
-            label={texts.departmentDate || "تاریخ شعبه"}
-            value={formatHijriDateForDisplay(archive.departmentDate)}
-          />
-
-          <Divider sx={{ my: 2 }} />
+          {/* Summary Waseqa */}
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.departmentDate || "تاریخ شعبه"}
+              </Typography>
+              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
+                {formatHijriDateForDisplay(archive.departmentDate)}
+              </Typography>
+            </Box>
+          </Grid>
 
           {/* Description */}
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                fontWeight="bold"
-                sx={{ mb: 1 }}
-              >
-                {texts.description || "ملاحظات / Remarks"}:
+          <Grid item xs={12}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.description || "ملاحظات"}
               </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  backgroundColor: "#f5f5f5",
-                  p: 2,
-                  borderRadius: 1,
-                  minHeight: "80px",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
+              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
                 {archive.description || "—"}
               </Typography>
-            </Grid>
+            </Box>
           </Grid>
-        </Box>
+
+          {/* Files Section */}
+        </Grid>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} variant="contained">
-          {texts.close || "تړل"}
+      {/* Actions */}
+      <DialogActions sx={{ px: 4, py: 2.5 }}>
+        <Button
+          variant="contained"
+          onClick={onClose}
+          sx={{
+            minWidth: 120,
+            bgcolor: "primary.main",
+            "&:hover": { bgcolor: "primary.dark" },
+          }}
+        >
+          {texts.close || "بندول"}
         </Button>
       </DialogActions>
     </Dialog>

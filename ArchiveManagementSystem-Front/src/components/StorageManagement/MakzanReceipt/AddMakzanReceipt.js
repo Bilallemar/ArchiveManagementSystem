@@ -17,7 +17,6 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
@@ -228,9 +227,9 @@ export default function AddMakzanReceipt() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/makzan-receipts")}
@@ -242,12 +241,18 @@ export default function AddMakzanReceipt() {
           {texts.pageTitle}
         </Typography>
       </Box>
-      <Box sx={{ mb: 3 }}>
+      {/* <Box sx={{ mb: 3 }}>
         <PageBreadcrumbs />
-      </Box>
+      </Box> */}
 
       {/* Form Card */}
-      <Card sx={{ maxWidth: 1200, mx: "auto" }}>
+      <Card
+        sx={{
+          borderRadius: 2,
+          boxShadow:
+            "0px 4px 15px rgba(0,0,0,0.07), 0px 8px 10px rgba(0,0,0,0.04)",
+        }}
+      >
         <CardContent sx={{ p: 4 }}>
           <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={3}>
@@ -456,7 +461,7 @@ export default function AddMakzanReceipt() {
 
               {/* RIGHT SIDE - Form Fields */}
               <Grid item xs={12} md={8}>
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
@@ -477,9 +482,7 @@ export default function AddMakzanReceipt() {
                       onChange={handleInputChange}
                       required
                       error={!formData.department}
-                      helperText={
-                        !formData.department ? texts.requiredField : ""
-                      }
+                      
                     />
                   </Grid>
 
@@ -552,9 +555,13 @@ export default function AddMakzanReceipt() {
                       name="description"
                       label={texts.description}
                       multiline
-                      rows={4}
                       value={formData.description}
                       onChange={handleInputChange}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          height: 100,
+                        },
+                      }}
                     />
                   </Grid>
 

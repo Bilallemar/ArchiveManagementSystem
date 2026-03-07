@@ -1,6 +1,6 @@
 import api from "../api";
 
-export const gitAllAnnualReports = () => api.get("/makzan-annual-reports");
+export const gitAllAnnualReports = (params) => api.get("/makzan-annual-reports", { params });
 
 export const getAnnualReportById = (id) =>
   api.get(`/makzan-annual-reports/${id}`);

@@ -1,24 +1,27 @@
-import React, { useState, useEffect } from "react";
+import SaveIcon from "@mui/icons-material/Save";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Box,
-  Grid,
-  TextField,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  TextField,
 } from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
-import { updateShuraAaliResolution } from "../../../services/RepositoryManagement/shuraAaliResolutionApi";
 import getShuraAaliResolutionTexts from "../../../helpers/hifziya/ShuraAaliResolutionTexts";
-import { dir } from "i18next";
-
+import { updateShuraAaliResolution } from "../../../services/RepositoryManagement/shuraAaliResolutionApi";
+import {
+  convertGregorianToHijri,
+  convertHijriToGregorian,
+} from "../../../utils/hijriDateUtils";
+import HijriDatePicker from "../../HijriDatePicker";
 export default function EditShuraAaliResolutionDialog({
   open,
   onClose,
@@ -52,7 +55,7 @@ export default function EditShuraAaliResolutionDialog({
   useEffect(() => {
     if (resolution && open) {
       setFormData({
-        sendDate: resolution.sendDate || "",
+        sendDate: convertGregorianToHijri(resolution.sendDate) || "",
         subject: resolution.subject || "",
         senderReference: resolution.senderReference || "",
         title: resolution.title || "",
@@ -66,7 +69,12 @@ export default function EditShuraAaliResolutionDialog({
       setIsLoading(false);
     }
   }, [resolution, open]);
-
+  const handleHijriDateChange = (field) => (hijriDate) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: hijriDate,
+    }));
+  };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -89,7 +97,7 @@ export default function EditShuraAaliResolutionDialog({
 
     try {
       const payload = {
-        sendDate: formData.sendDate || null,
+        sendDate: convertHijriToGregorian(formData.sendDate) || null,
         subject: formData.subject.trim(),
         senderReference: formData.senderReference?.trim() || null,
         title: formData.title?.trim() || null,
@@ -130,17 +138,17 @@ export default function EditShuraAaliResolutionDialog({
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Grid container spacing={2.5}>
               <Grid item xs={12} sm={6}>
-                <TextField
+                <HijriDatePicker
                   fullWidth
-                  name="sendDate"
-                  label={texts.sendDate}
+                  size="small"
                   type="date"
+                  name="sendDate"
+                  label={texts.sendDate || "تاریخ وارده"}
                   InputLabelProps={{ shrink: true }}
                   value={formData.sendDate}
-                  onChange={handleInputChange}
+                  onChange={handleHijriDateChange("sendDate")}
                 />
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth

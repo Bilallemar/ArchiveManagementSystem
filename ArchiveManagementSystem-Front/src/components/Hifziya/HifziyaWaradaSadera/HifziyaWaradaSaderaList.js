@@ -25,10 +25,9 @@ import {
   TablePagination,
   TableRow,
   Tabs,
-  Typography,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +35,7 @@ import getHifziyaWaradaSaderaTexts from "../../../helpers/hifziya/waradaSadera/w
 import {
   deleteHifziyaWaradaSadera,
   getAllHifziyaWaradaSadera,
+  getHifziyaWaradaSaderaById,
 } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
 import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
@@ -62,62 +62,72 @@ export default function HifziyaWaradaSaderaList() {
 
   const [field, setField] = useState("no");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
 
   const open = Boolean(anchorEl);
 
   const columns = [
-    { id: "no", label: text.headerNo || "شمېره", minWidth: 80 },
-    { id: "org", label: text.headerOrg || "اداره", minWidth: 150 },
+    { id: "org", label: text.org || "اداره", minWidth: 150 },
     {
       id: "letterNumber",
-      label: text.headerLetterNumber || "شمېره مکتوب",
+      label: text.letterNumber || "شمېره مکتوب",
       minWidth: 120,
     },
     {
       id: "subjectType",
-      label: text.headerSubjectType || "د لاسند ډول",
+      label: text.subjectType || "د لاسند ډول",
       minWidth: 120,
     },
     {
       id: "incommingDate",
-      label: text.headerIncommingDate || "تاریخ وارده",
+      label: text.incommingDate || "تاریخ وارده",
       minWidth: 130,
     },
-    {
-      id: "outgoingDate",
-      label: text.headerOutgoingDate || "تاریخ صادره",
-      minWidth: 130,
-    },
-    {
-      id: "summary",
-      label: text.headerSummary || "لنډیز",
-      minWidth: 150,
-    },
-    {
-      id: "description",
-      label: text.headerDescription || "ملاحظات",
-      minWidth: 150,
-    },
-    {
-      id: "direction",
-      label: text.headerDirection || "Direction",
-      minWidth: 100,
-    },
-    { id: "actions", label: text.headerActions || "عملیات", minWidth: 100 },
+    { id: "direction", label: text.direction || "نوع", minWidth: 100 },
+    { id: "actions", label: text.actions || "عملیات", minWidth: 100 },
   ];
+
+  // const loadHifziyaWaradaSadera = useCallback(async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await getAllHifziyaWaradaSadera();
+  //     setHifziyaWaradaSadera(response.data || []);
+  //   } catch (error) {
+  //     console.error("Error loading data:", error);
+  //     toast.error(text.loadError || "Error loading data");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [text.loadError]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const loadHifziyaWaradaSadera = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const response = await getAllHifziyaWaradaSadera();
-      setHifziyaWaradaSadera(response.data || []);
+      setIsLoading(true); // ← start loading
+      const params = {
+        page,
+        size: rowsPerPage,
+        field,
+        term: debouncedTerm,
+        ...(tabValue === 1 && { direction: "INCOMING" }),
+        ...(tabValue === 2 && { direction: "OUTGOING" }),
+      };
+      const response = await getAllHifziyaWaradaSadera(params);
+      setHifziyaWaradaSadera(response.data.content);
+      setTotalCount(response.data.totalElements);
     } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error(text.loadError || "Error loading data");
+      toast.error(text.loadError || "د معلوماتو د بارولو کې ستونزه");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // ← stop loading — always runs
     }
-  }, [text.loadError]);
+  }, [page, rowsPerPage, field, debouncedTerm, tabValue]);
 
   useEffect(() => {
     loadHifziyaWaradaSadera();
@@ -126,8 +136,16 @@ export default function HifziyaWaradaSaderaList() {
   const handleSearch = (e) => setSearchTerm(e.target.value);
   const handleFieldChange = (e) => setField(e.target.value);
 
-  const handleView = () => {
-    setOpenViewDialog(true);
+  const handleView = async () => {
+    try {
+      const response = await getHifziyaWaradaSaderaById(
+        selectedHifziyaWaradaSadera.id,
+      ); // ← fetch full record
+      setSelectedHifziyaWaradaSadera(response.data); // ← replace summary with full entity
+      setOpenViewDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
   const handleCloseView = () => {
@@ -141,8 +159,16 @@ export default function HifziyaWaradaSaderaList() {
   };
   const handleClose = () => setAnchorEl(null);
 
-  const handleEdit = () => {
-    setOpenEditDialog(true);
+  const handleEdit = async () => {
+    try {
+      const response = await getHifziyaWaradaSaderaById(
+        selectedHifziyaWaradaSadera.id,
+      ); // ← fetch full record
+      setSelectedHifziyaWaradaSadera(response.data); // ← replace DTO with full entity
+      setOpenEditDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
   const handleCloseEdit = () => {
@@ -151,43 +177,7 @@ export default function HifziyaWaradaSaderaList() {
   };
   const handleEditSuccess = () => loadHifziyaWaradaSadera();
 
-  // ✅ Tab filter + Search filter
-  const filteredRecords = useMemo(() => {
-    let data = [...hifziyaWaradaSadera];
 
-    // Tab filter: 0=All, 1=وارده (isIncoming=true), 2=صادره (isIncoming=false)
-    // Tab filter: 0=All, 1=وارده (INCOMING), 2=صادره (OUTGOING)
-    if (tabValue === 1) {
-      data = data.filter((r) => r.direction === "INCOMING");
-    } else if (tabValue === 2) {
-      data = data.filter((r) => r.direction === "OUTGOING");
-    }
-
-    // Search filter
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
-      data = data.filter((row) => {
-        switch (field) {
-          case "no":
-            return row.no?.toString().toLowerCase().includes(term);
-          case "org":
-            return row.org?.name?.toLowerCase().includes(term);
-          case "letterNumber":
-            return row.letterNumber?.toLowerCase().includes(term);
-          case "subjectType":
-            return row.subjectType?.toLowerCase().includes(term);
-          case "summary":
-            return row.summary?.toLowerCase().includes(term);
-
-          default:
-            return true;
-        }
-      });
-    }
-
-    data.sort((a, b) => b.id - a.id);
-    return data;
-  }, [hifziyaWaradaSadera, tabValue, searchTerm, field]);
 
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
@@ -303,17 +293,8 @@ export default function HifziyaWaradaSaderaList() {
             variant="fullWidth"
           >
             <Tab label={text.all || "ټولې"} />
-            <Tab
-              label={text.incoming || "وارده"}
-              sx={{
-                color: "success.main",
-                "&.Mui-selected": { color: "success.main !important" },
-              }}
-            />
-            <Tab
-              label={text.outgoing || "صادره"}
-              sx={{ color: "primary.main" }}
-            />
+            <Tab label={text.incomming || "وارده"} />
+            <Tab label={text.outgoing || "صادره"} />
           </Tabs>
         </Paper>
 
@@ -335,7 +316,7 @@ export default function HifziyaWaradaSaderaList() {
                 value: "subjectType",
                 label: text.subjectType || "د لاسند ډول",
               },
-              { value: "summary", label: text.summary || "لنډیز" },
+            
             ]}
           />
         </Paper>
@@ -362,89 +343,48 @@ export default function HifziyaWaradaSaderaList() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredRecords.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      align="center"
-                      sx={{ py: 5 }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        {text.noRecords || "No records found"}
-                      </Typography>
+                {hifziyaWaradaSadera.map((row) => (
+                  <TableRow hover key={row.id}>
+                    <TableCell align="center">
+                      {row.orgName || "—"}
+                    </TableCell>{" "}
+                    {/* ← not row.org?.name */}
+                    <TableCell align="center">
+                      {row.letterNumber || "—"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {row.subjectType || "—"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {formatHijriDateForDisplay(row.incommingDate) || "—"}
+                    </TableCell>
+                    {/* ✅ Direction badge using isIncoming */}
+                    <TableCell align="center">
+                      <Box
+                        sx={{
+                          display: "inline-block",
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: "999px",
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          backgroundColor:
+                            row.direction === "INCOMING"
+                              ? "#4CAF50"
+                              : "#2196F3",
+                          color: "white",
+                        }}
+                      >
+                        {row.direction === "INCOMING" ? "وارده" : "صادره"}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={(e) => handleClick(e, row)}>
+                        <MoreVertIcon />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filteredRecords
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((row) => (
-                      <TableRow hover key={row.id}>
-                        <TableCell align="center">{row.no || "N/A"}</TableCell>
-                        <TableCell align="center">
-                          {row.org?.name || "N/A"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {row.letterNumber || "N/A"}
-                        </TableCell>
-                        {/* ✅ Display docType */}
-                        <TableCell align="center">
-                          {row.subjectType || "N/A"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {formatHijriDateForDisplay(row.incommingDate) ||
-                            "N/A"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {formatHijriDateForDisplay(row.outgoingDate) || "N/A"}
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          sx={{
-                            maxWidth: 150,
-                            whiteSpace: "normal",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {row.summary || "N/A"}
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          sx={{
-                            maxWidth: 150,
-                            whiteSpace: "normal",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {row.description || "N/A"}
-                        </TableCell>
-                        {/* ✅ Direction badge using isIncoming */}
-                        <TableCell align="center">
-                          <Box
-                            sx={{
-                              display: "inline-block",
-                              px: 2,
-                              py: 0.5,
-                              borderRadius: "999px",
-                              fontSize: "0.875rem",
-                              fontWeight: 600,
-                              backgroundColor:
-                                row.direction === "INCOMING"
-                                  ? "#4CAF50"
-                                  : "#2196F3",
-                              color: "white",
-                            }}
-                          >
-                            {row.direction === "INCOMING" ? "وارده" : "صادره"}
-                          </Box>
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton onClick={(e) => handleClick(e, row)}>
-                            <MoreVertIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -452,7 +392,7 @@ export default function HifziyaWaradaSaderaList() {
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
-            count={filteredRecords.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}

@@ -1,28 +1,37 @@
 package com.MCIT.ArchiveManagementSystem.controller.RepositoryManagement;
 
-import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih;
-import com.MCIT.ArchiveManagementSystem.repositories.RepositoryManagement.SawanihRepository;
-import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
-import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.SawanihService;
-import com.MCIT.ArchiveManagementSystem.services.FileService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.MCIT.ArchiveManagementSystem.dtos.SawanihSummaryDTO;
+import com.MCIT.ArchiveManagementSystem.models.Management;
+import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih;
+import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
+import com.MCIT.ArchiveManagementSystem.services.FileService;
+import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.SawanihService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @RestController
 @RequestMapping("/api/sawanih")
@@ -42,9 +51,19 @@ public class SawanihController {
     }
 
     @GetMapping
-    public List<Sawanih> getAllSawanih() {
+    public ResponseEntity<Page<SawanihSummaryDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "volume") String field,
+            @RequestParam(defaultValue = "") String term,
+            @RequestParam(required = false) Boolean isSawanih) {
+
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
-        return sawanihService.getAllSawanihs();
+
+        Page<SawanihSummaryDTO> result = sawanihService.getAllSawanihs(
+                HIFZIYA_MANAGEMENT_ID, isSawanih, field, term, page, size);
+
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
@@ -55,17 +74,18 @@ public class SawanihController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(consumes = {"multipart/form-data"})
+    @PostMapping(consumes = { "multipart/form-data" })
     public Sawanih createSawanih(
             @RequestPart("sawanih") String sawanihJson,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
-    ) throws IOException {
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) throws IOException {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         Sawanih sawanih = mapper.readValue(sawanihJson, Sawanih.class);
-
+        Management management = new Management();
+        management.setManagementId(HIFZIYA_MANAGEMENT_ID);
+        sawanih.setManagement(management);
         return sawanihService.createSawanih(sawanih, fileURL);
     }
 
@@ -73,8 +93,7 @@ public class SawanihController {
     public ResponseEntity<?> updateSawanih(
             @PathVariable Integer id,
             @RequestPart("sawanih") String sawanihJson,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
-    ) {
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         try {

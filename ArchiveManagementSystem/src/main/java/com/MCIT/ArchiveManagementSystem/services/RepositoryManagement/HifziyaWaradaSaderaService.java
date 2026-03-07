@@ -6,11 +6,17 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.MCIT.ArchiveManagementSystem.dtos.HifziyaWaradaSaderaSummaryDTO;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaWaradaSadera;
+import com.MCIT.ArchiveManagementSystem.models.enums.HifziyaWaradaSaderaDirection;
 import com.MCIT.ArchiveManagementSystem.repositories.AuditLogRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.RepositoryManagement.HifziyaWaradaSaderaRepository;
@@ -44,8 +50,38 @@ public class HifziyaWaradaSaderaService {
         this.auditLogHelper = auditLogHelper;
     }
 
-    public List<HifziyaWaradaSadera> getAllHifziyaWaradaSadera() {
-        return hifziyaWaradaSaderaRepository.findAll();
+    public Page<HifziyaWaradaSaderaSummaryDTO> getAllHifziyaWaradaSadera(
+            Management management,
+            String direction,
+            String field,
+            String term,
+            int page,
+            int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        String cleanTerm = (term == null) ? "" : term.trim();
+
+        // Convert String → enum
+        HifziyaWaradaSaderaDirection directionEnum = null;
+        if (direction != null && !direction.isBlank()) {
+            directionEnum = HifziyaWaradaSaderaDirection.valueOf(direction.toUpperCase());
+        }
+
+        Page<HifziyaWaradaSadera> raw = hifziyaWaradaSaderaRepository.searchHifziyaWaradaSadera(
+                management, directionEnum, field, cleanTerm, pageable); // ← directionEnum not cleanDirection
+
+        return raw.map(a -> new HifziyaWaradaSaderaSummaryDTO(
+                a.getId(),
+                a.getLetterNumber(),
+                a.getIncommingDate(),
+                a.getSubjectType(),
+                a.getOrg() != null ? a.getOrg().getName() : null, // ← senderOrgName
+                a.getDirection() != null ? a.getDirection().name() : null));
+    }
+
+    // ── DETAIL (full entity, only when user clicks View) ───────────────────
+    public Optional<HifziyaWaradaSadera> getArchiveById(Integer id) {
+        return hifziyaWaradaSaderaRepository.findById(id);
     }
 
     public Optional<HifziyaWaradaSadera> getHifziyaWaradaSaderaById(Integer id) {

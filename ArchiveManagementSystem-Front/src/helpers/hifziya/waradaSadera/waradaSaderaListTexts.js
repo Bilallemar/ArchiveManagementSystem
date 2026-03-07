@@ -2,6 +2,9 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   // Page
   title: t("page.title"),
   newRecord: t("page.newRecord"),
+  recordTypeForDirection: t("page.recordTypeForDirection"),
+  viewIncoming: t("viewIncoming"),
+  viewOutgoing: t("viewOutgoing"),
 
   // Table Headers
   headerNo: t("table.headers.no"),
@@ -18,8 +21,8 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   // Filter
   recordType: t("filter.recordType"),
   all: t("filter.all"),
-  hifziya: t("filter.hifziya"),
-  makhzan: t("filter.makhzan"),
+  incomming: t("filter.incomming"),
+  outgoing: t("filter.outgoing"),
   bookNumber: t("filter.bookNumber"),
   province: t("filter.province"),
   district: t("filter.district"),

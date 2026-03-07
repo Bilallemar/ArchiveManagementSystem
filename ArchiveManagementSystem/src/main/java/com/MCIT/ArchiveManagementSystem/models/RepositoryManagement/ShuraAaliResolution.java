@@ -1,11 +1,21 @@
 package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
 
-import jakarta.persistence.*;
-import lombok.Data;
-
 import java.time.LocalDate;
 
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.enums.ShuraAliDirection;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "shura_aali_resolutions")
@@ -27,9 +37,8 @@ public class ShuraAaliResolution {
     private String title;
     private String resolutionType;
 
-@Enumerated(EnumType.STRING)
-private ShuraAliDirection direction;
-
+    @Enumerated(EnumType.STRING)
+    private ShuraAliDirection direction;
 
     @Column(name = "letter_number")
     private String letterNumber;
@@ -42,4 +51,8 @@ private ShuraAliDirection direction;
 
     @Column(length = 2000)
     private String remarks;
+      @ManyToOne
+    @JoinColumn(name = "management_id")
+    private Management management;
+
 }

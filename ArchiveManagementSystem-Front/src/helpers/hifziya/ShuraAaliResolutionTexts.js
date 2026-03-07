@@ -6,9 +6,10 @@ const getShuraAaliResolutionTexts = (t) => ({
   newResolution: t("page.newResolution"),
   editResolution: t("page.editResolution"),
   viewResolution: t("page.viewResolution"),
-    newYadasht: t("page.newYadasht"),
+  newYadasht: t("page.newYadasht"),
   editYadasht: t("page.editYadasht"),
   viewYadasht: t("page.viewYadasht"),
+  viewMosawaba: t("page.viewMosawaba"),
   back: t("page.back"),
 
   // ===== Table Columns =====

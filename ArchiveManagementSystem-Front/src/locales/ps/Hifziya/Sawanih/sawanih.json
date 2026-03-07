@@ -8,7 +8,26 @@
   "all": "ټول",
   "sawanih": "سوانح",
   "isteqdam": "استخدام",
-
+  "scanner": {
+    "folderPath": "د سکنر فولډر ",
+    "folderTitle": "د سکنر  فولډر",
+    "scanButton": "سکن",
+    "scanning": "سکن روان دی...",
+    "loadFiles": "فایلونه پورته کول",
+    "clickToScan": "د سکن پایلو د لیدو لپاره کلیک وکړئ",
+    "filesAvailable": "فایلونه موجود دي",
+    "detectedFiles": "پیژندل شوي فایلونه",
+    "noFiles": "هیڅ فایل ونه موندل شو",
+    "filesFound": "فایلونه وموندل شول",
+    "scanError": "د سکن پر مهال ستونزه",
+    "loadSuccess": "فایلونه په بریالیتوب سره پورته شول",
+    "loadError": "د فایلونو د پورته کولو پر مهال ستونزه"
+  },
+  "upload": {
+    "manualUpload": "یا فایل په لاس سره پورته کړئ",
+    "readyToUpload": "پورته کولو ته چمتو",
+    "removeAll": "ټول لرې کول"
+  },
   "name": "نوم",
   "fatherName": "د پلار نوم",
   "qaidWarida": "قید وارده",

@@ -1,42 +1,40 @@
-import React, { useState, useEffect } from "react";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import DeleteIcon from "@mui/icons-material/Delete";
+import FolderIcon from "@mui/icons-material/Folder";
+import SaveIcon from "@mui/icons-material/Save";
+import ScannerIcon from "@mui/icons-material/Scanner";
 import {
+  Badge,
   Box,
-  Grid,
   Button,
-  CircularProgress,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Typography,
   Card,
   CardContent,
-  Alert,
   Chip,
+  CircularProgress,
+  FormControl,
+  Grid,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
-  Badge,
+  TextField,
+  Typography,
 } from "@mui/material";
-import FolderIcon from "@mui/icons-material/Folder";
-import ScannerIcon from "@mui/icons-material/Scanner";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import getSawanihTexts from "../../../helpers/hifziya/sawanih/sawanihText";
+import api from "../../../services/api";
+import { createSawanih } from "../../../services/RepositoryManagement/SawanihAPI";
+import { convertHijriToGregorian } from "../../../utils/hijriDateUtils";
 import {
   convertToEnglishNumbers,
   convertToPersianNumbers,
 } from "../../../utils/numberUtils";
-import { convertHijriToGregorian } from "../../../utils/hijriDateUtils";
 import HijriDatePicker from "../../HijriDatePicker";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import { createSawanih } from "../../../services/RepositoryManagement/SawanihAPI";
-import SaveIcon from "@mui/icons-material/Save";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import DeleteIcon from "@mui/icons-material/Delete";
-import api from "../../../services/api";
-import getSawanihTexts from "../../../helpers/hifziya/sawanih/sawanihText";
-import { useTranslation } from "react-i18next";
 
 export default function AddSawanih() {
   const [searchParams] = useSearchParams();
@@ -179,7 +177,7 @@ export default function AddSawanih() {
 
   const recordTypeLabel = isSawanih
     ? texts.newSawanih || "نوې سوانح"
-    : texts.newIstekhdam || "نوې استخدام";
+    : texts.newIsteqdam || "نوې استخدام";
 
   return (
     <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
@@ -197,17 +195,7 @@ export default function AddSawanih() {
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
-        <PageBreadcrumbs />
-      </Box>
-
-      <Alert severity="info" sx={{ mb: 4 }} icon={false}>
-        <Typography variant="body1">
-          <strong>{texts.recordType || "ډول"}:</strong> {recordTypeLabel}
-        </Typography>
-      </Alert>
-
-      <Card elevation={3} sx={{ borderRadius: 2 }}>
+      <Card  sx={{ borderRadius: 2,  boxShadow: "0px 4px 15px rgba(0,0,0,0.07), 0px 8px 10px rgba(0,0,0,0.04)", }}>
         <CardContent sx={{ p: { xs: 3, md: 5 } }}>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={4}>
@@ -242,7 +230,7 @@ export default function AddSawanih() {
                         </Badge>
 
                         <Typography variant="h6" gutterBottom>
-                          {texts.folderTitle || "سکینر فولډر"}
+                          {texts.scannerFolderPath || "secnner folder "}
                         </Typography>
 
                         <Typography
@@ -389,7 +377,7 @@ export default function AddSawanih() {
 
               {/* Form Fields */}
               <Grid item xs={12} md={!isSawanih ? 8 : 12}>
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
@@ -486,9 +474,11 @@ export default function AddSawanih() {
                       name="description"
                       label={texts.description || "ملاحظات / توضیحات"}
                       multiline
-                      rows={4}
                       value={formData.description}
                       onChange={handleInputChange}
+                      sx={{       "& .MuiInputBase-root": {
+                          height: 100,
+                        },}}
                     />
                   </Grid>
 

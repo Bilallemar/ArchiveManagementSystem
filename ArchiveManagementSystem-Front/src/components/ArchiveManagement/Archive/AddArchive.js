@@ -22,10 +22,9 @@ import getArchiveTexts from "../../../helpers/archive/getArchiveTexts";
 import { createArchive } from "../../../services/ArchiveManagement/ArchiveAPI";
 import api from "../../../services/api";
 import { convertHijriToGregorian } from "../../../utils/hijriDateUtils";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import HijriDatePicker from "../../HijriDatePicker";
 
-export default function AddArchive() {
+export default function AddArchive({ archive }) {
   const { t } = useTranslation("archive");
   const texts = getArchiveTexts(t);
   const navigate = useNavigate();
@@ -40,6 +39,7 @@ export default function AddArchive() {
 
   const [formData, setFormData] = useState({
     docNo: "",
+    receiveDate: "",
     sendDate: "",
     departmentDate: "",
     senderOrgId: "",
@@ -52,7 +52,10 @@ export default function AddArchive() {
   const [docTypes, setDocTypes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
+  const pageTitle =
+    validDirection === "INCOMING"
+      ? texts.newIncoming || "نوې وارده"
+      : texts.newOutgoing || "نوی صادره";
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -114,7 +117,7 @@ export default function AddArchive() {
     try {
       const payload = {
         docNo: formData.docNo.trim(),
-        sendDate: convertHijriToGregorian(formData.sendDate) || null,
+        receiveDate: convertHijriToGregorian(formData.receiveDate) || null,
         departmentDate:
           convertHijriToGregorian(formData.departmentDate) || null,
         senderOrg: { id: Number(formData.senderOrgId) },
@@ -123,7 +126,9 @@ export default function AddArchive() {
         docType: { id: Number(formData.docTypeId) },
         direction: validDirection,
       };
-
+      if (validDirection === "OUTGOING" && formData.sendDate) {
+        payload.sendDate = convertHijriToGregorian(formData.sendDate);
+      }
       await createArchive(payload);
       toast.success(texts.success || "Document registered successfully");
       navigate("/archive");
@@ -146,7 +151,7 @@ export default function AddArchive() {
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1000, mx: "auto" }}>
+    <Box sx={{ p: 1, maxWidth: 1000, mx: "auto" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <Button
           startIcon={<ArrowBackIcon />}
@@ -155,18 +160,18 @@ export default function AddArchive() {
           {texts.back || "Back"}
         </Button>
         <Typography variant="h4" fontWeight="bold">
-          {texts.title || "Register New Document"}
+          {pageTitle}
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
+      {/* <Box sx={{ mb: 1 }}>
         <PageBreadcrumbs />
-      </Box>
+      </Box> */}
 
       <Card elevation={3}>
         <CardContent sx={{ p: 4 }}>
           <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
               {/* Direction info (read-only) */}
               <Grid item xs={12}>
                 <Typography
@@ -174,11 +179,11 @@ export default function AddArchive() {
                   color="text.secondary"
                   sx={{ mb: 2 }}
                 >
-                  Direction:{" "}
+                  {texts.recordTypeForDirection}:{" "}
                   <strong>
                     {validDirection === "INCOMING"
-                      ? "Incoming (وارده)"
-                      : "Outgoing (صادره)"}
+                      ? texts.incoming || "Incoming (وارده)"
+                      : texts.outgoing || "Outgoing (صادره)"}
                   </strong>
                 </Typography>
               </Grid>
@@ -193,7 +198,7 @@ export default function AddArchive() {
                   value={formData.docNo}
                   onChange={handleInputChange}
                   error={!formData.docNo?.trim()}
-                  helperText={!formData.docNo?.trim() ? texts.required : ""}
+                  // helperText={!formData.docNo?.trim() ? texts.required : ""}
                 />
               </Grid>
 
@@ -273,19 +278,49 @@ export default function AddArchive() {
                 </FormControl>
               </Grid>
 
-              {/* Send Date */}
-              <Grid item xs={12} sm={6}>
+              {/* Received Date */}
+              {/* {validDirection === "OUTGOING" && (
+                <Grid item xs={12} sm={6}>
+                  <HijriDatePicker
+                    fullWidth
+                    name="receiveDate"
+                    type="date"
+                    label={texts.incomingDate || "Received Date"}
+                    InputLabelProps={{ shrink: true }}
+                    value={formData.receiveDate}
+                    onChange={handleHijriDateChange("receivedDate")}
+                  />
+                </Grid>
+              )} */}
+
+              <Grid item xs={12} md={6}>
                 <HijriDatePicker
                   fullWidth
-                  name="sendDate"
+                  size="small"
                   type="date"
-                  label={texts.sendDate || "Sending Date"}
+                  name="receiveDate"
+                  label={texts.incomingDate || "تاریخ دریافت"}
                   InputLabelProps={{ shrink: true }}
-                  value={formData.sendDate}
-                  onChange={handleHijriDateChange("sendDate")}
+                  value={formData.receiveDate}
+                  onChange={handleHijriDateChange("receiveDate")}
                 />
               </Grid>
 
+              {/* Send Date */}
+              {validDirection === "OUTGOING" && (
+                <Grid item xs={12} md={6}>
+                  <HijriDatePicker
+                    fullWidth
+                    size="small"
+                    type="date"
+                    name="sendDate"
+                    label={texts.outgoingDate || "تاریخ صادره"}
+                    InputLabelProps={{ shrink: true }}
+                    value={formData.sendDate}
+                    onChange={handleHijriDateChange("sendDate")}
+                  />
+                </Grid>
+              )}
               {/* Department Date */}
               <Grid item xs={12} sm={6}>
                 <HijriDatePicker
@@ -306,10 +341,14 @@ export default function AddArchive() {
                   name="description"
                   label={texts.description || "Remarks / ملاحظات"}
                   multiline
-                  rows={4}
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder={texts.remarksPlaceholder || "..."}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      height: 100,
+                    },
+                  }}
                 />
               </Grid>
 

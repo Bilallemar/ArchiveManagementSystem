@@ -66,6 +66,7 @@ const getAddHazariTexts = (t) => ({
   updateSuccess: t("messages.updateSuccess"),
   updateError: t("messages.updateError"),
   noDataFound: t("messages.noDataFound"),
+  remarksPlaceholder: t("messages.remarksPlaceholder"),
 
   // ===== Delete Dialog =====
   deleteDialogTitle: t("deleteDialog.title"),

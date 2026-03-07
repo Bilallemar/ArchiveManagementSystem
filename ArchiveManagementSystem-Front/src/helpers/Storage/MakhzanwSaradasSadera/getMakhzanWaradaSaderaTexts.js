@@ -104,6 +104,8 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   viewDescription: t("view.description"),
   viewNoData: t("view.noData"),
   viewClose: t("view.close"),
+  viewIncoming: t("viewIncoming"),
+  viewOutgoing: t("viewOutgoing"),
 });
 
 export default getHifziyaWaradaSaderaTexts;

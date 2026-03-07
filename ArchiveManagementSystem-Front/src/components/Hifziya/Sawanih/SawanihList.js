@@ -1,49 +1,47 @@
-
+import { useTranslation } from "react-i18next";
+import getSawanihTexts from "../../../helpers/hifziya/sawanih/sawanihText";
 import {
-  getAllSawanih,
   deleteSawanih,
+  getAllSawanih,
+  getSawanihById,
 } from "../../../services/RepositoryManagement/SawanihAPI";
-import ViewSawanih from "./ViewSawanih";
-import EditSawanihDialog from "./EditSawanihDialog";
+import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import Filter from "../../Filter";
-import getSawanihTexts from "../../../helpers/hifziya/sawanih/sawanihText";
-import { useTranslation } from "react-i18next";
-import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
-import { convertToPersianNumbers } from "../../../utils/numberUtils";
+import EditSawanihDialog from "./EditSawanihDialog";
+import ViewSawanih from "./ViewSawanih";
 
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
   TablePagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  IconButton,
-  Menu,
-  MenuItem,
+  TableRow,
   Tabs,
-  Tab,
 } from "@mui/material";
-import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { red } from "@mui/material/colors";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function SawanihList() {
   const [sawanih, setSawanih] = useState([]);
@@ -57,6 +55,8 @@ export default function SawanihList() {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [field, setField] = useState("name");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
   const { t } = useTranslation("sawanih");
   const text = getSawanihTexts(t);
   const open = Boolean(anchorEl);
@@ -67,28 +67,46 @@ export default function SawanihList() {
     { id: "fatherName", label: text.fatherName, minWidth: 120 },
     { id: "org", label: text.org, minWidth: 120 },
     { id: "incommingDate", label: text.incommingDate, minWidth: 120 },
-    { id: "outgoingDate", label: text.outgoingDate, minWidth: 120 },
+    { id: "direction", label: text.direction || "نوع", minWidth: 100 },
 
-    ...(tabValue !== 1
-      ? [{ id: "pageQuantity", label: text.pageQuantity, minWidth: 100 }]
-      : []),
-
-    { id: "description", label: text.description, minWidth: 150 },
-    { id: "type", label: text.recordStatus || "نوع", minWidth: 100 },
     { id: "actions", label: text.actions, minWidth: 120 },
   ];
 
+  // const loadSawanih = useCallback(async () => {
+  //   try {
+  //     const response = await getAllSawanih();
+  //     console.log(response.data);
+  //     setSawanih(response.data);
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error(text.loadError);
+  //   }
+  // }, [text.loadError]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const loadSawanih = useCallback(async () => {
     try {
-      const response = await getAllSawanih();
-      console.log(response.data);
-      setSawanih(response.data);
+      const params = {
+        page,
+        size: rowsPerPage,
+        field,
+        term: debouncedTerm,
+        ...(tabValue === 1 && { isSawanih: true }),
+        ...(tabValue === 2 && { isSawanih: false }),
+      };
+      const response = await getAllSawanih(params);
+      setSawanih(response.data.content);
+      setTotalCount(response.data.totalElements);
     } catch (error) {
-      console.error(error);
-      toast.error(text.loadError);
+      toast.error(text.loadError || "د معلوماتو د بارولو کې ستونزه");
     }
-  }, [text.loadError]);
-
+  }, [page, rowsPerPage, field, debouncedTerm, tabValue]);
   useEffect(() => {
     loadSawanih();
   }, [loadSawanih]);
@@ -106,8 +124,14 @@ export default function SawanihList() {
     setPage(0);
   };
 
-  const handleView = () => {
-    setOpenViewDialog(true);
+  const handleView = async () => {
+    try {
+      const response = await getSawanihById(selectedSawanih.id); // ← fetch full record
+      setSelectedSawanih(response.data); // ← replace summary with full entity
+      setOpenViewDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
 
@@ -125,11 +149,16 @@ export default function SawanihList() {
     setAnchorEl(null);
   };
 
-  const handleEdit = () => {
-    setOpenEditDialog(true);
+  const handleEdit = async () => {
+    try {
+      const response = await getSawanihById(selectedSawanih.id); // ← fetch full record
+      setSelectedSawanih(response.data); // ← replace DTO with full entity
+      setOpenEditDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
-
   const handleCloseEdit = () => {
     setOpenEditDialog(false);
     setSelectedSawanih(null);
@@ -139,41 +168,41 @@ export default function SawanihList() {
     loadSawanih();
   };
 
-  const filteredReport = useMemo(() => {
-    let data = [...sawanih];
+  // const filteredReport = useMemo(() => {
+  //   let data = [...sawanih];
 
-    // Tab filter
-    if (tabValue === 1) {
-      data = data.filter((r) => r.isSawanih === true); // Sawanih
-    } else if (tabValue === 2) {
-      data = data.filter((r) => r.isSawanih === false); // Istekhdam
-    }
+  //   // Tab filter
+  //   if (tabValue === 1) {
+  //     data = data.filter((r) => r.isSawanih === true); // Sawanih
+  //   } else if (tabValue === 2) {
+  //     data = data.filter((r) => r.isSawanih === false); // Istekhdam
+  //   }
 
-    // Search filter
-    if (searchTerm?.trim()) {
-      const searchValue = searchTerm.toLowerCase().trim();
+  //   // Search filter
+  //   if (searchTerm?.trim()) {
+  //     const searchValue = searchTerm.toLowerCase().trim();
 
-      data = data.filter((row) => {
-        switch (field) {
-          case "name":
-            return row.name?.toLowerCase()?.includes(searchValue) ?? false;
-          case "fatherName":
-            return (
-              row.fatherName?.toLowerCase()?.includes(searchValue) ?? false
-            );
-          case "org":
-            return row.org?.name?.toLowerCase()?.includes(searchValue) ?? false;
-          default:
-            return true;
-        }
-      });
-    }
+  //     data = data.filter((row) => {
+  //       switch (field) {
+  //         case "name":
+  //           return row.name?.toLowerCase()?.includes(searchValue) ?? false;
+  //         case "fatherName":
+  //           return (
+  //             row.fatherName?.toLowerCase()?.includes(searchValue) ?? false
+  //           );
+  //         case "org":
+  //           return row.org?.name?.toLowerCase()?.includes(searchValue) ?? false;
+  //         default:
+  //           return true;
+  //       }
+  //     });
+  //   }
 
-    // Newest first
-    data.sort((a, b) => b.id - a.id);
+  //   // Newest first
+  //   data.sort((a, b) => b.id - a.id);
 
-    return data;
-  }, [sawanih, tabValue, searchTerm, field]);
+  //   return data;
+  // }, [sawanih, tabValue, searchTerm, field]);
 
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
@@ -299,129 +328,79 @@ export default function SawanihList() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredReport.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      align="center"
-                      sx={{ py: 5 }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        {text.noDataFound || "هیڅ معلومات ونه موندل شول."}
-                      </Typography>
+                {sawanih.map((row) => (
+                  <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
+                    <TableCell align="center">{row.name || "N/A"}</TableCell>
+                    <TableCell align="center">
+                      {row.fatherName || "N/A"}
+                    </TableCell>
+                    <TableCell align="center">{row.orgName || "N/A"}</TableCell>
+                    <TableCell align="center">
+                      {formatHijriDateForDisplay(row.incommingDate) || "N/A"}
+                    </TableCell>
+
+                    <TableCell align="center">
+                      <Box
+                        sx={{
+                          display: "inline-block",
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: "999px",
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          backgroundColor: row.isSawanih
+                            ? "#2196F3"
+                            : "#4CAF50",
+                          color: "white",
+                        }}
+                      >
+                        {row.isSawanih ? "سوانح" : "استخدام"}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={(e) => handleClick(e, row)}>
+                        <MoreVertIcon />
+                      </IconButton>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleClose}
+                      >
+                        <MenuItem onClick={handleView}>
+                          <VisibilityIcon
+                            fontSize="small"
+                            style={{ marginRight: 8 }}
+                          />
+                          {text.view}
+                        </MenuItem>
+                        <MenuItem onClick={handleEdit}>
+                          <EditIcon
+                            fontSize="small"
+                            style={{ marginRight: 8 }}
+                          />
+                          {text.edit}
+                        </MenuItem>
+                        <MenuItem
+                          onClick={handleDeleteClick}
+                          style={{ color: red[500] }}
+                        >
+                          <DeleteIcon
+                            fontSize="small"
+                            style={{ marginRight: 8, color: red[500] }}
+                          />
+                          {text.delete}
+                        </MenuItem>
+                      </Menu>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filteredReport
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((row) => {
-                      return (
-                        <TableRow
-                          hover
-                          role="checkbox"
-                          tabIndex={-1}
-                          key={row.id}
-                        >
-                          <TableCell align="center">
-                            {row.name || "N/A"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.fatherName || "N/A"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {row.org?.name || "N/A"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {formatHijriDateForDisplay(row.incommingDate) ||
-                              "N/A"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {formatHijriDateForDisplay(row.outgoingDate) ||
-                              "N/A"}
-                          </TableCell>
-                          <TableCell align="center">
-                            {!row.isSawanih
-                              ? row.pageQuantity
-                                ? convertToPersianNumbers(row.pageQuantity)
-                                : "N/A"
-                              : "—"}
-                          </TableCell>
-
-                          <TableCell
-                            align="center"
-                            sx={{
-                              maxWidth: 20,
-                              whiteSpace: "normal",
-                              wordBreak: "break-word",
-                              overflowWrap: "anywhere",
-                            }}
-                          >
-                            {row.description || "N/A"}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Box
-                              sx={{
-                                display: "inline-block",
-                                px: 2,
-                                py: 0.5,
-                                borderRadius: "999px",
-                                fontSize: "0.875rem",
-                                fontWeight: 600,
-                                backgroundColor: row.isSawanih
-                                  ? "#2196F3"
-                                  : "#4CAF50",
-                                color: "white",
-                              }}
-                            >
-                              {row.isSawanih ? "سوانح" : "استخدام"}
-                            </Box>
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton onClick={(e) => handleClick(e, row)}>
-                              <MoreVertIcon />
-                            </IconButton>
-                            <Menu
-                              anchorEl={anchorEl}
-                              open={open}
-                              onClose={handleClose}
-                            >
-                              <MenuItem onClick={handleView}>
-                                <VisibilityIcon
-                                  fontSize="small"
-                                  style={{ marginRight: 8 }}
-                                />
-                                {text.view}
-                              </MenuItem>
-                              <MenuItem onClick={handleEdit}>
-                                <EditIcon
-                                  fontSize="small"
-                                  style={{ marginRight: 8 }}
-                                />
-                                {text.edit}
-                              </MenuItem>
-                              <MenuItem
-                                onClick={handleDeleteClick}
-                                style={{ color: red[500] }}
-                              >
-                                <DeleteIcon
-                                  fontSize="small"
-                                  style={{ marginRight: 8, color: red[500] }}
-                                />
-                                {text.delete}
-                              </MenuItem>
-                            </Menu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                )}
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
-            count={filteredReport.length}
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}

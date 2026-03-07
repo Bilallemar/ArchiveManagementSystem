@@ -4,8 +4,8 @@ import api from "../api";
 // Shura Aali Resolutions APIs
 // ==============================
 
-export const getAllShuraAaliResolutions = () =>
-  api.get("/shura-aali-resolutions");
+export const getAllShuraAaliResolutions = (params) =>
+  api.get("/shura-aali-resolutions", { params });
 
 export const getShuraAaliResolutionById = (id) =>
   api.get(`/shura-aali-resolutions/${id}`);

@@ -3,6 +3,9 @@
   "newArchive": "نوی آرشیف ثبت",
   "newIncoming": "د وارده اسنادو ثبت",
   "newOutgoing": "د صادره اسنادو ثبت",
+  "recordTypeForDirection": "د ریکارډ  ډول ",
+  "viewOutgoing": "د صادره اسنادو لیدل",
+  "viewIncoming": "د وارده اسنادو لیدل",
 
   "type": "ډول",
   "incoming": "وارده",
@@ -11,8 +14,8 @@
 
   "docNo": "د مکتوب / پارسل شمېره",
   "departmentDate": "د شعبې نېټه",
-  "incomingDate": "د وارده کېدو نېټه",
-  "outgoingDate": "د صادرېدو نېټه",
+  "incomingDate": "د واردې نېټه",
+  "outgoingDate": "د صادرې نېټه",
   "sendDate": "د لېږلو نېټه",
   "submittedDate": "د تسلیمي نېټه",
 
@@ -55,6 +58,7 @@
   "noData": "هیڅ معلومات نشته",
   "notAvailable": "موجود نه دی",
   "noArchiveSelected": "هیڅ آرشیف نه دی ټاکل شوی",
+  "remarksPlaceholder": "ملاحظات ولیکئ...",
 
   "selectOrg": "اداره وټاکئ",
   "selectDocType": "د سند ډول وټاکئ",

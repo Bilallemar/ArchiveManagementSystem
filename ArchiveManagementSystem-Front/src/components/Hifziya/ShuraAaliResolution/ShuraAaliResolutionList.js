@@ -1,36 +1,34 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  MoreVert as MoreVertIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
 import {
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
   Paper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
   TablePagination,
-  IconButton,
-  Menu,
-  MenuItem,
-  Button,
+  TableRow,
   Tabs,
-  Tab,
-  Typography,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from "@mui/material";
-import {
-  Visibility as VisibilityIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  MoreVert as MoreVertIcon,
-  Add as AddIcon,
-} from "@mui/icons-material";
 import { red } from "@mui/material/colors";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -39,13 +37,14 @@ import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import Filter from "../../Filter";
 
 import {
-  getAllShuraAaliResolutions,
   deleteShuraAaliResolution,
+  getAllShuraAaliResolutions,
+  getShuraAaliResolutionById,
 } from "../../../services/RepositoryManagement/shuraAaliResolutionApi";
 
-import ViewShuraAaliResolution from "./ViewShuraAaliResolution";
-import EditShuraAaliResolutionDialog from "./EditShuraAaliResolutionDialog";
 import getShuraAaliResolutionTexts from "../../../helpers/hifziya/ShuraAaliResolutionTexts";
+import EditShuraAaliResolutionDialog from "./EditShuraAaliResolutionDialog";
+import ViewShuraAaliResolution from "./ViewShuraAaliResolution";
 
 export default function ShuraAaliResolutionList() {
   const { t } = useTranslation("shuraAali");
@@ -65,66 +64,77 @@ export default function ShuraAaliResolutionList() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchField, setSearchField] = useState("subject");
+  const [totalCount, setTotalCount] = useState(0);
+  const [debouncedTerm, setDebouncedTerm] = useState("");
 
   const openMenu = Boolean(anchorEl);
 
   const columns = useMemo(
     () => [
-      { id: "sendDate", label: texts.sendDate, minWidth: 120 },
       { id: "subject", label: texts.subject, minWidth: 120 },
-      { id: "senderReference", label: texts.senderRef, minWidth: 140 },
       { id: "title", label: texts.title, minWidth: 120 },
-      { id: "resolutionType", label: texts.type, minWidth: 160 },
       { id: "letterNumber", label: texts.letterNo, minWidth: 140 },
-      { id: "resolutionNo", label: texts.resolutionNumber, minWidth: 140 },
       { id: "approvalYear", label: texts.year, minWidth: 110 },
-      { id: "remarks", label: texts.remarks, minWidth: 150 },
       { id: "resolutionBadge", label: texts.badgeType, minWidth: 100 },
       { id: "actions", label: texts.actions, minWidth: 120 },
     ],
     [texts],
   );
-
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   const loadResolutions = useCallback(async () => {
     try {
-      const res = await getAllShuraAaliResolutions();
-      setResolutions(res.data || []);
+      const params = {
+        page,
+        size: rowsPerPage,
+        field: searchField,
+        term: debouncedTerm,
+        ...(tabValue === 1 && { direction: "MOSAWABA" }),
+        ...(tabValue === 2 && { direction: "YADASHT" }),
+      };
+      const res = await getAllShuraAaliResolutions(params);
+      setResolutions(res.data.content); // ← Page.content
+      setTotalCount(res.data.totalElements); // ← Page.totalElements
     } catch (err) {
-      console.error(err);
       toast.error(texts.loadError);
     }
-  }, [texts.loadError]);
+  }, [page, rowsPerPage, searchField, debouncedTerm, tabValue]);
 
   useEffect(() => {
     loadResolutions();
   }, [loadResolutions]);
 
-  const filteredData = useMemo(() => {
-    let data = [...resolutions];
+  // const filteredData = useMemo(() => {
+  //   let data = [...resolutions];
 
-    // ✅ Use direction like Archive uses direction
-    if (tabValue === 1) {
-      data = data.filter((r) => r.direction === "MOSAWABA");
-    } else if (tabValue === 2) {
-      data = data.filter((r) => r.direction === "YADASHT");
-    }
+  //   // ✅ Use direction like Archive uses direction
+  //   if (tabValue === 1) {
+  //     data = data.filter((r) => r.direction === "MOSAWABA");
+  //   } else if (tabValue === 2) {
+  //     data = data.filter((r) => r.direction === "YADASHT");
+  //   }
 
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
-      data = data.filter((row) => {
-        if (searchField === "subject")
-          return row.subject?.toLowerCase().includes(term);
-        if (searchField === "title")
-          return row.title?.toLowerCase().includes(term);
-        if (searchField === "letterNumber")
-          return row.letterNumber?.toLowerCase().includes(term);
-        return true;
-      });
-    }
+  //   if (searchTerm.trim()) {
+  //     const term = searchTerm.toLowerCase().trim();
+  //     data = data.filter((row) => {
+  //       if (searchField === "subject")
+  //         return row.subject?.toLowerCase().includes(term);
+  //       if (searchField === "title")
+  //         return row.title?.toLowerCase().includes(term);
+  //       if (searchField === "letterNumber")
+  //         return row.letterNumber?.toLowerCase().includes(term);
+  //       return true;
+  //     });
+  //   }
 
-    data.sort((a, b) => b.id - a.id);
-    return data;
-  }, [resolutions, searchTerm, searchField, tabValue]);
+  //   data.sort((a, b) => b.id - a.id);
+  //   return data;
+  // }, [resolutions, searchTerm, searchField, tabValue]);
 
   const handleChangePage = (e, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (e) => {
@@ -139,13 +149,25 @@ export default function ShuraAaliResolutionList() {
 
   const handleMenuClose = () => setAnchorEl(null);
 
-  const handleView = () => {
-    setOpenView(true);
+  const handleView = async () => {
+    try {
+      const response = await getShuraAaliResolutionById(selectedResolution.id);
+      setSelectedResolution(response.data);
+      setOpenView(true);
+    } catch (error) {
+      toast.error(texts.loadError);
+    }
     handleMenuClose();
   };
 
-  const handleEdit = () => {
-    setOpenEdit(true);
+  const handleEdit = async () => {
+    try {
+      const response = await getShuraAaliResolutionById(selectedResolution.id);
+      setSelectedResolution(response.data);
+      setOpenEdit(true);
+    } catch (error) {
+      toast.error(texts.loadError);
+    }
     handleMenuClose();
   };
 
@@ -264,84 +286,64 @@ export default function ShuraAaliResolutionList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredData
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => (
-                  <TableRow hover key={row.id}>
-                    <TableCell align="center">{row.sendDate || "—"}</TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        maxWidth: 150,
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {row.subject || "N/A"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.senderReference || "—"}
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        maxWidth: 150,
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {row.title || "N/A"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.resolutionType || "—"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.letterNumber || "—"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.resolutionNo || "—"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.approvalYear || "—"}
-                    </TableCell>
-                    <TableCell
-                      align="center"
-                      sx={{
-                        maxWidth: 150,
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      {row.remarks || "N/A"}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box
-                        sx={{
-                          display: "inline-block",
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: "999px",
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          backgroundColor:
-                            row.direction === "MOSAWABA"
-                              ? "#4CAF50"
-                              : "#2196F3", // ✅ direction
-                          color: "white",
-                        }}
-                      >
-                        {row.direction === "MOSAWABA" ? "مصوبه" : "یاداشت"}{" "}
-                        {/* ✅ direction */}
-                      </Box>
-                    </TableCell>
+              {resolutions.map((row) => (
+                <TableRow hover key={row.id}>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      maxWidth: 150,
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {row.subject || "N/A"}
+                  </TableCell>
 
-                    <TableCell align="center">
-                      <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                        <MoreVertIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  <TableCell
+                    align="center"
+                    sx={{
+                      maxWidth: 150,
+                      whiteSpace: "normal",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {row.title || "N/A"}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {row.letterNumber || "—"}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {row.approvalYear || "—"}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: "999px",
+                        fontSize: "0.875rem",
+                        fontWeight: 600,
+                        backgroundColor:
+                          row.direction === "MOSAWABA" ? "#4CAF50" : "#2196F3", // ✅ direction
+                        color: "white",
+                      }}
+                    >
+                      {row.direction === "MOSAWABA" ? "مصوبه" : "یاداشت"}{" "}
+                      {/* ✅ direction */}
+                    </Box>
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                      <MoreVertIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -349,7 +351,7 @@ export default function ShuraAaliResolutionList() {
         <TablePagination
           rowsPerPageOptions={[10, 25, 50, 100]}
           component="div"
-          count={filteredData.length}
+          count={totalCount}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

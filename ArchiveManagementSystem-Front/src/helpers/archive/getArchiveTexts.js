@@ -4,6 +4,10 @@ const getArchiveTexts = (t) => ({
   newArchive: t("newArchive"),
   newIncoming: t("newIncoming"),
   newOutgoing: t("newOutgoing"),
+    viewIncoming: t("viewIncoming"),
+  viewOutgoing: t("viewOutgoing"),
+
+  recordTypeForDirection: t("recordTypeForDirection"),
 
   // ===== Archive Types =====
   type: t("type"),
@@ -61,6 +65,7 @@ const getArchiveTexts = (t) => ({
   noData: t("noData"),
   notAvailable: t("notAvailable"),
   noArchiveSelected: t("noArchiveSelected"),
+  remarksPlaceholder: t("remarksPlaceholder"),
 
   // ===== Selects =====
   selectOrg: t("selectOrg"),

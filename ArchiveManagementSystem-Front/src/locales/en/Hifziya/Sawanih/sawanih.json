@@ -14,7 +14,26 @@
   "pageQuantity": "Page Quantity",
   "description": "Description",
   "recordStatus": "Record Status",
-
+  "scanner": {
+    "folderPath": "Scanner Folder",
+    "folderTitle": "Scanner Folder Scan Results",
+    "scanButton": "Scan",
+    "scanning": "Scanning...",
+    "loadFiles": "Load Files",
+    "clickToScan": "Click to Scan Results",
+    "filesAvailable": "Files Loaded",
+    "detectedFiles": "Detected Files",
+    "noFiles": "No files found",
+    "filesFound": "files found",
+    "scanError": "Error scanning",
+    "loadSuccess": "Files loaded successfully",
+    "loadError": "Error loading files"
+  },
+  "upload": {
+    "manualUpload": "Or upload file manually",
+    "readyToUpload": "Ready to Upload",
+    "removeAll": "Remove All"
+  },
   "actions": "Actions",
   "view": "View",
   "edit": "Edit",

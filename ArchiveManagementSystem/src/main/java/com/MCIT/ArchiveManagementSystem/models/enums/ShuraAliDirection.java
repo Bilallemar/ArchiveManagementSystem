@@ -1,7 +1,7 @@
 package com.MCIT.ArchiveManagementSystem.models.enums;
 
-public enum  ShuraAliDirection {
+public enum ShuraAliDirection {
     MOSAWABA,
     YADASHT
-  
+
 }

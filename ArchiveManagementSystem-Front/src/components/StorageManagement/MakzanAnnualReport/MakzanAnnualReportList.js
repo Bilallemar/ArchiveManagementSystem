@@ -1,43 +1,43 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
-  gitAllAnnualReports,
-  deleteAnnualReport,
-} from "../../../services/StorageManagement/MakzanAnnualReportAPI";
-import ViewMakzanAnnualReport from "./ViewMakzanAnnualReport";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-import Filter from "../../Filter";
-import EditMakzanAnnualReportDialog from "./EditMakzanAnnualReportDialog";
-import getMakzanAnnualReportTexts from "../../../helpers/Storage/MakzanAnnualReport/MakzanAnnualReportText";
-import { useTranslation } from "react-i18next";
-import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
   TablePagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  IconButton,
-  Menu,
-  MenuItem,
+  TableRow,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import AddIcon from "@mui/icons-material/Add";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import getMakzanAnnualReportTexts from "../../../helpers/Storage/MakzanAnnualReport/MakzanAnnualReportText";
+import {
+  deleteAnnualReport,
+  getAnnualReportById,
+  gitAllAnnualReports,
+} from "../../../services/StorageManagement/MakzanAnnualReportAPI";
+import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+import Filter from "../../Filter";
+import EditMakzanAnnualReportDialog from "./EditMakzanAnnualReportDialog";
+import ViewMakzanAnnualReport from "./ViewMakzanAnnualReport";
 
 export default function MakzanAnnualReportList() {
   const [reports, setReports] = useState([]);
@@ -48,98 +48,78 @@ export default function MakzanAnnualReportList() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [field, setField] = useState("address"); // default search field
+  const [field, setField] = useState("district");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false); // ← was missing
 
   const { t } = useTranslation("makzanAnnualReport");
   const texts = getMakzanAnnualReportTexts(t);
   const navigate = useNavigate();
-
   const open = Boolean(anchorEl);
 
   const columns = [
     { id: "province", label: texts.province || "ولایت", minWidth: 140 },
     { id: "district", label: texts.district || "ولسوالي", minWidth: 140 },
     { id: "year", label: texts.year, minWidth: 100 },
-    { id: "docType", label: texts.docType, minWidth: 130 },
-    { id: "summaryWaseqa", label: texts.summaryWaseqa, minWidth: 160 },
-    { id: "description", label: texts.description, minWidth: 180 },
-    { id: "actions", label: texts.actions, minWidth: 120, align: "center" },
+    { id: "actions", label: texts.actions, minWidth: 120 },
   ];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const loadReports = useCallback(async () => {
     try {
-      const response = await gitAllAnnualReports();
-      setReports(response.data || []);
+      setIsLoading(true);
+      const params = { page, size: rowsPerPage, field, term: debouncedTerm };
+      const response = await gitAllAnnualReports(params);
+      setReports(response.data.content);
+      setTotalCount(response.data.totalElements);
     } catch (error) {
-      console.error("Error loading reports:", error);
-      toast.error(texts.loadError || "د راپورونو لست لوستل ناکام شو");
+      toast.error(texts.loadError || "د معلوماتو د بارولو کې ستونزه");
+    } finally {
+      setIsLoading(false);
     }
-  }, [texts.loadError]);
+  }, [page, rowsPerPage, field, debouncedTerm]); // ← removed tabValue, this list has no tabs
 
   useEffect(() => {
     loadReports();
   }, [loadReports]);
 
-  const filteredReports = useMemo(() => {
-    let data = [...reports];
-
-    if (searchTerm?.trim()) {
-      const searchValue = searchTerm.toLowerCase().trim();
-
-      data = data.filter((row) => {
-        switch (field) {
-          case "province":
-            return (
-              row.province?.name?.toLowerCase()?.includes(searchValue) ?? false
-            );
-          case "district":
-            return (
-              row.district?.name?.toLowerCase()?.includes(searchValue) ?? false
-            );
-          case "year":
-            return row.year?.toString().includes(searchValue) ?? false;
-          case "docType":
-            return (
-              row.docType?.name?.toLowerCase()?.includes(searchValue) ?? false
-            );
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Sort by newest first (highest ID)
-    data.sort((a, b) => b.id - a.id);
-
-    return data;
-  }, [reports, searchTerm, field]);
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleFieldChange = (e) => {
-    setField(e.target.value);
-  };
+  const handleSearch = (e) => setSearchTerm(e.target.value);
+  const handleFieldChange = (e) => setField(e.target.value);
+  const handleClose = () => setAnchorEl(null);
 
   const handleClick = (event, report) => {
     setAnchorEl(event.currentTarget);
     setSelectedReport(report);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleView = () => {
-    setOpenViewDialog(true);
+  const handleView = async () => {
+    try {
+      const response = await getAnnualReportById(selectedReport.id);
+      setSelectedReport(response.data);
+      setOpenViewDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
 
-  const handleEdit = () => {
-    setOpenEditDialog(true);
+  const handleEdit = async () => {
+    try {
+      const response = await getAnnualReportById(selectedReport.id);
+      setSelectedReport(response.data);
+      setOpenEditDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
 
@@ -151,41 +131,21 @@ export default function MakzanAnnualReportList() {
   const handleDelete = async () => {
     try {
       await deleteAnnualReport(selectedReport.id);
-      toast.success(
-        texts.deleteSuccess || "راپور په بریالیتوب سره له منځه ولاړ",
-      );
+      toast.success(texts.deleteSuccess || "راپور له منځه ولاړ");
       loadReports();
     } catch (error) {
-      console.error("Delete error:", error);
-      toast.error(
-        texts.deleteError ||
-          "د راپور د له منځه وړلو پر مهال ستونزه رامنځته شوه",
-      );
+      toast.error(texts.deleteError || "د له منځه وړلو ستونزه");
     } finally {
       setOpenDeleteDialog(false);
     }
   };
 
-  const handleNewReport = () => {
-    navigate("/makzan-annual-reports/add");
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
+  const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  // Helper to extract province & district from address string
-  const getProvinceAndDistrict = (report) => {
-    return {
-      province: report.province?.name || "N/A",
-      district: report.district?.name || "N/A",
-    };
-  };
   return (
     <>
       <Box sx={{ width: "100%", p: 3 }}>
@@ -203,12 +163,11 @@ export default function MakzanAnnualReportList() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={handleNewReport}
+            onClick={() => navigate("/makzan-annual-reports/add")}
             color="primary"
           >
             {texts.addNewReport || "نوی راپور ثبت کړئ"}
           </Button>
-
           <Box
             sx={{
               display: "flex",
@@ -231,8 +190,6 @@ export default function MakzanAnnualReportList() {
               { value: "province", label: texts.province || "ولایت" },
               { value: "district", label: texts.district || "ولسوالي" },
               { value: "year", label: texts.year },
-              { value: "docType", label: texts.docType },
-              { value: "address", label: texts.address || "پته (پخوانی)" },
             ]}
           />
         </Paper>
@@ -243,61 +200,49 @@ export default function MakzanAnnualReportList() {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  {columns.map((column) => (
+                  {columns.map((col) => (
                     <TableCell
-                      key={column.id}
-                      align={column.align || "center"}
+                      key={col.id}
+                      align="center"
                       style={{
-                        minWidth: column.minWidth,
+                        minWidth: col.minWidth,
                         backgroundColor: "#f5f7fa",
                         fontWeight: "bold",
                         fontSize: "0.875rem",
                       }}
                     >
-                      {column.label}
+                      {col.label}
                     </TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredReports
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => {
-                    const { province, district } = getProvinceAndDistrict(row);
-                    return (
-                      <TableRow
-                        hover
-                        role="checkbox"
-                        tabIndex={-1}
-                        key={row.id}
-                      >
-                        <TableCell align="center">{province}</TableCell>
-                        <TableCell align="center">{district}</TableCell>
+                {reports.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      align="center"
+                      sx={{ py: 5 }}
+                    >
+                      هیڅ معلومات ونه موندل شول
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  reports.map(
+                    (
+                      row, // ← was makhzanWaradaSadera (wrong variable)
+                    ) => (
+                      <TableRow hover key={row.id}>
+                        <TableCell align="center">
+                          {row.provinceName || "N/A"}
+                        </TableCell>{" "}
+                        {/* ← DTO flat field */}
+                        <TableCell align="center">
+                          {row.districtName || "N/A"}
+                        </TableCell>{" "}
+                        {/* ← DTO flat field */}
                         <TableCell align="center">
                           {row.year || "N/A"}
-                        </TableCell>
-                        <TableCell align="center">
-                          {row.docType?.name || "N/A"}
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          sx={{
-                            maxWidth: 180,
-                            whiteSpace: "normal",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {row.summaryWaseqa || "N/A"}
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          sx={{
-                            maxWidth: 200,
-                            whiteSpace: "normal",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {row.description || "N/A"}
                         </TableCell>
                         <TableCell align="center">
                           <IconButton onClick={(e) => handleClick(e, row)}>
@@ -305,8 +250,9 @@ export default function MakzanAnnualReportList() {
                           </IconButton>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ),
+                  )
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -314,7 +260,7 @@ export default function MakzanAnnualReportList() {
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
-            count={filteredReports.length}
+            count={totalCount} // ← was filteredReports.length (wrong)
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
@@ -333,7 +279,6 @@ export default function MakzanAnnualReportList() {
         }}
         report={selectedReport}
       />
-
       <EditMakzanAnnualReportDialog
         open={openEditDialog}
         onClose={() => {
@@ -346,7 +291,6 @@ export default function MakzanAnnualReportList() {
           setOpenEditDialog(false);
         }}
       />
-
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
@@ -357,20 +301,19 @@ export default function MakzanAnnualReportList() {
         <DialogContent>
           <DialogContentText>
             {texts.deleteDialogContent ||
-              "ایا تاسو غواړئ دا راپور په بشپړه توګه له منځه یوسئ؟ دا عمل بیرته نه راګرځي."}
+              "ایا تاسو غواړئ دا راپور له منځه یوسئ؟"}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>
             {texts.cancel || "نه"}
           </Button>
-          <Button onClick={handleDelete} color="error" autoFocus>
-            {texts.delete || "هو، له منځه یوسئ"}
+          <Button onClick={handleDelete} color="error">
+            {texts.delete || "هو"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Menu for actions */}
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         <MenuItem onClick={handleView}>
           <VisibilityIcon fontSize="small" sx={{ mr: 1 }} />

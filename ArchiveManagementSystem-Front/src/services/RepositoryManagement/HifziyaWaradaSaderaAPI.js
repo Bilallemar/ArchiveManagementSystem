@@ -1,7 +1,7 @@
 import api from "../api";
 
-export const getAllHifziyaWaradaSadera = () =>
-  api.get("/hifziya-warada-sadera");
+export const getAllHifziyaWaradaSadera = (params) =>
+  api.get("/hifziya-warada-sadera", { params });
 
 export const getHifziyaWaradaSaderaById = (id) =>
   api.get(`/hifziya-warada-sadera/${id}`);

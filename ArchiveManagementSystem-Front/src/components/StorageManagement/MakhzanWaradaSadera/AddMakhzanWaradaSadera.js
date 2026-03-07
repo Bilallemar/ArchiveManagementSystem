@@ -189,7 +189,7 @@ export default function AddMakhzanWaradaSadera() {
         no: formData.no.trim(),
         org: { id: parseInt(formData.org) },
         letterNumber: formData.letterNumber.trim() || null,
-        incommingDate:convertHijriToGregorian(formData.incommingDate) || null,
+        incommingDate: convertHijriToGregorian(formData.incommingDate) || null,
         // outgoingDate: convertHijriToGregorian(formData.outgoingDate) || null, // Will be sent only for outgoing, but can be null for incoming
         summary: formData.summary.trim() || null,
         description: formData.description.trim() || null,
@@ -277,9 +277,9 @@ export default function AddMakhzanWaradaSadera() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/makhzan-warada-sadera")}
@@ -291,23 +291,16 @@ export default function AddMakhzanWaradaSadera() {
           {pageTitle}
         </Typography>
         {/* ✅ Badge showing وارده or صادره */}
-        <Box
-          sx={{
-            display: "inline-block",
-            px: 2,
-            py: 0.4,
-            borderRadius: "999px",
-            fontSize: "0.9rem",
-            fontWeight: 600,
-            backgroundColor: direction === "INCOMING" ? "#4CAF50" : "#2196F3",
-            color: "white",
-          }}
-        >
-          {direction === "INCOMING" ? "Incoming (وارده)" : "Outgoing (صادره)"}
-        </Box>
+
       </Box>
 
-      <Card sx={{ maxWidth: 1200, mx: "auto" }}>
+      <Card
+        sx={{
+          borderRadius: 2,
+          boxShadow:
+            "0px 4px 15px rgba(0,0,0,0.07), 0px 8px 10px rgba(0,0,0,0.04)",
+        }}
+      >
         <CardContent sx={{ p: 4 }}>
           <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={3}>
@@ -487,7 +480,7 @@ export default function AddMakhzanWaradaSadera() {
 
               {/* RIGHT SIDE - Form Fields */}
               <Grid item xs={12} md={8}>
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
@@ -498,9 +491,7 @@ export default function AddMakhzanWaradaSadera() {
                       onChange={handleInputChange}
                       required
                       error={!formData.no}
-                      helperText={
-                        !formData.no ? text.required || "Required" : ""
-                      }
+                     
                     />
                   </Grid>
 
@@ -602,11 +593,14 @@ export default function AddMakhzanWaradaSadera() {
                       fullWidth
                       size="small"
                       multiline
-                      rows={4}
+                     
                       label={text.description || "ملاحظات"}
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
+                      sx={{       "& .MuiInputBase-root": {
+                          height: 100,
+                        },}}
                     />
                   </Grid>
 

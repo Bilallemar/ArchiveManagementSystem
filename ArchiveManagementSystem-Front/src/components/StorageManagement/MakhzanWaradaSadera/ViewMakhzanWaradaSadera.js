@@ -25,18 +25,20 @@ import getMakhzanWaradaSaderaTexts from "../../../helpers/Storage/MakhzanwSarada
 import api from "../../../services/api";
 import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 
-
-
 // Your API service (must return Blob response)
-import { downloadFile } from "../../../services/StorageManagement/MakhzanWaradaSaderaAPI";
 
 export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
   const { t } = useTranslation("makhzanWaradaSadera");
   const texts = getMakhzanWaradaSaderaTexts(t);
+  const isWarada = record?.direction === "INCOMING";
 
+  const pageTitle = isWarada
+    ? texts.viewIncoming || "لیدل وارده"
+    : texts.viewOutgoing || "لیدل صادره";
   if (!open || !record) return null;
 
   const direction = record.direction || "INCOMING";
+  if (!open || !record) return null;
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -156,7 +158,7 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="h5" fontWeight="bold">
-            {texts.viewTitle || "د لاسوند تفصیلات"}
+            {pageTitle || "د لاسوند تفصیلات"}
           </Typography>
           <Chip
             label={direction === "INCOMING" ? "وارده" : "صادره"}
@@ -187,7 +189,11 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
           {/* Main Info */}
           <Grid item xs={12} sm={6}>
             <Box>
-              <Typography variant="caption" color="texts.secondary" gutterBottom>
+              <Typography
+                variant="caption"
+                color="texts.secondary"
+                gutterBottom
+              >
                 {texts.viewNumber || "شمېره"}
               </Typography>
               <Typography variant="h6" fontWeight={600}>
@@ -198,7 +204,11 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
 
           <Grid item xs={12} sm={6}>
             <Box>
-              <Typography variant="caption" color="texts.secondary" gutterBottom>
+              <Typography
+                variant="caption"
+                color="texts.secondary"
+                gutterBottom
+              >
                 {texts.viewOrganization || "اداره"}
               </Typography>
               <Typography variant="h6" fontWeight={600}>
@@ -209,7 +219,11 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
 
           <Grid item xs={12} sm={6}>
             <Box>
-              <Typography variant="caption" color="texts.secondary" gutterBottom>
+              <Typography
+                variant="caption"
+                color="texts.secondary"
+                gutterBottom
+              >
                 {texts.viewLetterNumber || "شمېره مکتوب"}
               </Typography>
               <Typography variant="body1">
@@ -220,11 +234,15 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
 
           <Grid item xs={12} sm={6}>
             <Box>
-              <Typography variant="caption" color="texts.secondary" gutterBottom>
+              <Typography
+                variant="caption"
+                color="texts.secondary"
+                gutterBottom
+              >
                 {texts.viewIncommingDate || "تاریخ وارده"}
               </Typography>
               <Typography variant="body1">
-                { formatHijriDateForDisplay(record.incommingDate) || "—"}
+                {formatHijriDateForDisplay(record.incommingDate) || "—"}
               </Typography>
             </Box>
           </Grid>
@@ -247,7 +265,11 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
           )}
           <Grid item xs={12} sm={6}>
             <Box>
-              <Typography variant="caption" color="texts.secondary" gutterBottom>
+              <Typography
+                variant="caption"
+                color="texts.secondary"
+                gutterBottom
+              >
                 {texts.viewSummary || "لنډیز"}
               </Typography>
               <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
@@ -257,7 +279,11 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
           </Grid>
           <Grid item xs={12} sm={6}>
             <Box>
-              <Typography variant="caption" color="texts.secondary" gutterBottom>
+              <Typography
+                variant="caption"
+                color="texts.secondary"
+                gutterBottom
+              >
                 {texts.viewSubjectType || "د موضوع نوع"}
               </Typography>
               <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
@@ -268,7 +294,11 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
 
           <Grid item xs={12}>
             <Box>
-              <Typography variant="caption" color="texts.secondary" gutterBottom>
+              <Typography
+                variant="caption"
+                color="texts.secondary"
+                gutterBottom
+              >
                 {texts.viewDescription || "ملاحظات"}
               </Typography>
               <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>

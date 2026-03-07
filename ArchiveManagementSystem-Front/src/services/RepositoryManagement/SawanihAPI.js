@@ -1,7 +1,6 @@
-
 import api from "../api";
 
-export const getAllSawanih = () => api.get("/sawanih");
+export const getAllSawanih = (params) => api.get("/sawanih", { params });
 
 export const getSawanihById = (id) => api.get(`/sawanih/${id}`);
 

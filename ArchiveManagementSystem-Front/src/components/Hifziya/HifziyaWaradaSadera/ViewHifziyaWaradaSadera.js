@@ -28,7 +28,11 @@ import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
   const { t } = useTranslation("hifziyaWaradaSadera");
   const text = getHifziyaWaradaSaderaTexts(t);
+  const isWarada = report?.direction === "INCOMING";
 
+  const pageTitle = isWarada
+    ? text.viewIncoming || "لیدل وارده"
+    : text.viewOutgoing || "لیدل صادره";
   if (!open || !report) return null;
 
   const direction = report.direction || "INCOMING";
@@ -151,7 +155,7 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="h5" fontWeight="bold">
-            {text.viewTitle || "د لاسوند تفصیلات"}
+            {pageTitle || "د لاسوند تفصیلات"}
           </Typography>
           <Chip
             label={direction === "INCOMING" ? "وارده" : "صادره"}

@@ -1,7 +1,10 @@
 {
+  "viewOutgoing": "نمایش ریکارد صادره",
+  "viewIncoming": "نمایش ریکار وارده",
   "page": {
     "title": "کتاب وارده و صادره",
-    "newRecord": "ثبت جدید"
+    "newRecord": "ثبت جدید",
+    "recordTypeForDirection": "نوع ریکارد"
   },
   "table": {
     "headers": {
@@ -20,8 +23,8 @@
   "filter": {
     "recordType": "نوع سند",
     "all": "همه",
-    "hifziya": "حفظیه",
-    "makhzan": "مخزن",
+    "incomming": "وارده",
+    "outgoing": "صادره",
     "bookNumber": "نمبر کتاب",
     "province": "ولایت",
     "district": "ولسوالی"
@@ -76,7 +79,7 @@
     "makhzan": "مخزن",
     "no": "نمبر کتاب",
     "org": "مرسل",
-      "subjectType": "موضوع",
+    "subjectType": "موضوع",
     "letterNumber": "نمبر مکتوب",
     "incommingDate": "تاریخ وارده",
     "outgoingDate": "تاریخ صادره",

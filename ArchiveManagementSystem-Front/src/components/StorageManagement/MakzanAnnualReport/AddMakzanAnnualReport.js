@@ -29,7 +29,6 @@ import { useNavigate } from "react-router-dom";
 import getMakzanAnnualReportTexts from "../../../helpers/Storage/MakzanAnnualReport/MakzanAnnualReportText";
 import api from "../../../services/api";
 import { createAnnualReport } from "../../../services/StorageManagement/MakzanAnnualReportAPI";
-import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 
 export default function AddMakzanAnnualReport() {
   const [formData, setFormData] = useState({
@@ -255,9 +254,9 @@ export default function AddMakzanAnnualReport() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/makzan-annual-reports")}
@@ -273,12 +272,12 @@ export default function AddMakzanAnnualReport() {
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 2 }}>
+      {/* <Box sx={{ mb: 2 }}>
         <PageBreadcrumbs />
-      </Box>
+      </Box> */}
 
       {/* Form Card */}
-      <Card sx={{ maxWidth: 1200, mx: "auto" }}>
+      <Card sx={{ borderRadius: 2,  boxShadow: "0px 4px 15px rgba(0,0,0,0.07), 0px 8px 10px rgba(0,0,0,0.04)", }}>
         <CardContent sx={{ p: 4 }}>
           <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={3}>
@@ -470,7 +469,7 @@ export default function AddMakzanAnnualReport() {
                 </Box>
               </Grid>
               <Grid item xs={12} md={8}>
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                   {/* Province Dropdown */}
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth size="small" required>
@@ -542,7 +541,6 @@ export default function AddMakzanAnnualReport() {
                       onChange={handleInputChange}
                       required
                       error={!formData.year}
-                      helperText={!formData.year ? texts.required : ""}
                     />
                   </Grid>
 
@@ -592,9 +590,13 @@ export default function AddMakzanAnnualReport() {
                       name="description"
                       label={texts.remarksLabel}
                       multiline
-                      rows={4}
                       value={formData.description}
                       onChange={handleInputChange}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          height: 100,
+                        },
+                      }}
                     />
                   </Grid>
 

@@ -63,7 +63,8 @@
     "deleteError": "Error deleting record",
     "updateSuccess": "Attendance updated successfully",
     "updateError": "Error updating record",
-    "noDataFound": "No attendance found"
+    "noDataFound": "No attendance found",
+    "remarksPlaceholder": "Enter remarks here..."
   },
   "deleteDialog": {
     "title": "Delete Attendance?",

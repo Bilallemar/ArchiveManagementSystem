@@ -1,7 +1,10 @@
 {
+  "viewOutgoing": "View Outgoing Documents",
+  "viewIncoming": "View Incoming Documents",
   "page": {
     "title": "Incoming & Outgoing Book",
-    "newRecord": "New Record"
+    "newRecord": "New Record",
+    "recordTypeForDirection": "Record Type"
   },
   "table": {
     "headers": {
@@ -20,8 +23,8 @@
   "filter": {
     "recordType": "Record Type",
     "all": "All",
-    "hifziya": "Hifziya",
-    "makhzan": "Makhzan",
+    "incomming": "Incomming",
+    "outgoing": "Outgoing",
     "bookNumber": "Book Number",
     "province": "Province",
     "district": "District"

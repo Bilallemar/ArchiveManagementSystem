@@ -3,6 +3,10 @@
   "newArchive": "Register New Archive",
   "newIncoming": "Register Incoming Documents",
   "newOutgoing": "Register Outgoing Documents",
+  "viewOutgoing": "View Outgoing Documents",
+  "viewIncoming": "View Incoming Documents",
+
+  "recordTypeForDirection": "Record Type",
 
   "type": "Type",
   "incoming": "Incoming",
@@ -17,7 +21,7 @@
   "submittedDate": "Submission Date",
 
   "org": "Render",
-  "organization": "Receiver", 
+  "organization": "Receiver",
   "sender": "Sender",
   "receiver": "Receiver",
 
@@ -55,6 +59,7 @@
   "noData": "No data available",
   "notAvailable": "Not available",
   "noArchiveSelected": "No archive selected",
+  "remarksPlaceholder": "Enter remarks here...",
 
   "selectOrg": "Select organization",
   "selectDocType": "Select document type",

@@ -1,46 +1,46 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
   TablePagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  IconButton,
-  Menu,
-  MenuItem,
+  TableRow,
   Tabs,
-  Tab,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
+import getAddHazariTexts from "../../../helpers/hifziya/hazari/AddHazariText";
 import {
-  getAllHifziyaHazaris,
   deleteHifziyaHazari,
+  getAllHifziyaHazaris,
+  getHifziyaHazariById,
 } from "../../../services/RepositoryManagement/HifziyaHazariAPI";
-import ViewHazari from "./ViewHazari";
-import EditHazariDialog from "./EditHazariDialog";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
 import Filter from "../../Filter";
-import getAddHazariTexts from "../../../helpers/hifziya/hazari/AddHazariText";
+import EditHazariDialog from "./EditHazariDialog";
+import ViewHazari from "./ViewHazari";
 
 export default function HazariList() {
   const { t } = useTranslation("addHazari");
@@ -56,8 +56,10 @@ export default function HazariList() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [field, setField] = useState("org");
+  const [field, setField] = useState("volume");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
 
   const open = Boolean(anchorEl);
   const columns = [
@@ -66,61 +68,46 @@ export default function HazariList() {
     { id: "type", label: text.type || "نوعیت", minWidth: 140 },
     { id: "year", label: text.year || "سال", minWidth: 120 },
     { id: "org", label: text.org || "اداره", minWidth: 180 },
-    { id: "description", label: text.description || "ملاحظات", minWidth: 220 },
     { id: "direction", label: text.direction || "نوع", minWidth: 100 },
     { id: "actions", label: text.action || "عملیات", minWidth: 120 },
   ];
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const loadHazari = useCallback(async () => {
     try {
-      const response = await getAllHifziyaHazaris();
-      setHazari(response.data || []);
+      const params = {
+        page,
+        size: rowsPerPage,
+        field,
+        term: debouncedTerm,
+        ...(tabValue === 1 && { isIndraj: true }),
+        ...(tabValue === 2 && { isIndraj: false }),
+      };
+      const response = await getAllHifziyaHazaris(params);
+      setHazari(response.data.content);
+      setTotalCount(response.data.totalElements);
     } catch (error) {
-      console.error("Error loading hazari:", error);
       toast.error(text.loadDataError || "د معلوماتو د بارولو کې ستونزه");
     }
-  }, []);
+  }, [page, rowsPerPage, field, debouncedTerm, tabValue]);
 
   useEffect(() => {
     loadHazari();
   }, [loadHazari]);
 
-  // Filter logic based on tab
-  const filteredHazari = useMemo(() => {
-    let data = [...hazari];
-
-    // Tab filter
-    if (tabValue === 1) {
-      data = data.filter((r) => r.isIndraj === true); // Indraj
-    } else if (tabValue === 2) {
-      data = data.filter((r) => r.isIndraj === false); // Hazari
-    }
-
-    // Search filter
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
-      return data.filter((row) => {
-        switch (field) {
-          case "org":
-            return row.org?.name?.toLowerCase().includes(term);
-          case "year":
-            return row.year?.toString().includes(term);
-          case "type":
-            return row.type?.name?.toLowerCase().includes(term);
-          default:
-            return true;
-        }
-      });
-    }
-    data.sort((a, b) => b.id - a.id);
-    return data;
-  }, [hazari, tabValue, searchTerm, field]);
-
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
     setPage(0);
+    setDebouncedTerm(""); // ← reset search too
+    setSearchTerm("");
   };
-
   const handleSearch = (e) => setSearchTerm(e.target.value);
   const handleFieldChange = (e) => setField(e.target.value);
 
@@ -131,13 +118,25 @@ export default function HazariList() {
 
   const handleClose = () => setAnchorEl(null);
 
-  const handleView = () => {
-    setOpenViewDialog(true);
+  const handleView = async () => {
+    try {
+      const response = await getHifziyaHazariById(selectedHazari.id); // ← fetch full record
+      setSelectedHazari(response.data); // ← replace summary with full entity
+      setOpenViewDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
 
-  const handleEdit = () => {
-    setOpenEditDialog(true);
+  const handleEdit = async () => {
+    try {
+      const response = await getHifziyaHazariById(selectedHazari.id); // ← fetch full record
+      setSelectedHazari(response.data); // ← replace DTO with full entity
+      setOpenEditDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
 
@@ -245,9 +244,10 @@ export default function HazariList() {
           field={field}
           onFieldChange={handleFieldChange}
           fields={[
+            { value: "volume", label: text.volume || "جلد" },
             { value: "org", label: text.org || "اداره" },
-            { value: "year", label: text.year || "کال" },
-            { value: "type", label: text.type || "نوعیت" },
+            { value: "type", label: text.type || "نوع" },
+            { value: "subType", label: text.subType || "کارمندان نوعیت" },
           ]}
         />
       </Paper>
@@ -274,76 +274,45 @@ export default function HazariList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredHazari.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    align="center"
-                    sx={{ py: 5 }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      {text.noDataFound || "هیڅ معلومات ونه موندل شول."}
-                    </Typography>
+              {hazari.map((row) => (
+                <TableRow hover key={row.id}>
+                  <TableCell align="center">{row.volume || "N/A"}</TableCell>
+                  <TableCell align="center">
+                    {row.subTypeName || "N/A"}
+                  </TableCell>{" "}
+                  {/* ← was row.subType?.name */}
+                  <TableCell align="center">
+                    {row.typeName || "N/A"}
+                  </TableCell>{" "}
+                  {/* ← was row.type?.name */}
+                  <TableCell align="center">{row.year || "N/A"}</TableCell>
+                  <TableCell align="center">
+                    {row.orgName || "N/A"}
+                  </TableCell>{" "}
+                  {/* ← was row.org?.name */}
+                  <TableCell align="center">
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: "999px",
+                        fontSize: "0.875rem",
+                        fontWeight: 600,
+                        backgroundColor: row.isIndraj ? "#2196F3" : "#4CAF50",
+                        color: "white",
+                      }}
+                    >
+                      {row.isIndraj ? "اندراج" : "حاضري"}
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton onClick={(e) => handleClick(e, row)}>
+                      <MoreVertIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredHazari
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => (
-                    <TableRow hover key={row.id}>
-                      <TableCell align="center">
-                        {row.volume || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.subType?.name || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        {row.type?.name || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">{row.year || "N/A"}</TableCell>
-                      <TableCell align="center">
-                        {row.org?.name || "N/A"}
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{
-                          maxWidth: 20, // دلته اندازه کنټرول کوې
-                          whiteSpace: "normal",
-                          wordBreak: "break-word",
-                          overflowWrap: "anywhere",
-                        }}
-                      >
-                        {row.description?.length > 60
-                          ? `${row.description.substring(0, 60)}...`
-                          : row.description || "N/A"}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Box
-                          sx={{
-                            display: "inline-block",
-                            px: 2,
-                            py: 0.5,
-                            borderRadius: "999px",
-                            fontSize: "0.875rem",
-                            fontWeight: 600,
-                            backgroundColor: row.isIndraj
-                              ? "#2196F3"
-                              : "#4CAF50", // شنه = اندراج، نیلي = حاضري
-                            color: "white",
-                          }}
-                        >
-                          {row.isIndraj ? "اندراج" : "حاضري"}{" "}
-                          {/* ← دلته بدلون */}
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton onClick={(e) => handleClick(e, row)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-              )}
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -351,7 +320,7 @@ export default function HazariList() {
         <TablePagination
           rowsPerPageOptions={[10, 25, 50, 100]}
           component="div"
-          count={filteredHazari.length}
+          count={totalCount}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

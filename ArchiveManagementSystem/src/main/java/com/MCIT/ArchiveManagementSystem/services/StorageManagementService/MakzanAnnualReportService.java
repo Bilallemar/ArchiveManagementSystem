@@ -6,10 +6,15 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.MCIT.ArchiveManagementSystem.dtos.MakzanAnnualReportSummaryDTO;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanAnnualReportRepository;
@@ -52,8 +57,29 @@ public class MakzanAnnualReportService {
         }
 
         // ─── GET ALL ────────────────────────────────────────────────────────────────
-        public List<MakzanAnnualReport> gitAllAnnualReports() {
-                return makzanAnnualReportRepository.findAll();
+        // public List<MakzanAnnualReport> gitAllAnnualReports() {
+        // return makzanAnnualReportRepository.findAll();
+        // }
+        public Page<MakzanAnnualReportSummaryDTO> gitAllAnnualReports(
+                        Management management,
+                        String field,
+                        String term,
+                        int page,
+                        int size) {
+
+                Pageable pageable = PageRequest.of(page, size);
+                String cleanTerm = (term == null) ? "" : term.trim();
+
+                // Convert String → enum
+
+                Page<MakzanAnnualReport> raw = makzanAnnualReportRepository.searchMakzanAnnualReport(
+                                management, field, cleanTerm, pageable); // ← directionEnum not cleanDirection
+
+                return raw.map(a -> new MakzanAnnualReportSummaryDTO(
+                                a.getId(),
+                                a.getYear(),
+                                a.getProvince() != null ? a.getProvince().getName() : null,
+                                a.getDistrict() != null ? a.getDistrict().getName() : null));
         }
 
         // ─── GET BY ID ──────────────────────────────────────────────────────────────

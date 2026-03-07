@@ -1,23 +1,37 @@
 package com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo;
 
-
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport;
 
 public interface MakzanAnnualReportRepository extends JpaRepository<MakzanAnnualReport, Integer> {
-     List<MakzanAnnualReport> findByManagement(Management management);
+    List<MakzanAnnualReport> findByManagement(Management management);
+
     Long countByManagement(Management management);
 
-    // List<Mak> findByBookNumberContainingIgnoreCaseOrProvinceContainingIgnoreCaseOrDistrictContainingIgnoreCase(
-    //     String bookNumber, String province, String district
-    // );
-
-    // // 🔹 د هر فیلډ لپاره جلا methods (د فلټر لپاره)
-    // List<MakzanSubmissionReport> findByBookNumberContainingIgnoreCase(String keyword);
-    // List<MakzanSubmissionReport> findByProvinceContainingIgnoreCase(String keyword);
-    // List<MakzanSubmissionReport> findByDistrictContainingIgnoreCase(String keyword);
+    @Query("""
+                SELECT m FROM MakzanAnnualReport m
+                LEFT JOIN m.province p
+                LEFT JOIN m.district d
+                WHERE m.management = :management
+                  AND (
+                    :term = ''
+                    OR (:field = 'province' AND LOWER(p.name) LIKE LOWER(CONCAT('%', :term, '%')))
+                    OR (:field = 'district' AND LOWER(d.name) LIKE LOWER(CONCAT('%', :term, '%')))
+                    OR (:field = 'year'     AND CAST(m.year AS string) LIKE CONCAT('%', :term, '%'))
+                  )
+                ORDER BY m.id DESC
+            """)
+    Page<MakzanAnnualReport> searchMakzanAnnualReport(
+            @Param("management") Management management,
+            @Param("field") String field,
+            @Param("term") String term,
+            Pageable pageable);
 }

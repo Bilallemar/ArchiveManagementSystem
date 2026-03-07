@@ -3,6 +3,10 @@
   "newArchive": "ثبت آرشیف جدید",
   "newIncoming": "ثبت اسناد وارده",
   "newOutgoing": "ثبت اسناد صادره",
+  "viewOutgoing": "نمایش ریکارد صادره",
+  "viewIncoming": "نمایش ریکار وارده",
+
+  "recordTypeForDirection": "نوعیت ریکارډ",
 
   "type": "نوعیت",
   "incoming": "وارده",
@@ -55,6 +59,7 @@
   "noData": "هیچ معلوماتی موجود نیست",
   "notAvailable": "موجود نمی‌باشد",
   "noArchiveSelected": "هیچ آرشیفی انتخاب نشده است",
+  "remarksPlaceholder": "ملاحظات را درج نمایید...",
 
   "selectOrg": "اداره را انتخاب نمایید",
   "selectDocType": "نوع سند را انتخاب نمایید",

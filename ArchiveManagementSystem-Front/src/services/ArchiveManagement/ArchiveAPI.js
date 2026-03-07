@@ -1,7 +1,7 @@
 import api from "../api";
 
 // Get all archives
-export const getAllArchives = () => api.get("/archives");
+export const getAllArchives = (params) => api.get("/archives", { params });
 
 // Get archive by ID - FIXED: Added parentheses
 export const getArchiveById = (id) => api.get(`/archives/${id}`);

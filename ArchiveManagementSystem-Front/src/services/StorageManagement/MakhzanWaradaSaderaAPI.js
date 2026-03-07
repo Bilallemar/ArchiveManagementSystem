@@ -1,7 +1,7 @@
 import api from "../api";
 
-export const getAllMakhzanWaradaSadera = () =>
-  api.get("/makhzan-warada-sadera");
+export const getAllMakhzanWaradaSadera = (params) =>
+  api.get("/makhzan-warada-sadera", { params });
 
 export const getMakhzanWaradaSaderaById = (id) =>
   api.get(`/makhzan-warada-sadera/${id}`);

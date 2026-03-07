@@ -63,7 +63,8 @@
     "deleteError": "خطا در هنگام حذف",
     "updateSuccess": "حاضری موفقانه ویرایش شد",
     "updateError": "خطا در هنگام ویرایش",
-    "noDataFound": "هیچ معلومات حاضری یافت نشد"
+    "noDataFound": "هیچ معلومات حاضری یافت نشد",
+    "remarksPlaceholder": "ملاحظات را درج نمایید..."
   },
   "deleteDialog": {
     "title": "حذف حاضری؟",

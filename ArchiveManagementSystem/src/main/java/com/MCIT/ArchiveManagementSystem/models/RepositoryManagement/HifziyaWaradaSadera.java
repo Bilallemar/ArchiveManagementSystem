@@ -6,6 +6,7 @@ import java.util.List;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
+import com.MCIT.ArchiveManagementSystem.models.enums.HifziyaWaradaSaderaDirection;
 import com.MCIT.ArchiveManagementSystem.models.enums.MakhzanWaradaSaderaDirection;
 
 import jakarta.persistence.CascadeType;
@@ -47,7 +48,7 @@ public class HifziyaWaradaSadera {
     private String description;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MakhzanWaradaSaderaDirection direction;
+    private HifziyaWaradaSaderaDirection  direction;
 
     @ManyToOne
     @JoinColumn(name = "management_id")

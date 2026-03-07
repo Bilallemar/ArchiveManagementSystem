@@ -4,6 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.MCIT.ArchiveManagementSystem.dtos.SawanihSummaryDTO;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
@@ -12,8 +19,6 @@ import com.MCIT.ArchiveManagementSystem.services.FileService;
 import com.MCIT.ArchiveManagementSystem.util.AuditLogHelper;
 
 import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class SawanihService {
@@ -35,8 +40,27 @@ public class SawanihService {
         this.auditLogHelper = auditLogHelper;
     }
 
-    public List<Sawanih> getAllSawanihs() {
-        return sawanihRepository.findAll();
+    public Page<SawanihSummaryDTO> getAllSawanihs(
+            Long managementId,
+            Boolean isSawanih,
+            String field,
+            String term,
+            int page,
+            int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        String cleanTerm = (term == null) ? "" : term.trim();
+
+        Page<Sawanih> raw = sawanihRepository.searchSawanihRepository(
+                managementId, isSawanih, field, cleanTerm, pageable);
+
+        return raw.map(s -> new SawanihSummaryDTO(
+                s.getId(),
+                s.getName(),
+                s.getFatherName(),
+                s.getIncommingDate(),
+                s.getOrg() != null ? s.getOrg().getName() : null,
+                s.getIsSawanih()));
     }
 
     public Optional<Sawanih> getSawanihById(Integer id) {

@@ -1,23 +1,23 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Grid,
-  Typography,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  CircularProgress,
-} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
-import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Grid,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
 
-import { createShuraAaliResolution } from "../../../services/RepositoryManagement/shuraAaliResolutionApi";
 import getShuraAaliResolutionTexts from "../../../helpers/hifziya/ShuraAaliResolutionTexts";
-
+import { createShuraAaliResolution } from "../../../services/RepositoryManagement/shuraAaliResolutionApi";
+import HijriDatePicker from "../../HijriDatePicker";
 export default function AddShuraAaliResolution() {
   const { t } = useTranslation("shuraAali");
   const navigate = useNavigate();
@@ -52,7 +52,12 @@ export default function AddShuraAaliResolution() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-
+  const handleHijriDateChange = (field) => (hijriDate) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: hijriDate,
+    }));
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -88,19 +93,25 @@ export default function AddShuraAaliResolution() {
 
       {/* <PageBreadcrumbs /> */}
 
-      <Card elevation={3} sx={{ mt: 3 }}>
+      <Card
+        sx={{
+          borderRadius: 2,
+          boxShadow:
+            "0px 4px 15px rgba(0,0,0,0.07), 0px 8px 10px rgba(0,0,0,0.04)",
+        }}
+      >
         <CardContent sx={{ p: 4 }}>
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField
+                <HijriDatePicker
                   fullWidth
                   label={texts.sendDate}
                   name="sendDate"
                   type="date"
                   InputLabelProps={{ shrink: true }}
                   value={form.sendDate}
-                  onChange={handleChange}
+                  onChange={handleHijriDateChange("sendDate")}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -186,6 +197,11 @@ export default function AddShuraAaliResolution() {
                   value={form.remarks}
                   onChange={handleChange}
                   placeholder={texts.remarksPlaceholder}
+                  sx={{
+                    "& .MuiInputBase-root": {
+                      height: 100,
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>

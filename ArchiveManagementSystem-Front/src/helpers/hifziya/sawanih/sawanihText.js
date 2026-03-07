@@ -39,6 +39,25 @@ const getSawanihTexts = (t) => ({
   deleteSuccess: t("deleteSuccess"),
   deleteError: t("deleteError"),
 
+
+    scannerFolderPath: t("scanner.folderPath"),
+  scannerFolderTitle: t("scanner.folderTitle"),
+  scanButton: t("scanner.scanButton"),
+  scanning: t("scanner.scanning"),
+  loadFiles: t("scanner.loadFiles"),
+  clickToScan: t("scanner.clickToScan"),
+  filesAvailable: t("scanner.filesAvailable"),
+  detectedFiles: t("scanner.detectedFiles"),
+  noFiles: t("scanner.noFiles"),
+  filesFound: t("scanner.filesFound"),
+  scanError: t("scanner.scanError"),
+  loadSuccess: t("scanner.loadSuccess"),
+  loadError: t("scanner.loadError"),
+
+  // ===== Upload =====
+  manualUpload: t("upload.manualUpload"),
+  readyToUpload: t("upload.readyToUpload"),
+  removeAll: t("upload.removeAll"),
   // ===== Filters & Search =====
   search: t("search"),
   fieldOrg: t("fieldOrg"),

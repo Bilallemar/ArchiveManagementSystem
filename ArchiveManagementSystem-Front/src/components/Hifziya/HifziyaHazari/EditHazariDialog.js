@@ -1,33 +1,37 @@
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-  Box,
-  IconButton,
-  Chip,
-  Typography,
-  Stack,
-  Alert,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import SaveIcon from "@mui/icons-material/Save";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
-import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import FolderIcon from "@mui/icons-material/Folder";
+import SaveIcon from "@mui/icons-material/Save";
+import ScannerIcon from "@mui/icons-material/Scanner";
+import {
+  Alert,
+  Badge,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { updateHifziyaHazari } from "../../../services/RepositoryManagement/HifziyaHazariAPI";
-import api from "../../../services/api";
 import { useTranslation } from "react-i18next";
 import getAddHazariTexts from "../../../helpers/hifziya/hazari/AddHazariText";
+import { updateHifziyaHazari } from "../../../services/RepositoryManagement/HifziyaHazariAPI";
+import api from "../../../services/api";
 
 export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
   const { t } = useTranslation("addHazari");
@@ -40,92 +44,141 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
     year: "",
     org: "",
     description: "",
-    newFiles: [], // only new files to upload
+    newFiles: [],
   });
 
   const [types, setTypes] = useState([]);
   const [subTypes, setSubTypes] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [existingFiles, setExistingFiles] = useState([]);
+  const [scannerFolderPath, setScannerFolderPath] = useState("");
+  const [detectedFiles, setDetectedFiles] = useState([]);
+  const [isScanning, setIsScanning] = useState(false);
 
-  // Load types & organizations
+  // Load data when dialog opens
   useEffect(() => {
+    if (!open) return;
+
     const loadData = async () => {
       try {
-        const [typesRes, orgsRes] = await Promise.all([
+        setIsLoading(true);
+        const [typesRes, orgsRes, scannerPathRes] = await Promise.all([
           api.get("/type"),
           api.get("/org"),
+          api.get("/scanner-folder/path").catch(() => ({ data: { path: "" } })),
         ]);
         setTypes(typesRes.data || []);
         setOrgs(orgsRes.data || []);
+        setScannerFolderPath(scannerPathRes.data.path || "");
+
+        if (hazari) {
+          const formattedYear = hazari.year
+            ? new Date(hazari.year).toISOString().split("T")[0]
+            : "";
+
+          setFormData({
+            volume: hazari.volume || "",
+            type: hazari.type?.id || "",
+            subType: hazari.subType?.id || "",
+            year: formattedYear,
+            org: hazari.org?.id || "",
+            description: hazari.description || "",
+            newFiles: [],
+          });
+
+          setExistingFiles(hazari.files || []);
+        }
       } catch (error) {
-        console.error("Failed to load data", error);
         toast.error(text.loadError || "د معلوماتو لوستلو کې ستونزه");
+      } finally {
+        setIsLoading(false);
       }
     };
+
     loadData();
-  }, [text.loadError]);
-
-  // Populate form & existing files when hazari changes
-  useEffect(() => {
-    if (hazari && open) {
-      const formattedYear = hazari.year
-        ? new Date(hazari.year).toISOString().split("T")[0]
-        : "";
-
-      setFormData({
-        volume: hazari.volume || "",
-        type: hazari.type?.id || "",
-        subType: hazari.subType?.id || "",
-        year: formattedYear,
-        org: hazari.org?.id || "",
-        description: hazari.description || "",
-        newFiles: [],
-      });
-
-      setExistingFiles(hazari.files || []);
-    }
-  }, [hazari, open]);
+  }, [open, hazari]);
 
   // Load sub-types when type changes
   useEffect(() => {
     const loadSubTypes = async () => {
       if (!formData.type) {
         setSubTypes([]);
-        setFormData((prev) => ({ ...prev, subType: "" }));
         return;
       }
       try {
         const res = await api.get(`/sub-type/by-type/${formData.type}`);
         setSubTypes(res.data || []);
-      } catch (error) {
-        console.error("Failed to load sub-types", error);
-        toast.error(text.loadSubTypesError || "د فرعي ډولونو لوستلو کې ستونزه");
+      } catch {
         setSubTypes([]);
       }
     };
     loadSubTypes();
-  }, [formData.type, text.loadSubTypesError]);
+  }, [formData.type]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleScan = async () => {
+    try {
+      setIsScanning(true);
+      const res = await api.get("/scanner-folder/files");
+      setDetectedFiles(res.data || []);
+      toast[res.data.length ? "success" : "info"](
+        `${res.data.length} ${text.filesFound || "files found"}`,
+      );
+    } catch {
+      toast.error(text.scanError || "د سکین کولو کې ستونزه");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleLoadFromScanner = async () => {
+    if (!detectedFiles.length) return;
+    try {
+      const files = await Promise.all(
+        detectedFiles.map(async (f) => {
+          const res = await api.get(
+            `/scanner-folder/files/${f.name}/download`,
+            { responseType: "blob" },
+          );
+          return new File([res.data], f.name, {
+            type: res.headers["content-type"] || "application/octet-stream",
+          });
+        }),
+      );
+      setFormData((prev) => ({
+        ...prev,
+        newFiles: [...prev.newFiles, ...files],
+      }));
+      setDetectedFiles([]);
+      toast.success(`${files.length} ${text.loadSuccess || "files loaded"}`);
+    } catch {
+      toast.error(text.loadError || "د فایلونو لوستلو کې ستونزه");
+    }
+  };
+
   const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
+    const selected = Array.from(e.target.files);
     setFormData((prev) => ({
       ...prev,
-      newFiles: [...prev.newFiles, ...selectedFiles],
+      newFiles: [...prev.newFiles, ...selected],
     }));
   };
 
-  const handleRemoveNewFile = (index) => {
+  const handleRemoveNewFile = (index) =>
     setFormData((prev) => ({
       ...prev,
       newFiles: prev.newFiles.filter((_, i) => i !== index),
     }));
+
+  const handleRemoveExistingFile = (fileId) => {
+    setExistingFiles((prev) => prev.filter((f) => f.id !== fileId));
+    toast.success(text.fileRemovedLocally || "File removed from list");
   };
 
   const handleSubmit = async (e) => {
@@ -133,55 +186,49 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
     setIsSubmitting(true);
 
     const required = ["type", "subType", "year", "org"];
-    const missing = required.filter((f) => !formData[f]);
-    if (missing.length) {
-      toast.error(text.error.requiredFields || "ټول اړین فیلډونه ډک کړئ");
+    if (required.some((f) => !formData[f])) {
+      toast.error(text.error?.requiredFields || "ټول اړین فیلډونه ډک کړئ");
       setIsSubmitting(false);
       return;
     }
 
     try {
       const fd = new FormData();
-
-      const yearAsInteger = new Date(formData.year).getFullYear();
-
       const payload = {
         volume: formData.volume?.trim() || null,
         type: { id: Number(formData.type) },
         subType: { id: Number(formData.subType) },
-        year: yearAsInteger,
+        year: new Date(formData.year).getFullYear(),
         org: { id: Number(formData.org) },
         description: formData.description?.trim() || null,
-        isIndraj: hazari.isIndraj, // ← taken from record, not changeable
+        isIndraj: hazari.isIndraj,
       };
 
       fd.append("hifziyaHazari", JSON.stringify(payload));
-
-      // Append new files only
       formData.newFiles.forEach((file) => fd.append("fileURL", file));
 
       await updateHifziyaHazari(hazari.id, fd);
-      toast.success(text.edit.updateSuccess || "معلومات په بریالیتوب تازه شول");
+      toast.success(text.edit?.updateSuccess || "معلومات تازه شول");
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Update failed:", error);
-      toast.error(text.edit.updateError || "د تازه کولو کې ستونزه");
+      toast.error(text.edit?.updateError || "د تازه کولو کې ستونزه");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Show current type as read-only info (Indraj or Hazari)
   const recordTypeLabel = hazari?.isIndraj
     ? text.indraj || "اندراج"
     : text.hazari || "حاضري";
+
+  const badgeColor = hazari?.isIndraj ? "#2196F3" : "#4CAF50";
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{ sx: { borderRadius: 2 } }}
     >
@@ -191,19 +238,31 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          pb: 2,
+          pb: 1,
         }}
       >
-        <Box>
-          <Typography variant="h6" fontWeight="bold">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="h5" fontWeight="bold">
             {text.title || "د حاضري اصلاح"}
           </Typography>
+          <Box
+            sx={{
+              px: 2,
+              py: 0.5,
+              borderRadius: "999px",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              backgroundColor: badgeColor,
+              color: "white",
+            }}
+          >
+            {recordTypeLabel}
+          </Box>
           {hazari && (
             <Chip
               label={`ID: ${hazari.id}`}
               size="small"
-              sx={{ mt: 1 }}
-              color="primary"
+              color="default"
               variant="outlined"
             />
           )}
@@ -213,269 +272,309 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
         </IconButton>
       </DialogTitle>
 
-      {/* Read-only Type Info */}
-      <Alert severity="info" sx={{ mx: 3, mt: 2 }} icon={false}>
-        <Typography variant="body1">
-          <strong>{text.recordType || "ډول"}:</strong> {recordTypeLabel}
-        </Typography>
-      </Alert>
-
-      <DialogContent dividers sx={{ py: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={4}>
-            {/* LEFT: File Upload Section */}
-            <Grid item xs={12} md={4}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                {/* File Upload Area */}
-                <Box
-                  sx={{
-                    width: 144,
-                    height: 144,
-                    borderRadius: "50%",
-                    border: "2px dashed",
-                    borderColor: "divider",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: "background.neutral",
-                    cursor: "pointer",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                      borderColor: "primary.main",
-                    },
-                  }}
-                  component="label"
-                >
-                  <AttachFileIcon
-                    sx={{ fontSize: 40, color: "primary.main" }}
-                  />
-                  <Typography
-                    sx={{ mt: 1, color: "text.secondary", fontSize: 12 }}
-                  >
-                    نوي فایل اپلوډ
-                  </Typography>
-                  <Typography
-                    sx={{
-                      mt: 0.5,
-                      color: "primary.main",
-                      fontSize: 11,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {formData.newFiles.length} نوی
-                  </Typography>
-                  <input
-                    type="file"
-                    hidden
-                    multiple
-                    onChange={handleFileChange}
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  />
-                </Box>
-
-                {/* Existing Files Info */}
-                {existingFiles.length > 0 && (
-                  <Box
-                    sx={{
-                      textAlign: "center",
-                      p: 1.5,
-                      bgcolor: "info.lighter",
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "info.dark", fontWeight: "bold" }}
-                    >
-                      موجوده فایلونه: {existingFiles.length}
-                    </Typography>
-                  </Box>
-                )}
-
-                {/* New Files List */}
-                {formData.newFiles.length > 0 && (
-                  <Box sx={{ maxHeight: 150, overflowY: "auto" }}>
-                    <Typography
-                      variant="caption"
-                      fontWeight="bold"
-                      sx={{ mb: 1, display: "block" }}
-                    >
-                      نوي فایلونه:
-                    </Typography>
-                    <Stack spacing={0.5}>
-                      {formData.newFiles.map((file, index) => (
-                        <Chip
-                          key={index}
-                          label={file.name}
-                          onDelete={() => handleRemoveNewFile(index)}
-                          deleteIcon={<DeleteIcon />}
-                          size="small"
+      <DialogContent dividers sx={{ p: 3 }}>
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              {/* LEFT — Scanner + Files */}
+              <Grid item xs={12} md={4}>
+                <Stack spacing={3}>
+                  {/* Scanner Card */}
+                  {scannerFolderPath && (
+                    <Card variant="outlined">
+                      <CardContent sx={{ textAlign: "center", py: 3 }}>
+                        <Badge
+                          badgeContent={detectedFiles.length}
                           color="success"
-                        />
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
+                          sx={{ mb: 2 }}
+                        >
+                          <FolderIcon
+                            sx={{ fontSize: 50, color: "primary.main" }}
+                          />
+                        </Badge>
+                        <Typography variant="h6" gutterBottom>
+                          {text.folderTitle || "سکینر فولډر"}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 2 }}
+                        >
+                          {detectedFiles.length > 0
+                            ? `${detectedFiles.length} ${text.filesFound || "files found"}`
+                            : text.clickToScan || "د سکین لپاره کلیک وکړئ"}
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          startIcon={<ScannerIcon />}
+                          onClick={handleScan}
+                          disabled={isScanning}
+                          sx={{ mb: 1 }}
+                        >
+                          {isScanning ? (
+                            <>
+                              <CircularProgress size={16} sx={{ mr: 1 }} />
+                              {text.scanning || "سکین کیږي..."}
+                            </>
+                          ) : (
+                            text.scanButton || "سکین"
+                          )}
+                        </Button>
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          startIcon={<AttachFileIcon />}
+                          onClick={handleLoadFromScanner}
+                          disabled={!detectedFiles.length}
+                          sx={{
+                            bgcolor: "#4CAF50",
+                            "&:hover": { bgcolor: "#45a049" },
+                          }}
+                        >
+                          {text.loadFiles || "فایلونه ولوډ کړئ"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
 
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  textAlign="center"
-                >
-                  Allowed: PNG, JPG, PDF, DOCX
-                  <br />
-                  Max 10MB per file
-                </Typography>
-              </Box>
-            </Grid>
+                  {/* Detected Files */}
+                  {detectedFiles.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight="bold"
+                        sx={{ mb: 1 }}
+                      >
+                        {text.detectedFiles || "کشف شوي فایلونه"}
+                      </Typography>
+                      <Stack
+                        spacing={0.5}
+                        sx={{ maxHeight: 150, overflowY: "auto" }}
+                      >
+                        {detectedFiles.map((f, i) => (
+                          <Chip
+                            key={i}
+                            label={f.name}
+                            size="small"
+                            icon={<AttachFileIcon />}
+                            sx={{ justifyContent: "flex-start" }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
 
-            {/* RIGHT: Form Fields */}
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={2.5}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
+                  {/* Existing Files */}
+                  {existingFiles.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        {text.existingFiles || "موجوده فایلونه"} (
+                        {existingFiles.length})
+                      </Typography>
+                      <Stack
+                        spacing={0.8}
+                        sx={{ maxHeight: 150, overflowY: "auto" }}
+                      >
+                        {existingFiles.map((file) => (
+                          <Chip
+                            key={file.id}
+                            label={file.fileName || file.name || "file"}
+                            size="small"
+                            icon={<AttachFileIcon />}
+                            onDelete={() => handleRemoveExistingFile(file.id)}
+                            sx={{ justifyContent: "flex-start" }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  {/* Manual Upload */}
+                  <Button
+                    variant="outlined"
+                    component="label"
                     fullWidth
-                    size="small"
-                    name="volume"
-                    label={text.volume || "جلد"}
-                    value={formData.volume}
-                    onChange={handleInputChange}
-                  />
-                </Grid>
-                {/* Type */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl
-                    fullWidth
-                    size="small"
-                    required
-                    error={!formData.type}
+                    startIcon={<AttachFileIcon />}
                   >
-                    <InputLabel>{text.type || "ډول"}</InputLabel>
-                    <Select
-                      name="type"
-                      value={formData.type}
+                    {text.addNewFiles || "نوي فایلونه اضافه کړئ"}
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    />
+                  </Button>
+
+                  {/* New Files */}
+                  {formData.newFiles.length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        {text.newFilesAdded || "نوي فایلونه"} (
+                        {formData.newFiles.length})
+                      </Typography>
+                      <Stack
+                        spacing={0.5}
+                        sx={{ maxHeight: 150, overflowY: "auto" }}
+                      >
+                        {formData.newFiles.map((file, i) => (
+                          <Chip
+                            key={i}
+                            label={file.name}
+                            size="small"
+                            color="success"
+                            onDelete={() => handleRemoveNewFile(i)}
+                            sx={{ justifyContent: "flex-start" }}
+                          />
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  {existingFiles.length === 0 &&
+                    formData.newFiles.length === 0 && (
+                      <Alert severity="info" icon={<FolderIcon />}>
+                        {text.noFilesAttached || "هیڅ فایل نشته"}
+                      </Alert>
+                    )}
+                </Stack>
+              </Grid>
+
+              {/* RIGHT — Form Fields */}
+              <Grid item xs={12} md={8}>
+                <Grid container spacing={2.5}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="volume"
+                      label={text.volume || "جلد"}
+                      value={formData.volume}
                       onChange={handleInputChange}
-                      label={text.type || "ډول"}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      required
+                      error={!formData.type}
                     >
-                      {types.length === 0 ? (
-                        <MenuItem disabled>
-                          {text.loading || "په بار کې دی..."}
-                        </MenuItem>
-                      ) : (
-                        types.map((type) => (
+                      <InputLabel>{text.type || "ډول"}</InputLabel>
+                      <Select
+                        name="type"
+                        value={formData.type}
+                        onChange={handleInputChange}
+                        label={text.type || "ډول"}
+                      >
+                        {types.map((type) => (
                           <MenuItem key={type.id} value={type.id}>
                             {type.name}
                           </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                {/* SubType */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl
-                    fullWidth
-                    size="small"
-                    required
-                    error={!formData.subType}
-                    disabled={!formData.type}
-                  >
-                    <InputLabel>{text.subType || "فرعي ډول"}</InputLabel>
-                    <Select
-                      name="subType"
-                      value={formData.subType}
-                      onChange={handleInputChange}
-                      label={text.subType || "فرعي ډول"}
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      required
+                      error={!formData.subType}
+                      disabled={!formData.type}
                     >
-                      {!formData.type ? (
-                        <MenuItem disabled>
-                          {text.selectTypeFirst || "لومړی ډول وټاکئ"}
-                        </MenuItem>
-                      ) : subTypes.length === 0 ? (
-                        <MenuItem disabled>
-                          {text.loading || "په بار کې دی..."}
-                        </MenuItem>
-                      ) : (
-                        subTypes.map((st) => (
-                          <MenuItem key={st.id} value={st.id}>
-                            {st.name}
+                      <InputLabel>{text.subType || "فرعي ډول"}</InputLabel>
+                      <Select
+                        name="subType"
+                        value={formData.subType}
+                        onChange={handleInputChange}
+                        label={text.subType || "فرعي ډول"}
+                      >
+                        {!formData.type ? (
+                          <MenuItem disabled>
+                            {text.selectTypeFirst || "لومړی ډول وټاکئ"}
                           </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                        ) : (
+                          subTypes.map((st) => (
+                            <MenuItem key={st.id} value={st.id}>
+                              {st.name}
+                            </MenuItem>
+                          ))
+                        )}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                {/* Year */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="year"
-                    type="date"
-                    label={text.year || "کال"}
-                    InputLabelProps={{ shrink: true }}
-                    value={formData.year}
-                    onChange={handleInputChange}
-                    required
-                    error={!formData.year}
-                    helperText={!formData.year ? text.required || "اړین" : ""}
-                  />
-                </Grid>
-
-                {/* Organization */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl
-                    fullWidth
-                    size="small"
-                    required
-                    error={!formData.org}
-                  >
-                    <InputLabel>{text.org || "اداره"}</InputLabel>
-                    <Select
-                      name="org"
-                      value={formData.org}
-                      onChange={handleInputChange}
-                      label={text.org || "اداره"}
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      required
+                      error={!formData.org}
                     >
-                      {orgs.length === 0 ? (
-                        <MenuItem disabled>
-                          {text.loading || "په بار کې دی..."}
-                        </MenuItem>
-                      ) : (
-                        orgs.map((org) => (
+                      <InputLabel>{text.org || "اداره"}</InputLabel>
+                      <Select
+                        name="org"
+                        value={formData.org}
+                        onChange={handleInputChange}
+                        label={text.org || "اداره"}
+                      >
+                        {orgs.map((org) => (
                           <MenuItem key={org.id} value={org.id}>
                             {org.name}
                           </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                {/* Description */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="description"
-                    label={text.description || "توضیحات / ملاحظات"}
-                    multiline
-                    rows={4}
-                    value={formData.description}
-                    onChange={handleInputChange}
-                  />
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="year"
+                      type="number"
+                      label={text.year || "کال"}
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.year}
+                      onChange={handleInputChange}
+                      required
+                      error={!formData.year}
+                      helperText={!formData.year ? text.required || "اړین" : ""}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="description"
+                      label={text.description || "توضیحات / ملاحظات"}
+                      multiline
+                      rows={4}
+                      value={formData.description}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        </form>
+          </Box>
+        )}
       </DialogContent>
 
-      {/* Actions */}
-      <DialogActions sx={{ px: 3, py: 2, gap: 2 }}>
+      <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} variant="outlined" disabled={isSubmitting}>
           {text.cancel || "لغوه"}
         </Button>
@@ -483,14 +582,13 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
           onClick={handleSubmit}
           variant="contained"
           disabled={isSubmitting}
-          endIcon={isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />}
-          sx={{
-            bgcolor: "black",
-            "&:hover": { bgcolor: "#1d252e" },
-          }}
+          startIcon={
+            isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />
+          }
+          sx={{ bgcolor: badgeColor, "&:hover": { bgcolor: badgeColor } }}
         >
           {isSubmitting
-            ? text.saving || "په ساتلو کې..."
+            ? text.saving || "ذخیره کیږي..."
             : text.save || "تغییرات خوندي کړئ"}
         </Button>
       </DialogActions>

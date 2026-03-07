@@ -1,31 +1,31 @@
-import React from "react";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import CloseIcon from "@mui/icons-material/Close";
+import FolderOffIcon from "@mui/icons-material/FolderOff";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Grid,
-  Typography,
+  Alert,
   Box,
-  IconButton,
-  Chip,
-  Divider,
+  Button,
   Card,
   CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
   Stack,
-  Alert,
+  Typography,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import FolderOffIcon from "@mui/icons-material/FolderOff";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import getSawanihTexts from "../../../helpers/hifziya/sawanih/sawanihText";
 import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 import { convertToPersianNumbers } from "../../../utils/numberUtils";
-import api from "../../../services/api";
+// Assuming you have a downloadFile function similar to other modules
+import { downloadFile } from "../../../services/RepositoryManagement/SawanihAPI";
 
 export default function ViewSawanih({ open, onClose, report }) {
   const { t } = useTranslation("sawanih");
@@ -35,24 +35,15 @@ export default function ViewSawanih({ open, onClose, report }) {
 
   const isSawanih = report?.isSawanih === true;
 
-  const formatFileSize = (bytes) => {
-    if (!bytes) return "نامعلوم";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
   const handleViewFile = async (fileName) => {
-    let loadingToast = toast.loading("⏳ فایل تیاریږي...", {
-      style: { textAlign: "right", direction: "rtl" },
-    });
+    let loadingToast = null;
 
     try {
-      const response = await api.get(
-        `/sawanih/download/${encodeURIComponent(fileName)}`,
-        { responseType: "blob" },
-      );
+      loadingToast = toast.loading("⏳ فایل تیاریږي...", {
+        style: { textAlign: "right", direction: "rtl" },
+      });
 
+      const response = await downloadFile(fileName);
       toast.dismiss(loadingToast);
 
       const contentType =
@@ -82,26 +73,24 @@ export default function ViewSawanih({ open, onClose, report }) {
 
       setTimeout(() => URL.revokeObjectURL(url), 90000);
     } catch (error) {
-      toast.dismiss(loadingToast);
+      if (loadingToast) toast.dismiss(loadingToast);
+      console.error("File view failed:", error);
 
-      let message = "د فایل لیدلو کې ستونزه رامنځته شوه";
-
-      if (error.response) {
-        const { status, data } = error.response;
-        if (status === 404) {
-          message = data?.message || "فایل په سرور کې نشته";
-        } else if (status === 401 || status === 403) {
-          message = "تاسو د دې فایل لیدلو اجازه نه لرئ";
-        } else if (status === 500) {
-          message = "سروري ستونزه – مهرباني وکړئ بیا هڅه وکړئ";
-        }
+      if (error.response?.status === 404) {
+        toast.error("فایل په سرور کې نشته یا حذف شوی دی", { duration: 5000 });
+      } else {
+        toast.error("د فایل لیدلو پر مهال ستونزه رامنځته شوه", {
+          duration: 4000,
+        });
       }
-
-      toast.error(message, {
-        duration: 6000,
-        style: { textAlign: "right", direction: "rtl", whiteSpace: "pre-line" },
-      });
     }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "نامعلوم";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
   return (
@@ -112,6 +101,7 @@ export default function ViewSawanih({ open, onClose, report }) {
       fullWidth
       PaperProps={{ sx: { borderRadius: 2 } }}
     >
+      {/* Title */}
       <DialogTitle
         sx={{
           display: "flex",
@@ -123,18 +113,17 @@ export default function ViewSawanih({ open, onClose, report }) {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="h5" fontWeight="bold">
-            {texts.viewTitle || "د سوانح تفصیلات"}
+            {isSawanih ? "د سوانح تفصیلات" : "د استخدام تفصیلات"}
           </Typography>
+
           <Chip
             label={isSawanih ? "سوانح" : "استخدام"}
-            size="medium"
-            sx={{
-              fontWeight: 600,
-              bgcolor: isSawanih ? "warning.main" : "primary.main",
-              color: "white",
-              px: 1.5,
-            }}
+            size="small"
+            color={isSawanih ? "warning" : "primary"}
+            variant="outlined"
+            sx={{ fontWeight: 600 }}
           />
+
           <Chip
             label={`ID: ${report.id}`}
             size="small"
@@ -150,7 +139,7 @@ export default function ViewSawanih({ open, onClose, report }) {
 
       <DialogContent dividers sx={{ py: 4, px: 4 }}>
         <Grid container spacing={3}>
-          {/* Main Info */}
+          {/* Row 1 */}
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
@@ -173,28 +162,34 @@ export default function ViewSawanih({ open, onClose, report }) {
             </Box>
           </Grid>
 
+          {/* Row 2 */}
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                قید وارده
+                {texts.org || "اداره / څانګه"}
               </Typography>
-              <Typography variant="body1">
-                {report.qaidWarida || "—"}
-              </Typography>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Box>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
-                {texts.org || "اداره"}
-              </Typography>
-              <Typography variant="h6" fontWeight={600}>
+              <Typography variant="body1" fontWeight={500}>
                 {report.org?.name || "—"}
               </Typography>
             </Box>
           </Grid>
 
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.pageQuantity || "تعداد صفحات"}
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {isSawanih
+                  ? "—"
+                  : report.pageQuantity
+                    ? convertToPersianNumbers(report.pageQuantity)
+                    : "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Dates */}
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
@@ -217,45 +212,34 @@ export default function ViewSawanih({ open, onClose, report }) {
             </Box>
           </Grid>
 
-          {!isSawanih && (
-            <Grid item xs={12} sm={6}>
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  {texts.pageQuantity || "تعداد صفحات"}
-                </Typography>
-                <Typography variant="body1">
-                  {report.pageQuantity
-                    ? convertToPersianNumbers(report.pageQuantity)
-                    : "—"}
-                </Typography>
-              </Box>
-            </Grid>
-          )}
-
-          <Grid item xs={12}>
-            <Box>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
-                {texts.description || "ملاحظات"}
-              </Typography>
-              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
-                {report.description || "—"}
-              </Typography>
-            </Box>
-          </Grid>
-
-          {/* Files Section */}
-          <Grid item xs={12} sx={{ mt: 4 }}>
+          {/* Description */}
+          <Grid item xs={12} sx={{ mt: 2 }}>
             <Typography
               variant="subtitle1"
               fontWeight="bold"
               color="primary.main"
               gutterBottom
             >
-              {texts.viewFiles || "ضمیمه شوي فایلونه"}{" "}
+              {texts.description || "ملاحظات / توضیحات"}
+            </Typography>
+            <Card variant="outlined" sx={{ bgcolor: "grey.50" }}>
+              <CardContent sx={{ whiteSpace: "pre-wrap", py: 2 }}>
+                <Typography variant="body1">
+                  {report.description || "هیڅ ملاحظات ثبت شوي نه دي"}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Files Section */}
+          <Grid item xs={12} sx={{ mt: 3 }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight="bold"
+              color="primary.main"
+              gutterBottom
+            >
+              ضمیمه شوي اسناد{" "}
               {report.files?.length ? `(${report.files.length})` : ""}
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -267,11 +251,11 @@ export default function ViewSawanih({ open, onClose, report }) {
                     key={index}
                     variant="outlined"
                     sx={{
+                      transition: "all 0.2s",
                       "&:hover": {
                         borderColor: "primary.main",
                         bgcolor: "action.hover",
                       },
-                      transition: "all 0.2s",
                     }}
                   >
                     <CardContent
@@ -319,13 +303,9 @@ export default function ViewSawanih({ open, onClose, report }) {
               <Alert
                 severity="info"
                 icon={<FolderOffIcon />}
-                sx={{
-                  bgcolor: "info.lighter",
-                  border: "1px solid",
-                  borderColor: "info.main",
-                }}
+                sx={{ bgcolor: "info.lighter" }}
               >
-                هیڅ ضمیمه شوی فایل نشته
+                هیڅ ضمیمه شوی سند نشته
               </Alert>
             )}
           </Grid>
@@ -333,17 +313,7 @@ export default function ViewSawanih({ open, onClose, report }) {
       </DialogContent>
 
       <DialogActions sx={{ px: 4, py: 2.5 }}>
-        <Button
-          variant="contained"
-          onClick={onClose}
-          sx={{
-            minWidth: 120,
-            bgcolor: isSawanih ? "primary.main" : "success.main",
-            "&:hover": {
-              bgcolor: isSawanih ? "success.dark" : "primary.dark",
-            },
-          }}
-        >
+        <Button variant="contained" onClick={onClose} sx={{ minWidth: 120 }}>
           {texts.close || "بندول"}
         </Button>
       </DialogActions>

@@ -1,7 +1,10 @@
 {
+  "viewOutgoing": "د صادره اسنادو لیدل",
+  "viewIncoming": "د وارده اسنادو لیدل",
   "page": {
     "title": "د وارده او صادره کتاب",
-    "newRecord": "نوی ثبت"
+    "newRecord": "نوی ثبت",
+    "recordTypeForDirection": "د ریکارد ډول"
   },
   "table": {
     "headers": {
@@ -20,8 +23,8 @@
   "filter": {
     "recordType": "د سند ډول",
     "all": "ټول",
-    "hifziya": "حفظیه",
-    "makhzan": "مخزن",
+    "incomming": "وارده",
+    "outgoing": " صادره",
     "bookNumber": "د کتاب شمېره",
     "province": "ولایت",
     "district": "ولسوالي"

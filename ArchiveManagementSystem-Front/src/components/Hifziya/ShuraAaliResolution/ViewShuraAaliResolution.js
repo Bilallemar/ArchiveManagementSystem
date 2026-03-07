@@ -1,106 +1,175 @@
-import React from "react";
+import CloseIcon from "@mui/icons-material/Close";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Typography,
-  Divider,
   Box,
   Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import getShuraAaliResolutionTexts from "../../../helpers/hifziya/ShuraAaliResolutionTexts";
+import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 
 export default function ViewShuraAaliResolution({ open, onClose, resolution }) {
   const { t } = useTranslation("shuraAali");
   const texts = getShuraAaliResolutionTexts(t);
+const isMosawaba = resolution?.direction === "MOSAWABA";
 
+  const pageTitle = isMosawaba
+    ? texts.viewMosawaba || "لیدل مصوبه"
+    : texts.viewYadasht  || "لیدل یاداشت";
   if (!resolution) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{texts.viewResolution}</DialogTitle>
-      <DialogContent dividers>
-        <Box sx={{ display: "grid", gap: 2.5, py: 1 }}>
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.id}:
-            </Typography>
-            <Typography variant="body1">{resolution.id}</Typography>
-          </Box>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 2 } }}
+    >
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
 
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.sendDate}:
-            </Typography>
-            <Typography variant="body1">
-              {resolution.sendDate || "—"}
-            </Typography>
-          </Box>
-
-          <Divider />
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.subject}:
-            </Typography>
-            <Typography variant="body1" fontWeight={500}>
-              {resolution.subject || "—"}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.senderRef}:
-            </Typography>
-            <Typography>{resolution.senderReference || "—"}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.title}:
-            </Typography>
-            <Typography>{resolution.title || "—"}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.type}:
-            </Typography>
-            <Typography>{resolution.resolutionType || "—"}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.letterNo}:
-            </Typography>
-            <Typography>{resolution.letterNumber || "—"}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.year}:
-            </Typography>
-            <Typography>{resolution.approvalYear || "—"}</Typography>
-          </Box>
-
-          <Divider />
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {texts.remarks}:
-            </Typography>
-            <Typography sx={{ whiteSpace: "pre-wrap" }}>
-              {resolution.remarks || "—"}
-            </Typography>
-          </Box>
+          pb: 2,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="h5" fontWeight="bold">
+            {pageTitle}
+          </Typography>
+          {/* <Chip
+            label={isSawanih ? "سوانح" : "استخدام"}
+            size="medium"
+            sx={{
+              fontWeight: 600,
+              bgcolor: isSawanih ? "warning.main" : "primary.main",
+              color: "white",
+              px: 1.5,
+            }}
+          /> */}
+          <Chip
+            label={`ID: ${resolution.id}`}
+            size="small"
+            color="default"
+            variant="outlined"
+          />
         </Box>
+
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ py: 4, px: 4 }}>
+        <Grid container spacing={3}>
+          {/* Main Info */}
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.sendDate}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {formatHijriDateForDisplay(resolution.sendDate) || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.senderRef}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {resolution.senderReference || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.subject}
+              </Typography>
+              <Typography variant="body1">
+                {resolution.subject || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.title}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {resolution.title || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.type}
+              </Typography>
+              <Typography variant="body1">
+                {resolution.resolutionType || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.letterNo}
+              </Typography>
+              <Typography variant="body1">
+                {resolution.letterNumber || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.year}
+              </Typography>
+              <Typography variant="body1">
+                {resolution.approvalYear || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.remarks}
+              </Typography>
+              <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
+                {resolution.remarks || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Files Section */}
+        </Grid>
       </DialogContent>
-      <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end" }}>
-        <Button onClick={onClose} variant="contained">
-          {texts.close}
+
+      <DialogActions sx={{ px: 4, py: 2.5 }}>
+        <Button variant="contained" onClick={onClose}>
+          {texts.close || "بندول"}
         </Button>
-      </Box>
+      </DialogActions>
     </Dialog>
   );
 }

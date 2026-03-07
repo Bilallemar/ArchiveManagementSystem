@@ -271,9 +271,9 @@ export default function AddHifziyaWaradaSadera() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 2, maxWidth: 1400, mx: "auto" }}>
       {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/hifziya-warada-sadera")}
@@ -285,49 +285,49 @@ export default function AddHifziyaWaradaSadera() {
           {pageTitle}
         </Typography>
         {/* ✅ Badge showing وارده or صادره */}
-        <Box
-          sx={{
-            display: "inline-block",
-            px: 2,
-            py: 0.4,
-            borderRadius: "999px",
-            fontSize: "0.9rem",
-            fontWeight: 600,
-            backgroundColor: direction === "INCOMING" ? "#4CAF50" : "#2196F3",
-            color: "white",
-          }}
-        >
-          {direction === "INCOMING" ? "Incoming (وارده)" : "Outgoing (صادره)"}
-        </Box>
       </Box>
 
-      <Card sx={{ maxWidth: 1200, mx: "auto" }}>
-        <CardContent sx={{ p: 4 }}>
+      <Card elevation={3} sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ p: { xs: 3, md: 5 } }}>
           <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  {text.recordTypeForDirection}:{" "}
+                  <strong>
+                    {direction === "INCOMING"
+                      ? text.incomming || "incoming (وارده)"
+                      : text.outgoing || "outgoing (صادره)"}
+                  </strong>
+                </Typography>
+              </Grid>
               {/* LEFT SIDE - Scanner / File Upload */}
               <Grid item xs={12} md={4}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                   <Card
-                    variant="outlined"
+          variant="outlined"
                     sx={{
-                      bgcolor:
-                        detectedFiles.length > 0
-                          ? "success.lighter"
-                          : "background.neutral",
-                      borderColor:
-                        detectedFiles.length > 0 ? "success.main" : "divider",
                       borderWidth: 2,
+                      borderColor: detectedFiles.length
+                        ? "success.main"
+                        : "divider",
+                      bgcolor: detectedFiles.length
+                        ? "success.lighter"
+                        : "background.paper",
                     }}
                   >
-                    <CardContent sx={{ textAlign: "center", py: 3 }}>
+                    <CardContent sx={{ textAlign: "center", py: 4 }}>
                       <Badge
                         badgeContent={detectedFiles.length}
                         color="success"
                         sx={{ mb: 2 }}
                       >
                         <FolderIcon
-                          sx={{ fontSize: 50, color: "primary.main" }}
+                          sx={{ fontSize: 60, color: "primary.main" }}
                         />
                       </Badge>
                       <Typography variant="h6" gutterBottom>
@@ -336,7 +336,7 @@ export default function AddHifziyaWaradaSadera() {
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mb: 2 }}
+                        sx={{ mb: 3 }}
                       >
                         {detectedFiles.length > 0
                           ? `${detectedFiles.length} ${text.existingFiles || "files found"}`
@@ -348,11 +348,11 @@ export default function AddHifziyaWaradaSadera() {
                         startIcon={<ScannerIcon />}
                         onClick={handleScan}
                         disabled={isScanning}
-                        sx={{ mb: 1 }}
+                        sx={{ mb: 2 }}
                       >
                         {isScanning ? (
                           <>
-                            <CircularProgress size={16} sx={{ mr: 1 }} />
+                            <CircularProgress size={20} sx={{ mr: 1 }} />
                             {text.scanning || "Scanning..."}
                           </>
                         ) : (
@@ -384,7 +384,7 @@ export default function AddHifziyaWaradaSadera() {
                       >
                         {text.detectedFiles || "Detected Files"}
                       </Typography>
-                      <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
+                      <Box sx={{ maxHeight: 180, overflowY: "auto" }}>
                         <Stack spacing={0.5}>
                           {detectedFiles.map((file, index) => (
                             <Chip
@@ -412,7 +412,6 @@ export default function AddHifziyaWaradaSadera() {
                       variant="outlined"
                       component="label"
                       fullWidth
-                      size="small"
                       startIcon={<AttachFileIcon />}
                     >
                       {text.manualUpload || "Manual Upload"}
@@ -448,7 +447,7 @@ export default function AddHifziyaWaradaSadera() {
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Box>
-                      <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
+                      <Box sx={{ maxHeight: 180, overflowY: "auto" }}>
                         <Stack spacing={0.5}>
                           {formData.files.map((file, index) => (
                             <Chip
@@ -481,7 +480,7 @@ export default function AddHifziyaWaradaSadera() {
 
               {/* RIGHT SIDE - Form Fields */}
               <Grid item xs={12} md={8}>
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
@@ -492,9 +491,6 @@ export default function AddHifziyaWaradaSadera() {
                       onChange={handleInputChange}
                       required
                       error={!formData.no}
-                      helperText={
-                        !formData.no ? text.required || "Required" : ""
-                      }
                     />
                   </Grid>
 
@@ -596,11 +592,15 @@ export default function AddHifziyaWaradaSadera() {
                       fullWidth
                       size="small"
                       multiline
-                      rows={4}
                       label={text.description || "ملاحظات"}
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          height: 100,
+                        },
+                      }}
                     />
                   </Grid>
 
@@ -655,671 +655,3 @@ export default function AddHifziyaWaradaSadera() {
     </Box>
   );
 }
-
-// import React, { useState, useEffect } from "react";
-// import {
-//   TextField,
-//   Box,
-//   Grid,
-//   Button,
-//   CircularProgress,
-//   FormControl,
-//   InputLabel,
-//   Select,
-//   MenuItem,
-//   Typography,
-//   Card,
-//   CardContent,
-//   Stack,
-//   Chip,
-//   IconButton,
-//   Alert,
-//   Badge,
-// } from "@mui/material";
-// import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
-// import { useNavigate, useLocation } from "react-router-dom";
-// import { toast } from "react-hot-toast";
-// import { createHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
-// import SaveIcon from "@mui/icons-material/Save";
-// import AttachFileIcon from "@mui/icons-material/AttachFile";
-// import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-// import DeleteIcon from "@mui/icons-material/Delete";
-// import ScannerIcon from "@mui/icons-material/Scanner";
-// import FolderIcon from "@mui/icons-material/Folder";
-// import api from "../../../services/api";
-// import getHifziyaWaradaSaderaTexts from "../../../helpers/hifziya/waradaSadera/waradaSaderaListTexts";
-// import { useTranslation } from "react-i18next";
-
-// export default function AddHifziyaWaradaSadera() {
-//   const { t } = useTranslation("hifziyaWaradaSadera");
-//   const text = getHifziyaWaradaSaderaTexts(t);
-//   const navigate = useNavigate();
-//   const location = useLocation();
-
-//   // ✅ Read isIncoming from URL param (true or false)
-//   const searchParams = new URLSearchParams(location.search);
-//   const isIncoming = searchParams.get("isIncoming") !== "false"; // default true
-//   const isWaredaFormUrl = !isIncoming;
-
-//   // ✅ Updated formData based on isIncoming
-//   const [formData, setFormData] = useState({
-//     no: "",
-//     org: "",
-//     letterNumber: "",
-//     incommingDate: "",
-//     outgoingDate: "", // Will be used only for صادره (outgoing)
-//     summary: "",
-//     docTypeId: "", // ✅ Optional for both incoming and outgoing
-//     description: "",
-//     files: [],
-//   });
-
-//   const [orgs, setOrgs] = useState([]);
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [scannerFolderPath, setScannerFolderPath] = useState("");
-//   const [detectedFiles, setDetectedFiles] = useState([]);
-//   const [isScanning, setIsScanning] = useState(false);
-//   const [docTypes, setDocTypes] = useState([]);
-
-//   useEffect(() => {
-//     const loadData = async () => {
-//       try {
-//         const [orgsRes, docTypesRes, scannerPathRes] = await Promise.all([
-//           api.get("/org"),
-//           api.get("/doc-type/active"),
-//           api.get("/scanner-folder/path").catch(() => ({ data: { path: "" } })),
-//         ]);
-//         setOrgs(orgsRes.data || []);
-//         setDocTypes(docTypesRes.data || []);
-//         setScannerFolderPath(scannerPathRes.data.path || "");
-//       } catch (error) {
-//         console.error("Failed to load data", error);
-//         toast.error(text.loadError || "Error loading data");
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-//     loadData();
-//   }, [text.loadError]);
-
-//   const handleInputChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormData((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleScan = async () => {
-//     try {
-//       setIsScanning(true);
-//       const response = await api.get("/scanner-folder/files");
-//       setDetectedFiles(response.data || []);
-//       if (response.data.length === 0) {
-//         toast.info(text.noFilesInScanner || "No files found in scanner folder");
-//       } else {
-//         toast.success(
-//           `${response.data.length} ${text.filesDetected || "files detected"}`,
-//         );
-//       }
-//     } catch (error) {
-//       console.error("Failed to scan folder", error);
-//       toast.error(text.scanError || "Error scanning folder");
-//     } finally {
-//       setIsScanning(false);
-//     }
-//   };
-
-//   const handleLoadFromScanner = async () => {
-//     if (detectedFiles.length === 0) {
-//       toast.error(text.noFilesToLoad || "No files to load");
-//       return;
-//     }
-//     try {
-//       const filePromises = detectedFiles.map(async (fileInfo) => {
-//         const response = await api.get(
-//           `/scanner-folder/files/${fileInfo.name}/download`,
-//           { responseType: "blob" },
-//         );
-//         return new File([response.data], fileInfo.name, {
-//           type: response.headers["content-type"] || "application/octet-stream",
-//         });
-//       });
-//       const files = await Promise.all(filePromises);
-//       setFormData((prev) => ({ ...prev, files: [...prev.files, ...files] }));
-//       setDetectedFiles([]);
-//       toast.success(
-//         `${files.length} ${text.filesLoadedSuccessfully || "files loaded"}`,
-//       );
-//     } catch (error) {
-//       console.error("Failed to load files from scanner", error);
-//       toast.error(text.loadFromScannerError || "Error loading files");
-//     }
-//   };
-
-//   const handleFileChange = (e) => {
-//     const selectedFiles = Array.from(e.target.files);
-//     setFormData((prev) => ({
-//       ...prev,
-//       files: [...prev.files, ...selectedFiles],
-//     }));
-//   };
-
-//   const handleRemoveFile = (index) =>
-//     setFormData((prev) => ({
-//       ...prev,
-//       files: prev.files.filter((_, i) => i !== index),
-//     }));
-//   const handleRemoveAllFiles = () =>
-//     setFormData((prev) => ({ ...prev, files: [] }));
-//   const pageTitle = isWaredaFormUrl
-//     ? text.newSadera || "نوی صادره"
-//     : text.newWareda || "نوې وارده";
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setIsSubmitting(true);
-
-//     // ✅ Validation
-//     if (!formData.no.trim()) {
-//       toast.error(text.missingFields || "Number is required");
-//       setIsSubmitting(false);
-//       return;
-//     }
-//     if (!formData.org) {
-//       toast.error(text.missingFields || "Organization is required");
-//       setIsSubmitting(false);
-//       return;
-//     }
-
-//     try {
-//       const formDataToSend = new FormData();
-
-//       // ✅ Build payload - matching the working structure from yesterday
-//       const payload = {
-//         no: formData.no.trim(),
-//         org: { id: parseInt(formData.org) },
-//         letterNumber: formData.letterNumber.trim() || null,
-//         incommingDate: formData.incommingDate || null,
-//         summary: formData.summary.trim() || null,
-//         description: formData.description.trim() || null,
-//         isIncoming: isIncoming,
-//       };
-
-//       // ✅ Add outgoingDate only for صادره (outgoing)
-//       if (!isIncoming && formData.outgoingDate) {
-//         payload.outgoingDate = formData.outgoingDate;
-//       }
-
-//       // ✅ Add docType only if selected (avoid sending null or empty)
-//       if (formData.docTypeId && formData.docTypeId !== "") {
-//         payload.docType = { id: parseInt(formData.docTypeId) };
-//       }
-
-//       // 🐛 DEBUG: Log the payload being sent
-//       console.log("=== PAYLOAD BEING SENT ===");
-//       console.log(JSON.stringify(payload, null, 2));
-//       console.log("=========================");
-
-//       formDataToSend.append("hifziyaWaradaSadera", JSON.stringify(payload));
-
-//       // Add files if any
-//       if (formData.files.length > 0) {
-//         formData.files.forEach((file) => {
-//           formDataToSend.append("fileURL", file);
-//         });
-//         console.log(`📎 Attaching ${formData.files.length} file(s)`);
-//       }
-
-//       // 🐛 DEBUG: Log FormData contents
-//       console.log("=== FORMDATA CONTENTS ===");
-//       for (let pair of formDataToSend.entries()) {
-//         if (pair[0] === "hifziyaWaradaSadera") {
-//           console.log(pair[0] + ": " + pair[1]);
-//         } else {
-//           console.log(pair[0] + ": [File: " + pair[1].name + "]");
-//         }
-//       }
-//       console.log("========================");
-
-//       const response = await createHifziyaWaradaSadera(formDataToSend);
-
-//       console.log("✅ Success response:", response);
-//       toast.success(
-//         text.recordCreatedSuccessfully || "Record created successfully",
-//       );
-//       navigate("/hifziya-warada-sadera");
-//     } catch (error) {
-//       console.error("❌ Full error object:", error);
-//       console.error("❌ Error response:", error.response);
-//       console.error("❌ Error config:", error.config);
-
-//       // Better error message
-//       let errorMessage = "Failed to create record";
-//       if (error.response) {
-//         errorMessage = `HTTP ${error.response.status}: ${error.response.data?.message || error.response.statusText || "Unknown error"}`;
-//       } else if (error.request) {
-//         errorMessage = "No response from server";
-//       } else {
-//         errorMessage = error.message;
-//       }
-
-//       toast.error(errorMessage);
-//     } finally {
-//       setIsSubmitting(false);
-//     }
-//   };
-
-//   if (isLoading) {
-//     return (
-//       <Box
-//         sx={{
-//           display: "flex",
-//           justifyContent: "center",
-//           alignItems: "center",
-//           minHeight: "400px",
-//         }}
-//       >
-//         <CircularProgress />
-//       </Box>
-//     );
-//   }
-
-//   return (
-//     <Box sx={{ p: 3 }}>
-//       {/* Header */}
-//       <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
-//         <Button
-//           startIcon={<ArrowBackIcon />}
-//           onClick={() => navigate("/hifziya-warada-sadera")}
-//           sx={{ color: "text.secondary" }}
-//         >
-//           {text.backToList || "Back"}
-//         </Button>
-//         <Typography variant="h4" fontWeight="bold">
-//           {pageTitle}
-//         </Typography>
-//         {/* ✅ Badge showing وارده or صادره */}
-//         <Box
-//           sx={{
-//             display: "inline-block",
-//             px: 2,
-//             py: 0.4,
-//             borderRadius: "999px",
-//             fontSize: "0.9rem",
-//             fontWeight: 600,
-//             backgroundColor: isIncoming ? "#4CAF50" : "#2196F3",
-//             color: "white",
-//           }}
-//         >
-//           {isIncoming ? "وارده" : "صادره"}
-//         </Box>
-//       </Box>
-
-//       <Card sx={{ maxWidth: 1200, mx: "auto" }}>
-//         <CardContent sx={{ p: 4 }}>
-//           <Box component="form" onSubmit={handleSubmit}>
-//             <Grid container spacing={3}>
-//               {/* LEFT SIDE - Scanner / File Upload */}
-//               <Grid item xs={12} md={4}>
-//                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-//                   <Card
-//                     variant="outlined"
-//                     sx={{
-//                       bgcolor:
-//                         detectedFiles.length > 0
-//                           ? "success.lighter"
-//                           : "background.neutral",
-//                       borderColor:
-//                         detectedFiles.length > 0 ? "success.main" : "divider",
-//                       borderWidth: 2,
-//                     }}
-//                   >
-//                     <CardContent sx={{ textAlign: "center", py: 3 }}>
-//                       <Badge
-//                         badgeContent={detectedFiles.length}
-//                         color="success"
-//                         sx={{ mb: 2 }}
-//                       >
-//                         <FolderIcon
-//                           sx={{ fontSize: 50, color: "primary.main" }}
-//                         />
-//                       </Badge>
-//                       <Typography variant="h6" gutterBottom>
-//                         {text.scannerFolderTitle || "Scanner Status"}
-//                       </Typography>
-//                       <Typography
-//                         variant="body2"
-//                         color="text.secondary"
-//                         sx={{ mb: 2 }}
-//                       >
-//                         {detectedFiles.length > 0
-//                           ? `${detectedFiles.length} ${text.existingFiles || "files found"}`
-//                           : text.scanButtonInfo || "Click scan to detect files"}
-//                       </Typography>
-//                       <Button
-//                         variant="outlined"
-//                         fullWidth
-//                         startIcon={<ScannerIcon />}
-//                         onClick={handleScan}
-//                         disabled={isScanning}
-//                         sx={{ mb: 1 }}
-//                       >
-//                         {isScanning ? (
-//                           <>
-//                             <CircularProgress size={16} sx={{ mr: 1 }} />
-//                             {text.scanning || "Scanning..."}
-//                           </>
-//                         ) : (
-//                           text.scan || "Scan"
-//                         )}
-//                       </Button>
-//                       <Button
-//                         variant="contained"
-//                         fullWidth
-//                         startIcon={<AttachFileIcon />}
-//                         onClick={handleLoadFromScanner}
-//                         disabled={detectedFiles.length === 0}
-//                         sx={{
-//                           bgcolor: "#4CAF50",
-//                           "&:hover": { bgcolor: "#45a049" },
-//                         }}
-//                       >
-//                         {text.loadFiles || "Load Files"}
-//                       </Button>
-//                     </CardContent>
-//                   </Card>
-
-//                   {detectedFiles.length > 0 && (
-//                     <Box>
-//                       <Typography
-//                         variant="subtitle2"
-//                         fontWeight="bold"
-//                         sx={{ mb: 1 }}
-//                       >
-//                         {text.detectedFiles || "Detected Files"}
-//                       </Typography>
-//                       <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
-//                         <Stack spacing={0.5}>
-//                           {detectedFiles.map((file, index) => (
-//                             <Chip
-//                               key={index}
-//                               label={file.name}
-//                               size="small"
-//                               icon={<AttachFileIcon />}
-//                               sx={{
-//                                 justifyContent: "flex-start",
-//                                 "& .MuiChip-label": {
-//                                   overflow: "hidden",
-//                                   textOverflow: "ellipsis",
-//                                   whiteSpace: "nowrap",
-//                                 },
-//                               }}
-//                             />
-//                           ))}
-//                         </Stack>
-//                       </Box>
-//                     </Box>
-//                   )}
-
-//                   <Box>
-//                     <Button
-//                       variant="outlined"
-//                       component="label"
-//                       fullWidth
-//                       size="small"
-//                       startIcon={<AttachFileIcon />}
-//                     >
-//                       {text.manualUpload || "Manual Upload"}
-//                       <input
-//                         type="file"
-//                         hidden
-//                         multiple
-//                         onChange={handleFileChange}
-//                         accept="image/*,.pdf,.doc,.docx"
-//                       />
-//                     </Button>
-//                   </Box>
-
-//                   {formData.files.length > 0 && (
-//                     <Box>
-//                       <Box
-//                         sx={{
-//                           display: "flex",
-//                           justifyContent: "space-between",
-//                           alignItems: "center",
-//                           mb: 1,
-//                         }}
-//                       >
-//                         <Typography variant="subtitle2" fontWeight="bold">
-//                           {text.readyToUpload || "Ready to Upload"} (
-//                           {formData.files.length})
-//                         </Typography>
-//                         <IconButton
-//                           size="small"
-//                           color="error"
-//                           onClick={handleRemoveAllFiles}
-//                         >
-//                           <DeleteIcon fontSize="small" />
-//                         </IconButton>
-//                       </Box>
-//                       <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
-//                         <Stack spacing={0.5}>
-//                           {formData.files.map((file, index) => (
-//                             <Chip
-//                               key={index}
-//                               label={file.name}
-//                               onDelete={() => handleRemoveFile(index)}
-//                               size="small"
-//                               sx={{
-//                                 backgroundColor: "#2196F3",
-//                                 color: "#ffffff",
-//                                 "& .MuiChip-deleteIcon": {
-//                                   color: "#ffffff",
-//                                   "&:hover": { color: "#ffffff" },
-//                                 },
-//                                 "& .MuiChip-label": {
-//                                   overflow: "hidden",
-//                                   textOverflow: "ellipsis",
-//                                   whiteSpace: "nowrap",
-//                                   maxWidth: 150,
-//                                 },
-//                               }}
-//                             />
-//                           ))}
-//                         </Stack>
-//                       </Box>
-//                     </Box>
-//                   )}
-//                 </Box>
-//               </Grid>
-
-//               {/* RIGHT SIDE - Form Fields */}
-//               <Grid item xs={12} md={8}>
-//                 <Grid container spacing={3}>
-//                   <Grid item xs={12} md={6}>
-//                     <TextField
-//                       fullWidth
-//                       size="small"
-//                       label={text.no || "شمېره"}
-//                       name="no"
-//                       value={formData.no}
-//                       onChange={handleInputChange}
-//                       required
-//                       error={!formData.no}
-//                       helperText={
-//                         !formData.no ? text.required || "Required" : ""
-//                       }
-//                     />
-//                   </Grid>
-
-//                   <Grid item xs={12} md={6}>
-//                     <FormControl
-//                       fullWidth
-//                       size="small"
-//                       required
-//                       error={!formData.org}
-//                     >
-//                       <InputLabel>{text.org || "اداره"}</InputLabel>
-//                       <Select
-//                         name="org"
-//                         value={formData.org}
-//                         onChange={handleInputChange}
-//                         label={text.org || "اداره"}
-//                       >
-//                         {orgs.length === 0 ? (
-//                           <MenuItem disabled>
-//                             {text.loading || "Loading..."}
-//                           </MenuItem>
-//                         ) : (
-//                           orgs.map((org) => (
-//                             <MenuItem key={org.id} value={org.id}>
-//                               {org.name}
-//                             </MenuItem>
-//                           ))
-//                         )}
-//                       </Select>
-//                     </FormControl>
-//                   </Grid>
-
-//                   <Grid item xs={12} md={6}>
-//                     <TextField
-//                       fullWidth
-//                       size="small"
-//                       label={text.letterNumber || "شمېره مکتوب"}
-//                       name="letterNumber"
-//                       value={formData.letterNumber}
-//                       onChange={handleInputChange}
-//                     />
-//                   </Grid>
-
-//                   {/* ✅ Document Type - Optional for both incoming and outgoing */}
-//                   <Grid item xs={12} md={6}>
-//                     <FormControl fullWidth size="small">
-//                       <InputLabel>
-//                         {text.headerDocType || "د اسنادو ډول"}
-//                       </InputLabel>
-//                       <Select
-//                         name="docTypeId"
-//                         value={formData.docTypeId}
-//                         onChange={handleInputChange}
-//                         label={text.docType || "د اسنادو ډول"}
-//                       >
-//                         <MenuItem value="">
-//                           <em>{text.selectDocType || "انتخاب کړئ"}</em>
-//                         </MenuItem>
-//                         {docTypes.length === 0 ? (
-//                           <MenuItem disabled>
-//                             {text.loading || "Loading..."}
-//                           </MenuItem>
-//                         ) : (
-//                           docTypes.map((dt) => (
-//                             <MenuItem key={dt.id} value={dt.id}>
-//                               {dt.name}
-//                             </MenuItem>
-//                           ))
-//                         )}
-//                       </Select>
-//                     </FormControl>
-//                   </Grid>
-
-//                   {/* ✅ Incoming Date - Always shown */}
-//                   <Grid item xs={12} md={6}>
-//                     <TextField
-//                       fullWidth
-//                       size="small"
-//                       type="date"
-//                       name="incommingDate"
-//                       label={text.incommingDate || "تاریخ وارده"}
-//                       InputLabelProps={{ shrink: true }}
-//                       value={formData.incommingDate}
-//                       onChange={handleInputChange}
-//                     />
-//                   </Grid>
-
-//                   {/* ✅ Outgoing Date - Only for صادره (outgoing) */}
-//                   {!isIncoming && (
-//                     <Grid item xs={12} md={6}>
-//                       <TextField
-//                         fullWidth
-//                         size="small"
-//                         type="date"
-//                         name="outgoingDate"
-//                         label={text.outgoingDate || "تاریخ صادره"}
-//                         InputLabelProps={{ shrink: true }}
-//                         value={formData.outgoingDate}
-//                         onChange={handleInputChange}
-//                       />
-//                     </Grid>
-//                   )}
-
-//                   <Grid item xs={12} md={6}>
-//                     <TextField
-//                       fullWidth
-//                       size="small"
-//                       label={text.summary || "لنډیز"}
-//                       name="summary"
-//                       value={formData.summary}
-//                       onChange={handleInputChange}
-//                     />
-//                   </Grid>
-
-//                   <Grid item xs={12}>
-//                     <TextField
-//                       fullWidth
-//                       size="small"
-//                       multiline
-//                       rows={4}
-//                       label={text.description || "ملاحظات"}
-//                       name="description"
-//                       value={formData.description}
-//                       onChange={handleInputChange}
-//                     />
-//                   </Grid>
-
-//                   <Grid item xs={12}>
-//                     <Box
-//                       sx={{
-//                         display: "flex",
-//                         gap: 2,
-//                         justifyContent: "flex-end",
-//                         mt: 2,
-//                       }}
-//                     >
-//                       <Button
-//                         variant="outlined"
-//                         onClick={() => navigate("/hifziya-warada-sadera")}
-//                         disabled={isSubmitting}
-//                       >
-//                         {text.cancel || "لغوه"}
-//                       </Button>
-//                       <Button
-//                         type="submit"
-//                         variant="contained"
-//                         endIcon={
-//                           isSubmitting ? (
-//                             <CircularProgress size={20} />
-//                           ) : (
-//                             <SaveIcon />
-//                           )
-//                         }
-//                         disabled={isSubmitting}
-//                         sx={{
-//                           bgcolor: isIncoming ? "#4CAF50" : "#2196F3",
-//                           "&:hover": {
-//                             bgcolor: isIncoming ? "#45a049" : "#1976D2",
-//                           },
-//                         }}
-//                       >
-//                         {isSubmitting
-//                           ? text.saving || "ذخیره کیږي..."
-//                           : text.save || "ذخیره"}
-//                       </Button>
-//                     </Box>
-//                   </Grid>
-//                 </Grid>
-//               </Grid>
-//             </Grid>
-//           </Box>
-//         </CardContent>
-//       </Card>
-//     </Box>
-//   );
-// }

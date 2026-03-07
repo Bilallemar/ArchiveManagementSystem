@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,10 +19,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.MCIT.ArchiveManagementSystem.dtos.MakhzanWaradaSaderaSummaryDTO;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakhzanWaradaSadera;
 import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
 import com.MCIT.ArchiveManagementSystem.services.FileService;
@@ -51,9 +54,23 @@ public class MakhzanWaradaSaderaController {
     }
 
     @GetMapping
-    public List<MakhzanWaradaSadera> getAll() {
+    public ResponseEntity<Page<MakhzanWaradaSaderaSummaryDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String direction,
+            @RequestParam(defaultValue = "org") String field,
+            @RequestParam(defaultValue = "") String term) {
+
         managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
-        return service.getAll();
+
+        // Build Management object from the constant ID
+        Management management = new Management();
+        management.setManagementId(MAKHZAN_MANAGEMENT_ID);
+
+        Page<MakhzanWaradaSaderaSummaryDTO> result = service.getAll(
+                management, direction, field, term, page, size);
+
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
@@ -77,7 +94,9 @@ public class MakhzanWaradaSaderaController {
         mapper.registerModule(new JavaTimeModule());
 
         MakhzanWaradaSadera entity = mapper.readValue(json, MakhzanWaradaSadera.class);
-
+        Management management = new Management();
+        management.setManagementId(MAKHZAN_MANAGEMENT_ID);
+        entity.setManagement(management);
         return service.create(entity, fileURL);
     }
 

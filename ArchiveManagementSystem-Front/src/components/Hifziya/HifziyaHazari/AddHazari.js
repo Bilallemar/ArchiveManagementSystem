@@ -1,5 +1,10 @@
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import DeleteIcon from "@mui/icons-material/Delete";
+import FolderIcon from "@mui/icons-material/Folder";
+import SaveIcon from "@mui/icons-material/Save";
+import ScannerIcon from "@mui/icons-material/Scanner";
 import {
-  Alert,
   Badge,
   Box,
   Button,
@@ -18,13 +23,6 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FolderIcon from "@mui/icons-material/Folder";
-import SaveIcon from "@mui/icons-material/Save";
-import ScannerIcon from "@mui/icons-material/Scanner";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -220,7 +218,7 @@ export default function AddHazari() {
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
+    <Box sx={{ p: 2, maxWidth: 1400, mx: "auto" }}>
       {/* Header */}
       <Box sx={{ mb: 4, display: "flex", alignItems: "center", gap: 2 }}>
         <Button
@@ -238,17 +236,26 @@ export default function AddHazari() {
         <PageBreadcrumbs />
       </Box> */}
       {/* Show current type as info (like direction in Archive) */}
-      <Alert severity="info" sx={{ mb: 4 }} icon={false}>
+      {/* <Alert severity="info" sx={{ mb: 4 }} icon={false}>
         <Typography variant="body1">
           <strong>{text.recordType || "ډول"}:</strong> {recordTypeLabel}
         </Typography>
-      </Alert>
+      </Alert> */}
 
       {/* Main Form */}
       <Card elevation={3} sx={{ borderRadius: 2 }}>
         <CardContent sx={{ p: { xs: 3, md: 5 } }}>
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={4}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  {text.recordType}: <strong>{recordTypeLabel}</strong>
+                </Typography>
+              </Grid>
               {/* LEFT: Scanner + Files */}
               <Grid item xs={12} md={4}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -426,7 +433,7 @@ export default function AddHazari() {
 
               {/* RIGHT: Form Fields */}
               <Grid item xs={12} md={8}>
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                   {/* Type */}
                   <Grid item xs={12} sm={6}>
                     <TextField
@@ -438,6 +445,8 @@ export default function AddHazari() {
                       onChange={handleInputChange}
                     />
                   </Grid>
+
+                  {/* Type */}
                   <Grid item xs={12} sm={6}>
                     <FormControl
                       fullWidth
@@ -446,23 +455,18 @@ export default function AddHazari() {
                       error={!formData.type}
                     >
                       <InputLabel>{text.type || "ډول"}</InputLabel>
+
                       <Select
                         name="type"
                         value={formData.type}
                         onChange={handleInputChange}
                         label={text.type || "ډول"}
                       >
-                        {types.length === 0 ? (
-                          <MenuItem disabled>
-                            {text.loading || "په بار کې دی..."}
+                        {types.map((type) => (
+                          <MenuItem key={type.id} value={type.id}>
+                            {type.name}
                           </MenuItem>
-                        ) : (
-                          types.map((type) => (
-                            <MenuItem key={type.id} value={type.id}>
-                              {type.name}
-                            </MenuItem>
-                          ))
-                        )}
+                        ))}
                       </Select>
                     </FormControl>
                   </Grid>
@@ -477,46 +481,20 @@ export default function AddHazari() {
                       disabled={!formData.type}
                     >
                       <InputLabel>{text.subType || "فرعي ډول"}</InputLabel>
+
                       <Select
                         name="subType"
                         value={formData.subType}
                         onChange={handleInputChange}
                         label={text.subType || "فرعي ډول"}
                       >
-                        {!formData.type ? (
-                          <MenuItem disabled>
-                            {text.selectTypeFirst || "لومړی ډول وټاکئ"}
+                        {subTypes.map((st) => (
+                          <MenuItem key={st.id} value={st.id}>
+                            {st.name}
                           </MenuItem>
-                        ) : subTypes.length === 0 ? (
-                          <MenuItem disabled>
-                            {text.loading || "په بار کې دی..."}
-                          </MenuItem>
-                        ) : (
-                          subTypes.map((st) => (
-                            <MenuItem key={st.id} value={st.id}>
-                              {st.name}
-                            </MenuItem>
-                          ))
-                        )}
+                        ))}
                       </Select>
                     </FormControl>
-                  </Grid>
-
-                  {/* Year */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      name="year"
-                      type="date"
-                      label={text.year || "کال"}
-                      InputLabelProps={{ shrink: true }}
-                      value={formData.year}
-                      onChange={handleInputChange}
-                      required
-                      error={!formData.year}
-                      helperText={!formData.year ? text.required || "اړین" : ""}
-                    />
                   </Grid>
 
                   {/* Organization */}
@@ -528,25 +506,34 @@ export default function AddHazari() {
                       error={!formData.org}
                     >
                       <InputLabel>{text.org || "اداره"}</InputLabel>
+
                       <Select
                         name="org"
                         value={formData.org}
                         onChange={handleInputChange}
                         label={text.org || "اداره"}
                       >
-                        {orgs.length === 0 ? (
-                          <MenuItem disabled>
-                            {text.loading || "په بار کې دی..."}
+                        {orgs.map((org) => (
+                          <MenuItem key={org.id} value={org.id}>
+                            {org.name}
                           </MenuItem>
-                        ) : (
-                          orgs.map((org) => (
-                            <MenuItem key={org.id} value={org.id}>
-                              {org.name}
-                            </MenuItem>
-                          ))
-                        )}
+                        ))}
                       </Select>
                     </FormControl>
+                  </Grid>
+
+                  {/* Year */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="year"
+                      type="number"
+                      label={text.year || "کال"}
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.year}
+                      onChange={handleInputChange}
+                    />
                   </Grid>
 
                   {/* Description */}
@@ -555,11 +542,16 @@ export default function AddHazari() {
                       fullWidth
                       size="small"
                       name="description"
-                      label={text.description || "توضیحات / ملاحظات"}
+                      label={text.description || "توضیحات"}
                       multiline
-                      rows={4}
                       value={formData.description}
                       onChange={handleInputChange}
+                      placeholder={text.remarksPlaceholder || "..."}
+                      sx={{
+                        "& .MuiInputBase-root": {
+                          height: 100,
+                        },
+                      }}
                     />
                   </Grid>
 

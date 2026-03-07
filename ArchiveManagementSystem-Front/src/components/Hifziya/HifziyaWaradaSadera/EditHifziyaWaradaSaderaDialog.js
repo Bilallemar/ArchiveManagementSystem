@@ -32,7 +32,11 @@ import { useTranslation } from "react-i18next";
 import getHifziyaWaradaSaderaTexts from "../../../helpers/hifziya/waradaSadera/waradaSaderaListTexts";
 import { updateHifziyaWaradaSadera } from "../../../services/RepositoryManagement/HifziyaWaradaSaderaAPI";
 import api from "../../../services/api";
-import { convertGregorianToHijri } from "../../../utils/hijriDateUtils";
+import {
+  convertHijriToGregorian,
+  convertGregorianToHijri,
+} from "../../../utils/hijriDateUtils";
+import HijriDatePicker from "../../HijriDatePicker";
 
 export default function EditHifziyaWaradaSaderaDialog({
   open,
@@ -97,8 +101,8 @@ export default function EditHifziyaWaradaSaderaDialog({
             no: waradaSadara.no || "",
             org: waradaSadara.org?.id || "",
             letterNumber: waradaSadara.letterNumber || "",
-            incommingDate: formatDate(waradaSadara.incommingDate),
-            outgoingDate: formatDate(waradaSadara.outgoingDate),
+            incommingDate: convertGregorianToHijri(waradaSadara.incommingDate),
+            outgoingDate: convertGregorianToHijri(waradaSadara.outgoingDate),
             summary: waradaSadara.summary || "",
             description: waradaSadara.description || "",
             subjectType: waradaSadara.subjectType || "",
@@ -229,7 +233,7 @@ export default function EditHifziyaWaradaSaderaDialog({
         no: formData.no.trim(),
         org: { id: parseInt(formData.org) },
         letterNumber: formData.letterNumber.trim() || null,
-        incommingDate: convertGregorianToHijri(formData.incommingDate) || null,
+        incommingDate: convertHijriToGregorian(formData.incommingDate) || null,
         summary: formData.summary.trim() || null,
         subjectType: formData.subjectType || null,
         description: formData.description.trim() || null,
@@ -237,7 +241,7 @@ export default function EditHifziyaWaradaSaderaDialog({
       };
 
       if (direction === "OUTGOING" && formData.outgoingDate) {
-        payload.outgoingDate = convertGregorianToHijri(formData.outgoingDate);
+        payload.outgoingDate = convertHijriToGregorian(formData.outgoingDate);
       }
 
       if (formData.docTypeId && formData.docTypeId !== "") {
@@ -547,7 +551,7 @@ export default function EditHifziyaWaradaSaderaDialog({
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
-                    <TextField
+                    <HijriDatePicker
                       fullWidth
                       size="small"
                       type="date"
@@ -561,7 +565,7 @@ export default function EditHifziyaWaradaSaderaDialog({
 
                   {direction === "OUTGOING" && (
                     <Grid item xs={12} sm={6}>
-                      <TextField
+                      <HijriDatePicker
                         fullWidth
                         size="small"
                         type="date"

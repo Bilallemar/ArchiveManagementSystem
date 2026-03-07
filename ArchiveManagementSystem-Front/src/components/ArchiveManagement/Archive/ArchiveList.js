@@ -35,6 +35,7 @@ import getArchiveTexts from "../../../helpers/archive/getArchiveTexts";
 import {
   deleteArchive,
   getAllArchives,
+  getArchiveById,
 } from "../../../services/ArchiveManagement/ArchiveAPI";
 import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
@@ -50,6 +51,8 @@ export default function ArchiveList() {
   const [archives, setArchives] = useState([]);
   const [tabValue, setTabValue] = useState(0); // 0=All, 1=Incoming, 2=Outgoing
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedArchive, setSelectedArchive] = useState(null);
@@ -57,7 +60,7 @@ export default function ArchiveList() {
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [field, setField] = useState("docNo");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
 
   const open = Boolean(anchorEl);
 
@@ -65,8 +68,8 @@ export default function ArchiveList() {
   const columns = useMemo(
     () => [
       { id: "docNo", label: texts.docNo, minWidth: 130 },
-      { id: "sendDate", label: texts.sendDate, minWidth: 120 },
-      { id: "departmentDate", label: texts.departmentDate, minWidth: 120 },
+      { id: "receiveDate", label: texts.incomingDate, minWidth: 120 },
+
       {
         id: "senderOrg",
         label: texts.org || "Sender (مرسل)",
@@ -77,63 +80,41 @@ export default function ArchiveList() {
         label: texts.organization || "Receiver (مرسل الیه)",
         minWidth: 180,
       },
-      { id: "docType", label: texts.docType, minWidth: 140 },
-      { id: "description", label: texts.description, minWidth: 200 },
+
       { id: "direction", label: texts.type, minWidth: 100 },
       { id: "actions", label: texts.actions, minWidth: 120 },
     ],
     [texts],
   );
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+      setPage(0); // reset to page 1 on new search
+    }, 400);
+
+    return () => clearTimeout(timer); // cancel if user keeps typing
+  }, [searchTerm]);
+
+  // Use debouncedTerm in loadArchives instead of searchTerm
   const loadArchives = useCallback(async () => {
-    try {
-      const response = await getAllArchives();
-      setArchives(response.data || []);
-    } catch (error) {
-      console.error("Failed to load archives:", error);
-      toast.error(t("loadError") || "Failed to load documents");
-    }
-  }, [t]);
+    const params = {
+      page,
+      size: rowsPerPage,
+      field,
+      term: debouncedTerm, // ← use debounced, not live searchTerm
+      ...(tabValue === 1 && { direction: "INCOMING" }),
+      ...(tabValue === 2 && { direction: "OUTGOING" }),
+    };
+    const response = await getAllArchives(params);
+    console.log("First record:", response.data.content[0]);
+    setArchives(response.data.content);
+    setTotalCount(response.data.totalElements);
+  }, [page, rowsPerPage, field, debouncedTerm, tabValue]);
 
   useEffect(() => {
     loadArchives();
   }, [loadArchives]);
-
-  // Filter logic
-  const displayedArchives = useMemo(() => {
-    let data = [...archives];
-
-    // 1. Tab filter
-    if (tabValue === 1) {
-      data = data.filter((r) => r.direction === "INCOMING");
-    } else if (tabValue === 2) {
-      data = data.filter((r) => r.direction === "OUTGOING");
-    }
-
-    // 2. Search filter
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
-      data = data.filter((row) => {
-        switch (field) {
-          case "docNo":
-            return row.docNo?.toLowerCase().includes(term);
-          case "sender":
-            return row.senderOrg?.name?.toLowerCase().includes(term);
-          case "receiver":
-            return row.receiverOrg?.name?.toLowerCase().includes(term);
-          case "docType":
-            return row.docType?.name?.toLowerCase().includes(term);
-          default:
-            return true;
-        }
-      });
-    }
-
-    // 3. Sort — newest first
-    data.sort((a, b) => b.id - a.id);
-
-    return data;
-  }, [archives, tabValue, searchTerm, field]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -150,13 +131,25 @@ export default function ArchiveList() {
 
   const handleClose = () => setAnchorEl(null);
 
-  const handleView = () => {
-    setOpenViewDialog(true);
+  const handleView = async () => {
+    try {
+      const response = await getArchiveById(selectedArchive.id); // ← fetch full record
+      setSelectedArchive(response.data); // ← replace summary with full entity
+      setOpenViewDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
 
-  const handleEdit = () => {
-    setOpenEditDialog(true);
+  const handleEdit = async () => {
+    try {
+      const response = await getArchiveById(selectedArchive.id); // ← fetch full record
+      setSelectedArchive(response.data); // ← replace DTO with full entity
+      setOpenEditDialog(true);
+    } catch (error) {
+      toast.error("د معلوماتو د بارولو کې ستونزه");
+    }
     handleClose();
   };
 
@@ -284,63 +277,45 @@ export default function ArchiveList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {displayedArchives
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => (
-                  <TableRow hover key={row.id}>
-                    <TableCell align="center">{row.docNo || "-"}</TableCell>
-                    <TableCell align="center">
-                      {formatHijriDateForDisplay(row.sendDate) || "-"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {formatHijriDateForDisplay(row.departmentDate) || "-"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.senderOrg?.name || "—"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.receiverOrg?.name || "—"}
-                    </TableCell>
-                    <TableCell align="center">
-                      {row.docType?.name || "-"}
-                    </TableCell>
-                    <TableCell
-                      align="center"
+              {archives.map((row) => (
+                <TableRow hover key={row.id}>
+                  <TableCell align="center">{row.docNo || "-"}</TableCell>
+
+                  <TableCell align="center">
+                    {formatHijriDateForDisplay(row.receiveDate) || "-"}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {row.senderOrgName || "—"}
+                  </TableCell>
+                  <TableCell align="center">
+                    {row.receiverOrgName || "—"}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Box
                       sx={{
-                        maxWidth: 200,
-                        whiteSpace: "normal",
-                        wordBreak: "break-word",
-                        overflowWrap: "anywhere",
+                        display: "inline-block",
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: "999px",
+                        fontSize: "0.875rem",
+                        fontWeight: 600,
+                        backgroundColor:
+                          row.direction === "INCOMING" ? "#4CAF50" : "#2196F3",
+                        color: "white",
                       }}
                     >
-                      {row.description || "-"}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box
-                        sx={{
-                          display: "inline-block",
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: "999px",
-                          fontSize: "0.875rem",
-                          fontWeight: 600,
-                          backgroundColor:
-                            row.direction === "INCOMING"
-                              ? "#4CAF50"
-                              : "#2196F3",
-                          color: "white",
-                        }}
-                      >
-                        {row.direction === "INCOMING" ? "وارده" : "صادره"}
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton onClick={(e) => handleClick(e, row)}>
-                        <MoreVertIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      {row.direction === "INCOMING" ? "وارده" : "صادره"}
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton onClick={(e) => handleClick(e, row)}>
+                      <MoreVertIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -348,7 +323,7 @@ export default function ArchiveList() {
         <TablePagination
           rowsPerPageOptions={[10, 25, 50, 100]}
           component="div"
-          count={displayedArchives.length}
+          count={totalCount}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}

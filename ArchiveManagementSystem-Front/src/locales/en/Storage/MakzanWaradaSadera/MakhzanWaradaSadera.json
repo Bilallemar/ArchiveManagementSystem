@@ -108,5 +108,7 @@
     "description": "Description",
     "noData": "No record selected",
     "close": "Close"
-  }
+  },
+  "viewOutgoing": "View Outgoing Documents",
+  "viewIncoming": "View Incoming Documents"
 }
