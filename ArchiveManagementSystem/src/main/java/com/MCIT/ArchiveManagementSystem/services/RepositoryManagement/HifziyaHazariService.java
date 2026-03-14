@@ -1,9 +1,15 @@
 package com.MCIT.ArchiveManagementSystem.services.RepositoryManagement;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +33,11 @@ public class HifziyaHazariService {
     private final FileRepository fileRepository;
     private static final String TABLE_NAME = "hifziya_hazari";
     private final AuditLogHelper auditLogHelper;
+    @Value("${scanner.folder.path:C:/ScannerOutput}")
+    private String scannerFolderPath;
+
+    @Value("${spring.file.directory:C:/uploads}")
+    private String uploadDir;
 
     public HifziyaHazariService(HifziyaHazariRepository hifziyaHazariRepository,
             FileService fileService,
@@ -66,38 +77,68 @@ public class HifziyaHazariService {
     }
 
     // ✅ UPDATED: Now accepts multiple files
-    public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile[] fileURL) {
-        System.out.println("Saving HifziyaHazari: " + hifziyaHazari);
+    public HifziyaHazari createHifziyaHazari(HifziyaHazari hifziyaHazari, MultipartFile[] fileURL,
+            List<String> scannerFiles) {
+        System.out.println("🔍 scannerFiles received: " + scannerFiles);
+        System.out.println("🔍 scannerFolderPath: " + scannerFolderPath);
+        System.out.println("🔍 uploadDir: " + uploadDir);
 
         // Save the main entity first
         hifziyaHazari = hifziyaHazariRepository.save(hifziyaHazari);
 
-        // If files exist, save them
+        List<FileEntity> fileEntities = new ArrayList<>(); // ← OUTSIDE everything
+
+        // Block 1: Handle manually uploaded files
         if (fileURL != null && fileURL.length > 0) {
-            System.out.println("Saving " + fileURL.length + " files");
-
-            // Save all files using fileService
+            System.out.println("Saving " + fileURL.length + " uploaded files");
             List<String> storedPaths = fileService.savefiles(fileURL, hifziyaHazari);
-
-            // Create FileEntity for each uploaded file
-            List<FileEntity> fileEntities = new ArrayList<>();
             for (int i = 0; i < fileURL.length; i++) {
                 MultipartFile file = fileURL[i];
-                FileEntity fileEntity = new FileEntity();
-                fileEntity.setFilePath(storedPaths.get(i));
-                fileEntity.setFileName(file.getOriginalFilename());
-                fileEntity.setFileType(file.getContentType());
-                fileEntity.setHifziyaHazari(hifziyaHazari);
-                fileRepository.save(fileEntity);
-                fileEntities.add(fileEntity);
-
-                System.out.println("Saved file " + (i + 1) + ": " + file.getOriginalFilename());
+                FileEntity fe = new FileEntity();
+                fe.setFilePath(storedPaths.get(i));
+                fe.setFileName(file.getOriginalFilename());
+                fe.setFileType(file.getContentType());
+                fe.setHifziyaHazari(hifziyaHazari);
+                fileRepository.save(fe);
+                fileEntities.add(fe);
+                System.out.println("✅ Saved uploaded file: " + file.getOriginalFilename());
             }
+        } // ← Block 1 ends here
 
-            hifziyaHazari.setFiles(fileEntities);
-        } else {
-            System.out.println("No files to save in Service");
-        }
+        // Block 2: Handle scanner files — OUTSIDE Block 1
+        if (scannerFiles != null && !scannerFiles.isEmpty()) {
+            System.out.println("📁 Processing " + scannerFiles.size() + " scanner files");
+            for (String name : scannerFiles) {
+                try {
+                    Path src = Paths.get(scannerFolderPath).resolve(name).normalize();
+                    System.out.println("🔍 Looking for: " + src.toAbsolutePath());
+                    if (!Files.exists(src)) {
+                        System.err.println("❌ Not found: " + src.toAbsolutePath());
+                        continue;
+                    }
+                    String uuid = UUID.randomUUID().toString();
+                    String newName = uuid + "_" + name;
+                    Path dest = Paths.get(uploadDir).resolve(newName).normalize();
+                    // Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+
+                    FileEntity fe = new FileEntity();
+                    fe.setFileName(name);
+                    fe.setFilePath(newName);
+                    fe.setFileType(name.endsWith(".pdf") ? "application/pdf" : "application/octet-stream");
+                    fe.setHifziyaHazari(hifziyaHazari);
+                    fileRepository.save(fe);
+                    fileEntities.add(fe);
+                    System.out.println("✅ Moved scanner file: " + name + " → " + newName);
+                } catch (Exception e) {
+                    System.err.println("❌ Failed to move: " + name + " → " + e.getMessage());
+                }
+            }
+        } // ← Block 2 ends here
+
+        // OUTSIDE both blocks
+        hifziyaHazari.setFiles(fileEntities);
+
         auditLogHelper.logCreate(TABLE_NAME, hifziyaHazari.getId().longValue(),
                 hifziyaHazari.getDescription());
         return hifziyaHazari;

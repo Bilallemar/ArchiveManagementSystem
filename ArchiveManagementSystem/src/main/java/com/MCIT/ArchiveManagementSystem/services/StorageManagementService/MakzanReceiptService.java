@@ -6,12 +6,17 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.MCIT.ArchiveManagementSystem.dtos.MakzanReceiptSummaryDTO;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
 import com.MCIT.ArchiveManagementSystem.repositories.AuditLogRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.FileRepository;
@@ -65,8 +70,26 @@ public class MakzanReceiptService {
         return "system";
     }
 
-    public List<MakzanReceipt> getAllReceipts() {
-        return makzanReceiptRepository.findAll();
+    public Page<MakzanReceiptSummaryDTO> getAll(
+            Management management,
+            String field,
+            String term,
+            int page,
+            int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        String cleanTerm = (term == null) ? "" : term.trim();
+
+        Page<MakzanReceipt> raw = makzanReceiptRepository.searchMakzanReceipt(
+                management, field, cleanTerm, pageable);
+
+        return raw.map(m -> new MakzanReceiptSummaryDTO(
+                m.getId(),
+                m.getDocNo(),
+                m.getDepartment(),
+                m.getOrg() != null ? m.getOrg().getName() : null,
+                m.getLetterNo(),
+                m.getSubjectType()));
     }
 
     public Optional<MakzanReceipt> getReceiptById(Integer id) {
@@ -238,29 +261,5 @@ public class MakzanReceiptService {
         makzanReceiptRepository.delete(makzanReceipts);
     }
 
-    public List<MakzanReceipt> searchByKeyword(String field, String keyword) {
-        // If no keyword, return all
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return makzanReceiptRepository.findAll();
-        }
 
-        // Search specific field or all fields
-        if (field == null || field.trim().isEmpty()) {
-            return makzanReceiptRepository.searchAllFields(keyword);
-        }
-
-        switch (field.toLowerCase()) {
-
-            case "docno":
-                return makzanReceiptRepository.searchByDocNo(keyword);
-            case "letterno":
-                return makzanReceiptRepository.searchByLetterNo(keyword);
-            case "subjecttype":
-                return makzanReceiptRepository.searchBySubjectType(keyword);
-            case "description":
-                return makzanReceiptRepository.searchByDescription(keyword);
-            default:
-                return makzanReceiptRepository.searchAllFields(keyword);
-        }
-    }
 }

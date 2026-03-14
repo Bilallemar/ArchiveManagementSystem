@@ -1,6 +1,34 @@
 
-
 package com.MCIT.ArchiveManagementSystem.controller;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.MCIT.ArchiveManagementSystem.dtos.UserDTO;
 import com.MCIT.ArchiveManagementSystem.models.AppRole;
@@ -20,30 +48,8 @@ import com.MCIT.ArchiveManagementSystem.services.TotpService;
 import com.MCIT.ArchiveManagementSystem.services.UserService;
 import com.MCIT.ArchiveManagementSystem.util.AuthUtil;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
+
 import jakarta.validation.Valid;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -78,13 +84,13 @@ public class AuthController {
     @Autowired
     TotpService totpService;
 
- @PostMapping("/public/signin")
+    @PostMapping("/public/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         Authentication authentication;
         try {
             authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsername(), 
+                            loginRequest.getUsername(),
                             loginRequest.getPassword()));
         } catch (AuthenticationException exception) {
             Map<String, Object> map = new HashMap<>();
@@ -96,14 +102,19 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        
+
         // Get user from database to access management
         User user = userRepository.findByUserName(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
+        if (!user.isEnabled()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("message", "ستاسو حساب غیر فعال شوی دی. د مدیر سره اړیکه ونیسئ");
+            map.put("status", false);
+            return new ResponseEntity<Object>(map, HttpStatus.FORBIDDEN);
+        }
         // Check if user has management assigned (except for ADMIN)
         boolean isAdmin = user.getRole().getRoleName().equals(AppRole.ROLE_ADMIN);
-        
+
         if (user.getManagement() == null && !isAdmin) {
             Map<String, Object> map = new HashMap<>();
             map.put("message", "User is not assigned to any management department");
@@ -125,20 +136,20 @@ public class AuthController {
         response.put("email", userDetails.getEmail());
         response.put("roles", roles);
         response.put("is2faEnabled", user.isTwoFactorEnabled());
-        
+
         // Add management information if available
         if (user.getManagement() != null) {
             Map<String, Object> managementInfo = new HashMap<>();
             managementInfo.put("managementId", user.getManagement().getManagementId());
             managementInfo.put("managementName", user.getManagement().getManagementName());
             response.put("management", managementInfo);
-            
-            System.out.println("✅ Login successful for: " + user.getUserName() + 
-                             " | Management: " + user.getManagement().getManagementName());
+
+            System.out.println("✅ Login successful for: " + user.getUserName() +
+                    " | Management: " + user.getManagement().getManagementName());
         } else {
             response.put("management", null);
-            System.out.println("⚠️ Login successful for ADMIN: " + user.getUserName() + 
-                             " | No management required");
+            System.out.println("⚠️ Login successful for ADMIN: " + user.getUserName() +
+                    " | No management required");
         }
 
         return ResponseEntity.ok(response);
@@ -197,13 +208,13 @@ public class AuthController {
             // Optional: Auto-assign based on email domain
             String emailDomain = signUpRequest.getEmail().substring(
                     signUpRequest.getEmail().indexOf("@") + 1);
-            
+
             // You can create a mapping table or use naming convention
             // Example: finance@company.com -> Finance Management
             Management management = managementRepository
                     .findByManagementName(emailDomain)
                     .orElse(null);
-            
+
             if (management != null) {
                 user.setManagement(management);
             }
@@ -233,8 +244,7 @@ public class AuthController {
                 user.getCredentialsExpiryDate(),
                 user.getAccountExpiryDate(),
                 user.isTwoFactorEnabled(),
-                roles
-        );
+                roles);
 
         return ResponseEntity.ok().body(response);
     }
@@ -258,7 +268,7 @@ public class AuthController {
 
     @PostMapping("/public/reset-password")
     public ResponseEntity<?> resetPassword(@RequestParam String token,
-                                           @RequestParam String newPassword) {
+            @RequestParam String newPassword) {
         try {
             userService.resetPassword(token, newPassword);
             return ResponseEntity.ok(new MessageResponse("Password reset successful"));
@@ -310,7 +320,7 @@ public class AuthController {
 
     @PostMapping("/public/verify-2fa-login")
     public ResponseEntity<String> verify2FALogin(@RequestParam int code,
-                                                 @RequestParam String jwtToken) {
+            @RequestParam String jwtToken) {
         String username = jwtUtils.getUserNameFromJwtToken(jwtToken);
         User user = userService.findByUsername(username);
         boolean isValid = userService.validate2FACode(user.getUserId(), code);
@@ -321,26 +331,27 @@ public class AuthController {
                     .body("Invalid 2FA Code");
         }
     }
-  @GetMapping("/profile")
-@PreAuthorize("isAuthenticated()")
-public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
-    logger.info("📋 /api/auth/profile called");
-    logger.info("👤 UserDetails: {}", userDetails != null ? userDetails.getUsername() : "null");
-    
-    if (userDetails == null) {
-        logger.error("❌ UserDetails is null - user not authenticated!");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Not authenticated"));
+
+    @GetMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        logger.info("📋 /api/auth/profile called");
+        logger.info("👤 UserDetails: {}", userDetails != null ? userDetails.getUsername() : "null");
+
+        if (userDetails == null) {
+            logger.error("❌ UserDetails is null - user not authenticated!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Not authenticated"));
+        }
+
+        User user = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        logger.info("✅ User found: {}", user.getUserName());
+
+        UserDTO userDTO = convertToDto(user);
+        return ResponseEntity.ok(userDTO);
     }
-    
-    User user = userRepository.findByUserName(userDetails.getUsername())
-            .orElseThrow(() -> new RuntimeException("User not found"));
-    
-    logger.info("✅ User found: {}", user.getUserName());
-    
-    UserDTO userDTO = convertToDto(user);
-    return ResponseEntity.ok(userDTO);
-}
 
     private UserDTO convertToDto(User user) {
         return new UserDTO(
@@ -359,7 +370,6 @@ public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails use
                 user.getSignUpMethod(),
                 user.getRole(),
                 user.getCreatedDate(),
-                user.getUpdatedDate()
-        );
+                user.getUpdatedDate());
     }
 }

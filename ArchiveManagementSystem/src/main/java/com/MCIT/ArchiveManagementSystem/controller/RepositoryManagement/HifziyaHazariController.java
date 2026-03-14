@@ -3,7 +3,9 @@ package com.MCIT.ArchiveManagementSystem.controller.RepositoryManagement;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,8 @@ import com.MCIT.ArchiveManagementSystem.services.RepositoryManagement.HifziyaHaz
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 @RestController
 @RequestMapping("/api/hifziya-hazari")
 public class HifziyaHazariController {
@@ -52,22 +56,28 @@ public class HifziyaHazariController {
 
     @PostMapping(consumes = { "multipart/form-data" })
     public HifziyaHazari createHifziyaHazari(
-            @RequestPart("hifziyaHazari") String hifziyaHazari,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) throws IOException {
+            @RequestPart("hifziyaHazari") String hifziyaHazariJson,
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestParam(value = "scannerFiles", required = false) String scannerFilesJson) throws IOException {
 
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         // 1. Parse the string FIRST
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        HifziyaHazari receivedHifziyaHazari = mapper.readValue(hifziyaHazari, HifziyaHazari.class);
-
+        HifziyaHazari receivedHifziyaHazari = mapper.readValue(hifziyaHazariJson, HifziyaHazari.class);
         // 2. THEN set management on the parsed object
         Management management = new Management();
         management.setManagementId(HIFZIYA_MANAGEMENT_ID);
         receivedHifziyaHazari.setManagement(management); // ← now it's HifziyaHazari, not String
 
-        return hifziyaHazariService.createHifziyaHazari(receivedHifziyaHazari, fileURL);
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isEmpty()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+
+        return hifziyaHazariService.createHifziyaHazari(receivedHifziyaHazari, fileURL, scannerFiles);
     }
 
     @GetMapping
@@ -128,12 +138,13 @@ public class HifziyaHazariController {
      * Download/Preview endpoint with clear Pashto error messages
      */
     @GetMapping("/download/{filename:.+}")
-    public ResponseEntity<?> download(@PathVariable String filename) {
+    public ResponseEntity<?> download(@PathVariable String filename, HttpServletResponse httpResponse) {
         try {
             managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
             Resource resource = fileService.loadFileAsResource(filename);
-
+            httpResponse.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+            httpResponse.setHeader("Access-Control-Allow-Credentials", "true");
             // Detect content type
             String contentType = "application/octet-stream";
             try {

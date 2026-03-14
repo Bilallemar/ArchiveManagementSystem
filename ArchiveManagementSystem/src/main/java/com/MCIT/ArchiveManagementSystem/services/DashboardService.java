@@ -1,11 +1,26 @@
 package com.MCIT.ArchiveManagementSystem.services;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.MCIT.ArchiveManagementSystem.dtos.DashboardStatsDTO;
 import com.MCIT.ArchiveManagementSystem.dtos.ManagementStatsDTO;
 import com.MCIT.ArchiveManagementSystem.models.AppRole;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.User;
-import com.MCIT.ArchiveManagementSystem.repositories.*;
+import com.MCIT.ArchiveManagementSystem.repositories.UserRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.ArchiveManagement.ArchiveRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.RepositoryManagement.HifziyaHazariRepository;
 import com.MCIT.ArchiveManagementSystem.repositories.RepositoryManagement.HifziyaWaradaSaderaRepository;
@@ -15,14 +30,6 @@ import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.Makza
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanSubmissionReportRepository;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,495 +46,499 @@ public class DashboardService {
     private final MakzanSubmissionReportRepository makzanSubmissionReportRepository;
     private final UserRepository userRepository;
 
-    private static final String[] AFGHAN_MONTHS = {
-        "حمل", "ثور", "جوزا", "سرطان", "اسد", "سنبله",
-        "میزان", "عقرب", "قوس", "جدی", "دلو", "حوت"
-    };
-
-    // ========================================
-    // Dashboard stats for user (by management)
-    // ========================================
+    // =============================================
+    // MAIN ENTRY POINT
+    // =============================================
     public DashboardStatsDTO getDashboardStatsByUser(String username) {
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.getRole().getRoleName() == AppRole.ROLE_ADMIN) {
-            logger.info("🔑 Admin user - fetching all documents");
-            return processAllDocuments(null);
+            logger.info("Admin user - building admin stats");
+            return buildAdminStats();
         }
 
         if (user.getManagement() != null) {
-            logger.info("👥 User belongs to management: {} (ID: {})", 
-                user.getManagement().getManagementName(), 
-                user.getManagement().getManagementId());
-            
-            return processAllDocuments(user.getManagement());
+            Long managementId = user.getManagement().getManagementId();
+            logger.info("Manager user - management ID: {}", managementId);
+            if (managementId == 1)
+                return buildArchiveStats(user.getManagement());
+            if (managementId == 2)
+                return buildHifziyaStats(user.getManagement());
+            if (managementId == 3)
+                return buildMakhzanStats(user.getManagement());
         }
 
-        logger.warn("⚠️ User has no management assigned - returning empty stats");
+        logger.warn("No management assigned - returning empty stats");
         return createEmptyStats();
     }
 
-    // ========================================
-    // Process ALL document types based on management
-    // ========================================
-    private DashboardStatsDTO processAllDocuments(Management management) {
-        Map<String, MonthlyCount> monthCounts = new LinkedHashMap<>();
-        int weeklySender = 0, weeklyRecipient = 0, weeklyFile = 0;
+    // =============================================
+    // ADMIN
+    // Card1: Total Archive, Card2: Total Hifziya, Card3: Total Makhzan
+    // Chart: all docs per month (1 bar)
+    // Donut: Archive vs Hifziya vs Makhzan
+    // =============================================
+    private DashboardStatsDTO buildAdminStats() {
+        long totalArchive = archiveRepository.count();
+        long totalHifziya = sawanihRepository.count()
+                + hifziyaHazariRepository.count()
+                + hifziyaWaradaSaderaRepository.count();
+        long totalMakhzan = makzanReceiptRepository.count()
+                + makzanAnnualReportRepository.count()
+                + makzanSubmissionReportRepository.count();
+        long totalDocuments = totalArchive + totalHifziya + totalMakhzan;
 
-        LocalDate today = LocalDate.now();
-        LocalDate weekAgo = today.minusDays(7);
-        
-        logger.info("📅 Today: {}, Week ago: {}", today, weekAgo);
+        Map<String, Integer> monthCounts = new TreeMap<>();
+        addArchiveDatesToMap(archiveRepository.findAll(), monthCounts);
+        addSawanihDatesToMap(sawanihRepository.findAll(), monthCounts);
+        addHifziyaHazariDatesToMap(hifziyaHazariRepository.findAll(), monthCounts);
+        addHifziyaWaradaSaderaDatesToMap(hifziyaWaradaSaderaRepository.findAll(), monthCounts);
+        addMakzanReceiptDatesToMap(makzanReceiptRepository.findAll(), monthCounts);
+        addMakzanAnnualDatesToMap(makzanAnnualReportRepository.findAll(), monthCounts);
+        addMakzanSubmissionDatesToMap(makzanSubmissionReportRepository.findAll(), monthCounts);
 
-        // Support multiple date formats (including timestamps)
-        DateTimeFormatter[] formatters = {
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),  // ✅ NEW: With timestamp
-            DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"),
-            DateTimeFormatter.ofPattern("yyyy/MM/dd"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy")
-        };
+        List<String> months = new ArrayList<>(monthCounts.keySet());
+        List<Integer> fileData = new ArrayList<>(monthCounts.values());
+        int weeklyTotal = calculateWeeklyTotal(monthCounts);
 
-        // Process based on management type
-        if (management == null) {
-            // Admin - process all
-            processArchiveDocuments(archiveRepository.findAll(), monthCounts, formatters, weekAgo, today);
-            processSawanihDocuments(sawanihRepository.findAll(), monthCounts, formatters, weekAgo, today);
-            processHifziyaHazariDocuments(hifziyaHazariRepository.findAll(), monthCounts, formatters, weekAgo, today);
-            processHifziyaWaradaSaderaDocuments(hifziyaWaradaSaderaRepository.findAll(), monthCounts, formatters, weekAgo, today);
-            processMakzanReceiptDocuments(makzanReceiptRepository.findAll(), monthCounts, formatters, weekAgo, today);
-        } else {
-            Long managementId = management.getManagementId();
-            
-            if (managementId == 1) {
-                // Archive management
-                logger.info("📚 Processing Archive documents");
-                processArchiveDocuments(archiveRepository.findByManagement(management), monthCounts, formatters, weekAgo, today);
-            } else if (managementId == 2) {
-                // Hifziya management
-                logger.info("📝 Processing Hifziya documents");
-                processSawanihDocuments(sawanihRepository.findByManagement(management), monthCounts, formatters, weekAgo, today);
-                processHifziyaHazariDocuments(hifziyaHazariRepository.findByManagement(management), monthCounts, formatters, weekAgo, today);
-                processHifziyaWaradaSaderaDocuments(hifziyaWaradaSaderaRepository.findByManagement(management), monthCounts, formatters, weekAgo, today);
-            } else if (managementId == 3) {
-                // Makhzan management
-                logger.info("🗃️ Processing Makhzan documents");
-                processMakzanReceiptDocuments(makzanReceiptRepository.findByManagement(management), monthCounts, formatters, weekAgo, today);
-            }
-        }
-
-        // Calculate weekly stats from monthCounts
-        for (MonthlyCount count : monthCounts.values()) {
-            weeklySender += count.weeklySender;
-            weeklyRecipient += count.weeklyRecipient;
-            weeklyFile += count.weeklyFile;
-        }
-
-        // Build result
-        List<String> months = new ArrayList<>();
-        List<Integer> senderData = new ArrayList<>();
-        List<Integer> recipientData = new ArrayList<>();
-        List<Integer> fileData = new ArrayList<>();
-
-        for (String month : AFGHAN_MONTHS) {
-            if (monthCounts.containsKey(month)) {
-                months.add(month);
-                MonthlyCount count = monthCounts.get(month);
-                senderData.add(count.sender);
-                recipientData.add(count.recipient);
-                fileData.add(count.file);
-            }
-        }
-
-        int totalSender = senderData.stream().mapToInt(Integer::intValue).sum();
-        int totalRecipient = recipientData.stream().mapToInt(Integer::intValue).sum();
-        int totalFile = fileData.stream().mapToInt(Integer::intValue).sum();
-
-        logger.info("📊 Stats: Total Sender={}, Recipient={}, Files={} | Weekly: Sender={}, Recipient={}, Files={}", 
-            totalSender, totalRecipient, totalFile, weeklySender, weeklyRecipient, weeklyFile);
+        logger.info("Admin - Archive:{}, Hifziya:{}, Makhzan:{}, Total:{}, Months:{}",
+                totalArchive, totalHifziya, totalMakhzan, totalDocuments, months.size());
 
         return DashboardStatsDTO.builder()
                 .months(months)
-                .senderData(senderData)
-                .recipientData(recipientData)
                 .fileData(fileData)
-                .totalSender(totalSender)
-                .totalRecipient(totalRecipient)
-                .totalFile(totalFile)
+                .waradaData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .saderaData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .senderData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .recipientData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .totalArchive(totalArchive)
+                .totalHifziya(totalHifziya)
+                .totalMakhzan(totalMakhzan)
+                .totalDocuments(totalDocuments)
+                .totalWarada(0).totalSadera(0)
+                .totalSawanih(0).totalHifziyaHazari(0).totalHifziyaWaradaSadera(0)
+                .totalMakzanReceipt(0).totalAnnualReport(0).totalSubmissionReport(0)
+                .totalFile((int) totalDocuments).totalSender(0).totalRecipient(0)
                 .weeklyData(DashboardStatsDTO.WeeklyDataDTO.builder()
-                        .sender(weeklySender)
-                        .recipient(weeklyRecipient)
-                        .file(weeklyFile)
-                        .build())
+                        .sender(0).recipient(0).file(weeklyTotal).build())
                 .build();
     }
 
-    // ========================================
-    // Process Archive documents
-    // ========================================
-    private void processArchiveDocuments(List<?> documents, Map<String, MonthlyCount> monthCounts, 
-                                        DateTimeFormatter[] formatters, LocalDate weekAgo, LocalDate today) {
-        if (documents == null || documents.isEmpty()) {
-            logger.info("No archive documents found");
-            return;
-        }
-        
-        logger.info("Processing {} archive documents", documents.size());
-        
-        for (Object doc : documents) {
-            var archive = (com.MCIT.ArchiveManagementSystem.models.ArchiveManagement.Archive) doc;
-            // Use incommingDate or outgoingDate
-            String dateStr = archive.getSendDate() != null ? archive.getSendDate().toString() : archive.getDepartmentDate().toString();
-            if (dateStr == null || dateStr.isEmpty()) continue;
+    // =============================================
+    // ARCHIVE MANAGER
+    // Card1: Total Incoming (Warada), Card2: Total Outgoing (Sadera), Card3: This
+    // month
+    // Chart: Incoming vs Outgoing bars by month
+    // ✅ FIX: enum values are INCOMING / OUTGOING
+    // =============================================
+    private DashboardStatsDTO buildArchiveStats(Management management) {
+        List<?> allDocs = archiveRepository.findByManagement(management);
 
-            LocalDate docDate = parseDate(dateStr, formatters);
-            if (docDate == null) continue;
+        // ✅ FIXED: use INCOMING / OUTGOING not WARADA / SADERA
+        List<?> incomingDocs = allDocs.stream()
+                .filter(d -> {
+                    var doc = (com.MCIT.ArchiveManagementSystem.models.ArchiveManagement.Archive) d;
+                    return doc.getDirection() != null &&
+                            doc.getDirection().toString().toUpperCase().contains("INCOMING");
+                }).collect(Collectors.toList());
 
-            String monthName = getAfghanMonth(docDate);
-            monthCounts.putIfAbsent(monthName, new MonthlyCount());
-            MonthlyCount count = monthCounts.get(monthName);
+        List<?> outgoingDocs = allDocs.stream()
+                .filter(d -> {
+                    var doc = (com.MCIT.ArchiveManagementSystem.models.ArchiveManagement.Archive) d;
+                    return doc.getDirection() != null &&
+                            doc.getDirection().toString().toUpperCase().contains("OUTGOING");
+                }).collect(Collectors.toList());
 
-            boolean isWithinWeek = !docDate.isBefore(weekAgo) && !docDate.isAfter(today);
+        long totalWarada = incomingDocs.size(); // Incoming = Warada
+        long totalSadera = outgoingDocs.size(); // Outgoing = Sadera
+        long totalArchive = allDocs.size();
 
-            // Count as sender if has org
-            if (archive.getSenderOrg() != null) {
-                count.sender++;
-                if (isWithinWeek) count.weeklySender++;
-            }
+        // Build separate month maps for each direction
+        Map<String, Integer> incomingMap = new TreeMap<>();
+        Map<String, Integer> outgoingMap = new TreeMap<>();
+        addArchiveDatesToMap(incomingDocs, incomingMap);
+        addArchiveDatesToMap(outgoingDocs, outgoingMap);
 
-            // Count as recipient if has docNo
-            if (archive.getDocNo() != null && !archive.getDocNo().isEmpty()) {
-                count.recipient++;
-                if (isWithinWeek) count.weeklyRecipient++;
-            }
+        // Merge all months from both directions
+        Set<String> allMonths = new TreeSet<>();
+        allMonths.addAll(incomingMap.keySet());
+        allMonths.addAll(outgoingMap.keySet());
+        List<String> months = new ArrayList<>(allMonths);
 
-            // Archives don't have files, so count document itself
-            count.file++;
-            if (isWithinWeek) count.weeklyFile++;
+        List<Integer> waradaData = months.stream()
+                .map(m -> incomingMap.getOrDefault(m, 0))
+                .collect(Collectors.toList());
+        List<Integer> saderaData = months.stream()
+                .map(m -> outgoingMap.getOrDefault(m, 0))
+                .collect(Collectors.toList());
+        List<Integer> fileData = months.stream()
+                .map(m -> incomingMap.getOrDefault(m, 0) + outgoingMap.getOrDefault(m, 0))
+                .collect(Collectors.toList());
+
+        // Weekly = current month total
+        Map<String, Integer> totalMap = new TreeMap<>();
+        addArchiveDatesToMap(allDocs, totalMap);
+        int weeklyTotal = calculateWeeklyTotal(totalMap);
+
+        logger.info("Archive - Incoming(Warada):{}, Outgoing(Sadera):{}, Total:{}, Months:{}",
+                totalWarada, totalSadera, totalArchive, months.size());
+
+        return DashboardStatsDTO.builder()
+                .months(months)
+                .fileData(fileData)
+                .waradaData(waradaData)
+                .saderaData(saderaData)
+                .senderData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .recipientData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .totalArchive(totalArchive).totalHifziya(0).totalMakhzan(0)
+                .totalDocuments(totalArchive)
+                .totalWarada(totalWarada)
+                .totalSadera(totalSadera)
+                .totalSawanih(0).totalHifziyaHazari(0).totalHifziyaWaradaSadera(0)
+                .totalMakzanReceipt(0).totalAnnualReport(0).totalSubmissionReport(0)
+                .totalFile((int) totalArchive).totalSender(0).totalRecipient(0)
+                .weeklyData(DashboardStatsDTO.WeeklyDataDTO.builder()
+                        .sender(0).recipient(0).file(weeklyTotal).build())
+                .build();
+    }
+
+    // =============================================
+    // HIFZIYA MANAGER
+    // Card1: Sawanih total, Card2: HifziyaHazari total, Card3: HifziyaWaradaSadera
+    // total
+    // Chart: 3 separate bars by month
+    // =============================================
+    private DashboardStatsDTO buildHifziyaStats(Management management) {
+        List<?> sawanihDocs = sawanihRepository.findByManagement(management);
+        List<?> allHazariDocs = hifziyaHazariRepository.findByManagement(management);
+        List<?> waradaSaderaDocs = hifziyaWaradaSaderaRepository.findByManagement(management);
+
+        List<?> hazariDocs = allHazariDocs.stream()
+                .filter(d -> {
+                    var doc = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazari) d;
+                    return doc.getIsIndraj() != null && !doc.getIsIndraj();
+                }).collect(Collectors.toList());
+
+        List<?> indrajDocs = allHazariDocs.stream()
+                .filter(d -> {
+                    var doc = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazari) d;
+                    return doc.getIsIndraj() != null && doc.getIsIndraj();
+                }).collect(Collectors.toList());
+
+        long totalSawanih = sawanihDocs.size();
+        long totalHazari = hazariDocs.size();
+        long totalIndraj = indrajDocs.size();
+        long totalHifziyaWaradaSadera = waradaSaderaDocs.size();
+        long totalHifziya = totalSawanih + totalHazari + totalIndraj + totalHifziyaWaradaSadera;
+
+        // ✅ Hazari and Indraj use YEAR map — Sawanih uses YYYY-MM map
+        // We merge all into a common key set
+        // For Sawanih: keys like "2025-08", for Hazari/Indraj: keys like "1446"
+        // Since they are different formats, we keep them SEPARATE
+        // X-axis will show Hijri years for Hazari/Indraj chart
+        Map<String, Integer> hazariMap = new TreeMap<>();
+        Map<String, Integer> indrajMap = new TreeMap<>();
+        addHifziyaHazariDatesToMap(hazariDocs, hazariMap); // keys: "1444", "1445"...
+        addHifziyaHazariDatesToMap(indrajDocs, indrajMap); // keys: "1444", "1445"...
+
+        Set<String> allMonths = new TreeSet<>();
+        allMonths.addAll(hazariMap.keySet());
+        allMonths.addAll(indrajMap.keySet());
+        List<String> months = new ArrayList<>(allMonths);
+
+        // waradaData = Hazari bars, saderaData = Indraj bars
+        List<Integer> waradaData = months.stream()
+                .map(m -> hazariMap.getOrDefault(m, 0)).collect(Collectors.toList());
+        List<Integer> saderaData = months.stream()
+                .map(m -> indrajMap.getOrDefault(m, 0)).collect(Collectors.toList());
+        List<Integer> fileData = new ArrayList<>(Collections.nCopies(months.size(), 0));
+
+        int weeklyTotal = calculateWeeklyTotal(new TreeMap<>());
+
+        logger.info("Hifziya - Sawanih:{}, Hazari:{}, Indraj:{}, Total:{}",
+                totalSawanih, totalHazari, totalIndraj, totalHifziya);
+
+        return DashboardStatsDTO.builder()
+                .months(months) // ✅ Now contains Hijri years: "1444","1445"...
+                .fileData(fileData)
+                .waradaData(waradaData)
+                .saderaData(saderaData)
+                .senderData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .recipientData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .totalArchive(0).totalHifziya(totalHifziya).totalMakhzan(0)
+                .totalDocuments(totalHifziya)
+                .totalWarada(0).totalSadera(0)
+                .totalSawanih(totalSawanih)
+                .totalHifziyaHazari(totalHazari)
+                .totalHifziyaWaradaSadera(totalIndraj)
+                .totalMakzanReceipt(0).totalAnnualReport(0).totalSubmissionReport(0)
+                .totalFile((int) totalHifziya).totalSender(0).totalRecipient(0)
+                .weeklyData(DashboardStatsDTO.WeeklyDataDTO.builder()
+                        .sender(0).recipient(0).file(weeklyTotal).build())
+                .build();
+    }
+
+    // =============================================
+    // MAKHZAN MANAGER
+    // Card1: MakzanReceipt total, Card2: AnnualReport total, Card3:
+    // SubmissionReport total
+    // Chart: 3 separate bars by month
+    // =============================================
+    private DashboardStatsDTO buildMakhzanStats(Management management) {
+        List<?> receiptDocs = makzanReceiptRepository.findByManagement(management);
+        List<?> annualDocs = makzanAnnualReportRepository.findByManagement(management);
+        List<?> submissionDocs = makzanSubmissionReportRepository.findByManagement(management);
+
+        long totalMakzanReceipt = receiptDocs.size();
+        long totalAnnualReport = annualDocs.size();
+        long totalSubmissionReport = submissionDocs.size();
+        long totalMakhzan = totalMakzanReceipt + totalAnnualReport + totalSubmissionReport;
+
+        Map<String, Integer> receiptMap = new TreeMap<>();
+        Map<String, Integer> annualMap = new TreeMap<>();
+        Map<String, Integer> submissionMap = new TreeMap<>();
+
+        addMakzanReceiptDatesToMap(receiptDocs, receiptMap);
+        addMakzanAnnualDatesToMap(annualDocs, annualMap);
+        addMakzanSubmissionDatesToMap(submissionDocs, submissionMap);
+
+        Set<String> allMonths = new TreeSet<>();
+        allMonths.addAll(receiptMap.keySet());
+        allMonths.addAll(annualMap.keySet());
+        allMonths.addAll(submissionMap.keySet());
+        List<String> months = new ArrayList<>(allMonths);
+
+        // waradaData = Receipt bars
+        // saderaData = Annual bars
+        // fileData = Submission bars
+        List<Integer> waradaData = months.stream()
+                .map(m -> receiptMap.getOrDefault(m, 0)).collect(Collectors.toList());
+        List<Integer> saderaData = months.stream()
+                .map(m -> annualMap.getOrDefault(m, 0)).collect(Collectors.toList());
+        List<Integer> fileData = months.stream()
+                .map(m -> submissionMap.getOrDefault(m, 0)).collect(Collectors.toList());
+
+        Map<String, Integer> totalMap = new TreeMap<>();
+        addMakzanReceiptDatesToMap(receiptDocs, totalMap);
+        addMakzanAnnualDatesToMap(annualDocs, totalMap);
+        addMakzanSubmissionDatesToMap(submissionDocs, totalMap);
+        int weeklyTotal = calculateWeeklyTotal(totalMap);
+
+        logger.info("Makhzan - Receipt:{}, Annual:{}, Submission:{}, Total:{}",
+                totalMakzanReceipt, totalAnnualReport, totalSubmissionReport, totalMakhzan);
+
+        return DashboardStatsDTO.builder()
+                .months(months)
+                .fileData(fileData)
+                .waradaData(waradaData)
+                .saderaData(saderaData)
+                .senderData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .recipientData(new ArrayList<>(Collections.nCopies(months.size(), 0)))
+                .totalArchive(0).totalHifziya(0).totalMakhzan(totalMakhzan)
+                .totalDocuments(totalMakhzan)
+                .totalWarada(0).totalSadera(0)
+                .totalSawanih(0).totalHifziyaHazari(0).totalHifziyaWaradaSadera(0)
+                .totalMakzanReceipt(totalMakzanReceipt)
+                .totalAnnualReport(totalAnnualReport)
+                .totalSubmissionReport(totalSubmissionReport)
+                .totalFile((int) totalMakhzan).totalSender(0).totalRecipient(0)
+                .weeklyData(DashboardStatsDTO.WeeklyDataDTO.builder()
+                        .sender(0).recipient(0).file(weeklyTotal).build())
+                .build();
+    }
+
+    // =============================================
+    // HELPERS: Add entity dates to YYYY-MM map
+    // =============================================
+    private void addArchiveDatesToMap(List<?> docs, Map<String, Integer> map) {
+        for (Object d : docs) {
+            var doc = (com.MCIT.ArchiveManagementSystem.models.ArchiveManagement.Archive) d;
+            LocalDate date = doc.getSendDate() != null ? doc.getSendDate() : doc.getDepartmentDate();
+            if (date != null)
+                addToMap(date, map);
         }
     }
 
-    // ========================================
-    // Process Sawanih documents
-    // ========================================
-    private void processSawanihDocuments(List<?> documents, Map<String, MonthlyCount> monthCounts, 
-                                        DateTimeFormatter[] formatters, LocalDate weekAgo, LocalDate today) {
-        if (documents == null || documents.isEmpty()) {
-            logger.info("No sawanih documents found");
-            return;
-        }
-        
-        logger.info("Processing {} sawanih documents", documents.size());
-        
-        for (Object doc : documents) {
-            var sawanih = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih) doc;
-            
-            String dateStr = sawanih.getIncommingDate() != null ? sawanih.getIncommingDate().toString() : sawanih.getOutgoingDate().toString();
-            if (dateStr == null || dateStr.isEmpty()) {
-                logger.warn("⚠️ Sawanih id={} has no date", sawanih.getId());
-                continue;
-            }
-
-            LocalDate docDate = parseDate(dateStr, formatters);
-            if (docDate == null) {
-                logger.warn("⚠️ Failed to parse sawanih date: {}", dateStr);
-                continue;
-            }
-
-            logger.info("✅ Sawanih date parsed: {} -> {}", dateStr, docDate);
-            
-            String monthName = getAfghanMonth(docDate);
-            monthCounts.putIfAbsent(monthName, new MonthlyCount());
-            MonthlyCount count = monthCounts.get(monthName);
-
-            boolean isWithinWeek = !docDate.isBefore(weekAgo) && !docDate.isAfter(today);
-            logger.info("   Is within week? {} (date={}, weekAgo={}, today={})", isWithinWeek, docDate, weekAgo, today);
-
-            if (sawanih.getOrg() != null) {
-                count.sender++;
-                if (isWithinWeek) count.weeklySender++;
-            }
-
-            if (sawanih.getFiles() != null && !sawanih.getFiles().isEmpty()) {
-                count.recipient++;
-                if (isWithinWeek) count.weeklyRecipient++;
-            }
-
-            // Count pages as files
-            if (sawanih.getPageQuantity() != null && sawanih.getPageQuantity() > 0) {
-                count.file += sawanih.getPageQuantity();
-                if (isWithinWeek) count.weeklyFile += sawanih.getPageQuantity();
-            }
+    private void addSawanihDatesToMap(List<?> docs, Map<String, Integer> map) {
+        for (Object d : docs) {
+            var doc = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.Sawanih) d;
+            LocalDate date = doc.getIncommingDate() != null
+                    ? doc.getIncommingDate()
+                    : doc.getOutgoingDate();
+            if (date != null)
+                addToMap(date, map);
         }
     }
 
-    // ========================================
-    // Process Hifziya Hazari documents
-    // ========================================
-    private void processHifziyaHazariDocuments(List<?> documents, Map<String, MonthlyCount> monthCounts, 
-                                              DateTimeFormatter[] formatters, LocalDate weekAgo, LocalDate today) {
-        if (documents == null || documents.isEmpty()) {
-            logger.info("No hifziya hazari documents found");
-            return;
-        }
-        
-        logger.info("Processing {} hifziya hazari documents", documents.size());
-        
-        for (Object doc : documents) {
-            var hifziya = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazari) doc;
-            
-            // Use year as approximate date
-            if (hifziya.getYear() == null) continue;
-            
-            LocalDate docDate = LocalDate.of(hifziya.getYear(), 1, 1);
-            String monthName = getAfghanMonth(docDate);
-            monthCounts.putIfAbsent(monthName, new MonthlyCount());
-            MonthlyCount count = monthCounts.get(monthName);
-
-            boolean isWithinWeek = !docDate.isBefore(weekAgo) && !docDate.isAfter(today);
-
-            if (hifziya.getOrg() != null) {
-                count.sender++;
-                if (isWithinWeek) count.weeklySender++;
+    private void addHifziyaHazariDatesToMap(List<?> docs, Map<String, Integer> map) {
+        for (Object d : docs) {
+            var doc = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaHazari) d;
+            if (doc.getYear() == null)
+                continue;
+            // ✅ Only accept valid Hijri years, store directly as string
+            // Accept both Hijri (1400-1500) and Gregorian (2000-2100)
+            if ((doc.getYear() < 1400 || doc.getYear() > 1500) &&
+                    (doc.getYear() < 2000 || doc.getYear() > 2100)) {
+                logger.warn("Skipping invalid year: {}", doc.getYear());
+                continue;
             }
-
-            count.recipient++;
-            if (isWithinWeek) count.weeklyRecipient++;
-
-            // Count actual files
-            if (hifziya.getFiles() != null && !hifziya.getFiles().isEmpty()) {
-                count.file += hifziya.getFiles().size();
-                if (isWithinWeek) count.weeklyFile += hifziya.getFiles().size();
-            }
+            map.merge(String.valueOf(doc.getYear()), 1, Integer::sum);
         }
     }
 
-    // ========================================
-    // Process Hifziya Warada Sadera documents
-    // ========================================
-    private void processHifziyaWaradaSaderaDocuments(List<?> documents, Map<String, MonthlyCount> monthCounts, 
-                                                    DateTimeFormatter[] formatters, LocalDate weekAgo, LocalDate today) {
-        if (documents == null || documents.isEmpty()) {
-            logger.info("No hifziya warada sadera documents found");
-            return;
-        }
-        
-        logger.info("Processing {} hifziya warada sadera documents", documents.size());
-        
-        for (Object doc : documents) {
-            var hifziya = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaWaradaSadera) doc;
-            
-            String dateStr = hifziya.getIncommingDate() != null ? hifziya.getIncommingDate() : hifziya.getOutgoingDate();
-            if (dateStr == null || dateStr.isEmpty()) {
-                logger.warn("⚠️ HifziyaWaradaSadera id={} has no date", hifziya.getId());
-                continue;
-            }
-
-            LocalDate docDate = parseDate(dateStr, formatters);
-            if (docDate == null) {
-                logger.warn("⚠️ Failed to parse hifziya warada date: {}", dateStr);
-                continue;
-            }
-
-            logger.info("✅ HifziyaWaradaSadera date parsed: {} -> {}", dateStr, docDate);
-
-            String monthName = getAfghanMonth(docDate);
-            monthCounts.putIfAbsent(monthName, new MonthlyCount());
-            MonthlyCount count = monthCounts.get(monthName);
-
-            boolean isWithinWeek = !docDate.isBefore(weekAgo) && !docDate.isAfter(today);
-            logger.info("   Is within week? {} (date={}, weekAgo={}, today={})", isWithinWeek, docDate, weekAgo, today);
-
-            if (hifziya.getOrg() != null) {
-                count.sender++;
-                if (isWithinWeek) count.weeklySender++;
-            }
-
-            if (hifziya.getLetterNumber() != null && !hifziya.getLetterNumber().isEmpty()) {
-                count.recipient++;
-                if (isWithinWeek) count.weeklyRecipient++;
-            }
-
-            if (hifziya.getFiles() != null && !hifziya.getFiles().isEmpty()) {
-                count.file += hifziya.getFiles().size();
-                if (isWithinWeek) count.weeklyFile += hifziya.getFiles().size();
-            }
+    private void addHifziyaWaradaSaderaDatesToMap(List<?> docs, Map<String, Integer> map) {
+        for (Object d : docs) {
+            var doc = (com.MCIT.ArchiveManagementSystem.models.RepositoryManagement.HifziyaWaradaSadera) d;
+            String dateStr = doc.getIncommingDate() != null
+                    ? doc.getIncommingDate()
+                    : doc.getOutgoingDate();
+            LocalDate date = parseDate(dateStr);
+            if (date != null)
+                addToMap(date, map);
         }
     }
 
-    // ========================================
-    // Process Makzan Receipt documents
-    // ========================================
-    private void processMakzanReceiptDocuments(List<?> documents, Map<String, MonthlyCount> monthCounts, 
-                                              DateTimeFormatter[] formatters, LocalDate weekAgo, LocalDate today) {
-        if (documents == null || documents.isEmpty()) {
-            logger.info("No makzan receipt documents found");
-            return;
-        }
-        
-        logger.info("Processing {} makzan receipt documents", documents.size());
-        
-        for (Object doc : documents) {
-            var receipt = (com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt) doc;
-            
-            if (receipt.getLetterDate() == null || receipt.getLetterDate().isEmpty()) continue;
-
-            LocalDate docDate = parseDate(receipt.getLetterDate(), formatters);
-            if (docDate == null) {
-                logger.warn("⚠️ Invalid date format: {}", receipt.getLetterDate());
-                continue;
-            }
-
-            String monthName = getAfghanMonth(docDate);
-            monthCounts.putIfAbsent(monthName, new MonthlyCount());
-            MonthlyCount count = monthCounts.get(monthName);
-
-            boolean isWithinWeek = !docDate.isBefore(weekAgo) && !docDate.isAfter(today);
-
-            if (receipt.getOrg() != null) {
-                count.sender++;
-                if (isWithinWeek) count.weeklySender++;
-            }
-
-            if (receipt.getLetterNo() != null && !receipt.getLetterNo().isEmpty()) {
-                count.recipient++;
-                if (isWithinWeek) count.weeklyRecipient++;
-            }
-
-            if (receipt.getFiles() != null && !receipt.getFiles().isEmpty()) {
-                count.file += receipt.getFiles().size();
-                if (isWithinWeek) count.weeklyFile += receipt.getFiles().size();
-            }
+    private void addMakzanReceiptDatesToMap(List<?> docs, Map<String, Integer> map) {
+        for (Object d : docs) {
+            var doc = (com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt) d;
+            LocalDate date = parseDate(doc.getLetterDate());
+            if (date != null)
+                addToMap(date, map);
         }
     }
 
-    // ========================================
-    // Helper: Parse date with multiple formats (including timestamps)
-    // ========================================
-    private LocalDate parseDate(String dateStr, DateTimeFormatter[] formatters) {
-        if (dateStr == null || dateStr.trim().isEmpty()) {
+    private void addMakzanAnnualDatesToMap(List<?> docs, Map<String, Integer> map) {
+        for (Object d : docs) {
+            var doc = (com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport) d;
+            if (doc.getYear() != null)
+                addToMap(LocalDate.of(doc.getYear(), 1, 1), map);
+        }
+    }
+
+    private void addMakzanSubmissionDatesToMap(List<?> docs, Map<String, Integer> map) {
+        for (Object d : docs) {
+            var doc = (com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanSubmissionReport) d;
+            if (doc.getYear() != null)
+                addToMap(LocalDate.of(doc.getYear(), 1, 1), map);
+        }
+    }
+
+    // =============================================
+    // HELPER: Add to YYYY-MM map — skip invalid years
+    // =============================================
+    private void addToMap(LocalDate date, Map<String, Integer> map) {
+        if (date.getYear() < 2000 || date.getYear() > 2100) {
+            logger.warn("Skipping invalid year: {}", date.getYear());
+            return;
+        }
+        String key = date.getYear() + "-" + String.format("%02d", date.getMonthValue());
+        map.merge(key, 1, Integer::sum);
+    }
+
+    // =============================================
+    // HELPER: Parse date string — multiple formats
+    // =============================================
+    private LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty())
             return null;
-        }
-        
-        // Try parsing with all formatters
+        DateTimeFormatter[] formatters = {
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd"),
+                DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"),
+                DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+        };
         for (DateTimeFormatter formatter : formatters) {
             try {
-                // For formats with time, use LocalDateTime then extract date
-                if (formatter.toString().contains("HH:mm:ss")) {
+                if (formatter.toString().contains("HourOfDay")) {
                     return java.time.LocalDateTime.parse(dateStr.trim(), formatter).toLocalDate();
-                } else {
-                    return LocalDate.parse(dateStr.trim(), formatter);
                 }
+                return LocalDate.parse(dateStr.trim(), formatter);
             } catch (Exception e) {
-                // Try next format
-            }
+                /* try next */ }
         }
-        
+        logger.warn("Could not parse date: {}", dateStr);
         return null;
     }
 
-    // ========================================
-    // Management-level aggregated stats (Admin view)
-    // ========================================
+    // =============================================
+    // HELPER: Weekly = docs in current month
+    // =============================================
+    private int calculateWeeklyTotal(Map<String, Integer> monthCounts) {
+        String currentMonth = LocalDate.now().getYear() + "-"
+                + String.format("%02d", LocalDate.now().getMonthValue());
+        return monthCounts.getOrDefault(currentMonth, 0);
+    }
+
+    // =============================================
+    // MANAGEMENT STATS (Admin overview endpoint)
+    // =============================================
     public ManagementStatsDTO getManagementStats() {
         long archivesCount = archiveRepository.count();
         long sawanihCount = sawanihRepository.count();
         long hifziyaHazariCount = hifziyaHazariRepository.count();
         long hifziyaWaradaSaderaCount = hifziyaWaradaSaderaRepository.count();
         long makzanReceiptsCount = makzanReceiptRepository.count();
-        long makzanAnnualReportsCount = makzanAnnualReportRepository.count();
-        long makzanSubmissionReportsCount = makzanSubmissionReportRepository.count();
-
-        long totalDocuments = archivesCount + sawanihCount + hifziyaHazariCount +
-                hifziyaWaradaSaderaCount + makzanReceiptsCount + makzanAnnualReportsCount +
-                makzanSubmissionReportsCount;
+        long makzanAnnualCount = makzanAnnualReportRepository.count();
+        long makzanSubmissionCount = makzanSubmissionReportRepository.count();
+        long totalDocuments = archivesCount + sawanihCount + hifziyaHazariCount
+                + hifziyaWaradaSaderaCount + makzanReceiptsCount
+                + makzanAnnualCount + makzanSubmissionCount;
 
         return ManagementStatsDTO.builder()
                 .managementName("All Managements")
-                .archives(archivesCount)
-                .sawanih(sawanihCount)
+                .archives(archivesCount).sawanih(sawanihCount)
                 .hifziyaHazari(hifziyaHazariCount)
                 .hifziyaWaradaSadera(hifziyaWaradaSaderaCount)
                 .makzanReceipts(makzanReceiptsCount)
-                .makzanAnnualReports(makzanAnnualReportsCount)
-                .makzanSubmissionReports(makzanSubmissionReportsCount)
+                .makzanAnnualReports(makzanAnnualCount)
+                .makzanSubmissionReports(makzanSubmissionCount)
                 .totalDocuments(totalDocuments)
                 .build();
     }
 
-    // ========================================
-    // Get stats for all managements (Admin view)
-    // ========================================
+    // =============================================
+    // ALL MANAGEMENT STATS LIST
+    // =============================================
     public List<ManagementStatsDTO> getAllManagementStats(List<Management> allManagements) {
-        return allManagements.stream()
-                .map(management -> {
-                    long archivesCount = archiveRepository.countByManagement(management);
-                    long sawanihCount = sawanihRepository.countByManagement(management);
-                    long hifziyaHazariCount = hifziyaHazariRepository.countByManagement(management);
-                    long hifziyaWaradaSaderaCount = hifziyaWaradaSaderaRepository.countByManagement(management);
-                    long makzanReceiptsCount = makzanReceiptRepository.countByManagement(management);
-                    long makzanAnnualReportsCount = makzanAnnualReportRepository.countByManagement(management);
-                    long makzanSubmissionReportsCount = makzanSubmissionReportRepository.countByManagement(management);
-
-                    long totalDocuments = archivesCount + sawanihCount + hifziyaHazariCount +
-                            hifziyaWaradaSaderaCount + makzanReceiptsCount + makzanAnnualReportsCount +
-                            makzanSubmissionReportsCount;
-
-                    return ManagementStatsDTO.builder()
-                            .managementName(management.getManagementName())
-                            .archives(archivesCount)
-                            .sawanih(sawanihCount)
-                            .hifziyaHazari(hifziyaHazariCount)
-                            .hifziyaWaradaSadera(hifziyaWaradaSaderaCount)
-                            .makzanReceipts(makzanReceiptsCount)
-                            .makzanAnnualReports(makzanAnnualReportsCount)
-                            .makzanSubmissionReports(makzanSubmissionReportsCount)
-                            .totalDocuments(totalDocuments)
-                            .build();
-                })
-                .collect(Collectors.toList());
+        return allManagements.stream().map(management -> {
+            long a = archiveRepository.countByManagement(management);
+            long s = sawanihRepository.countByManagement(management);
+            long hh = hifziyaHazariRepository.countByManagement(management);
+            long hw = hifziyaWaradaSaderaRepository.countByManagement(management);
+            long mr = makzanReceiptRepository.countByManagement(management);
+            long ma = makzanAnnualReportRepository.countByManagement(management);
+            long ms = makzanSubmissionReportRepository.countByManagement(management);
+            long total = a + s + hh + hw + mr + ma + ms;
+            return ManagementStatsDTO.builder()
+                    .managementName(management.getManagementName())
+                    .archives(a).sawanih(s).hifziyaHazari(hh)
+                    .hifziyaWaradaSadera(hw).makzanReceipts(mr)
+                    .makzanAnnualReports(ma).makzanSubmissionReports(ms)
+                    .totalDocuments(total).build();
+        }).collect(Collectors.toList());
     }
 
-    // ========================================
-    // Helper: create empty dashboard stats
-    // ========================================
+    // =============================================
+    // EMPTY STATS for unassigned users
+    // =============================================
     private DashboardStatsDTO createEmptyStats() {
         return DashboardStatsDTO.builder()
                 .months(new ArrayList<>())
-                .senderData(new ArrayList<>())
+                .fileData(new ArrayList<>()).waradaData(new ArrayList<>())
+                .saderaData(new ArrayList<>()).senderData(new ArrayList<>())
                 .recipientData(new ArrayList<>())
-                .fileData(new ArrayList<>())
-                .totalSender(0)
-                .totalRecipient(0)
-                .totalFile(0)
+                .totalArchive(0).totalHifziya(0).totalMakhzan(0).totalDocuments(0)
+                .totalWarada(0).totalSadera(0)
+                .totalSawanih(0).totalHifziyaHazari(0).totalHifziyaWaradaSadera(0)
+                .totalMakzanReceipt(0).totalAnnualReport(0).totalSubmissionReport(0)
+                .totalFile(0).totalSender(0).totalRecipient(0)
                 .weeklyData(DashboardStatsDTO.WeeklyDataDTO.builder()
-                        .sender(0)
-                        .recipient(0)
-                        .file(0)
-                        .build())
+                        .sender(0).recipient(0).file(0).build())
                 .build();
-    }
-
-    // ========================================
-    // Helper: Afghan month name
-    // ========================================
-    private String getAfghanMonth(LocalDate date) {
-        return AFGHAN_MONTHS[date.getMonthValue() - 1];
-    }
-
-    // ========================================
-    // Helper class to count monthly data
-    // ========================================
-    private static class MonthlyCount {
-        int sender = 0;
-        int recipient = 0;
-        int file = 0;
-        int weeklySender = 0;
-        int weeklyRecipient = 0;
-        int weeklyFile = 0;
     }
 }

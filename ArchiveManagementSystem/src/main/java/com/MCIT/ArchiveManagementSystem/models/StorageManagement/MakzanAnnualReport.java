@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "makzan_annual_report")
+@Table(name = "annual_reports")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

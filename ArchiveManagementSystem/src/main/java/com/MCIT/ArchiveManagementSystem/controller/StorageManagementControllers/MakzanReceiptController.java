@@ -5,11 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,11 +20,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanAnnualReport;
+import com.MCIT.ArchiveManagementSystem.dtos.MakzanReceiptSummaryDTO;
+import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakzanReceipt;
 import com.MCIT.ArchiveManagementSystem.repositories.StorageManagementRepo.MakzanReceiptRepository;
 import com.MCIT.ArchiveManagementSystem.security.ManagementSecurityService;
@@ -65,10 +67,20 @@ public class MakzanReceiptController {
     }
 
     @GetMapping
-    public List<MakzanReceipt> getAllReceipts() {
+    public ResponseEntity<Page<MakzanReceiptSummaryDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "docNo") String field,
+            @RequestParam(defaultValue = "") String term) {
+
         managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
-        return receiptsService.getAllReceipts();
+        Management management = new Management();
+        management.setManagementId(MAKHZAN_MANAGEMENT_ID);
+
+        Page<MakzanReceiptSummaryDTO> result = receiptsService.getAll(management, field, term, page, size);
+
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
@@ -91,61 +103,66 @@ public class MakzanReceiptController {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         MakzanReceipt recivedrMakzanReceipt = mapper.readValue(receipts, MakzanReceipt.class);
-
+        Management management = new Management();
+        management.setManagementId(MAKHZAN_MANAGEMENT_ID);
+        recivedrMakzanReceipt.setManagement(management);
         return receiptsService.createReceipt(recivedrMakzanReceipt, fileURL);
     }
 
     // @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     // public ResponseEntity<MakzanReceipt> updateReceipt(
-    //         @PathVariable Integer id,
-    //         @RequestPart("receipts") String receiptsJson, // JSON string د Receipts object لپاره
-    //         @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
-    //     managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+    // @PathVariable Integer id,
+    // @RequestPart("receipts") String receiptsJson, // JSON string د Receipts
+    // object لپاره
+    // @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
+    // managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
-    //     try {
-    //         // JSON string parse کوو
-    //         ObjectMapper mapper = new ObjectMapper();
-    //         mapper.registerModule(new JavaTimeModule());
-    //         MakzanReceipt recivedReceipts = mapper.readValue(receiptsJson, MakzanReceipt.class);
+    // try {
+    // // JSON string parse کوو
+    // ObjectMapper mapper = new ObjectMapper();
+    // mapper.registerModule(new JavaTimeModule());
+    // MakzanReceipt recivedReceipts = mapper.readValue(receiptsJson,
+    // MakzanReceipt.class);
 
-    //         // service ته پاس کوو
-    //         MakzanReceipt updatedReceipt = receiptsService.updateReceipt(id, recivedReceipts, fileURL);
+    // // service ته پاس کوو
+    // MakzanReceipt updatedReceipt = receiptsService.updateReceipt(id,
+    // recivedReceipts, fileURL);
 
-    //         return ResponseEntity.ok(updatedReceipt);
-    //     } catch (Exception e) {
-    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    //     }
+    // return ResponseEntity.ok(updatedReceipt);
+    // } catch (Exception e) {
+    // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     // }
- @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<?> updateReceipt(
+    // }
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateReceipt(
 
-                        @PathVariable Integer id,
+            @PathVariable Integer id,
 
-                        @RequestPart("receipts") String receiptsJson,
+            @RequestPart("receipts") String receiptsJson,
 
-                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
 
-        ) {
-                managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
+    ) {
+        managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
 
-                try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        mapper.registerModule(new JavaTimeModule());
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
 
-                        MakzanReceipt report = mapper.readValue(
-                                        receiptsJson,
-                                        MakzanReceipt.class);
+            MakzanReceipt report = mapper.readValue(
+                    receiptsJson,
+                    MakzanReceipt.class);
 
-                        receiptsService.updateReceipt(id, report, fileURL);
+            receiptsService.updateReceipt(id, report, fileURL);
 
-                        // ✅ Return success message only — no entity serialization
-                        return ResponseEntity.ok("Updated successfully");
+            // ✅ Return success message only — no entity serialization
+            return ResponseEntity.ok("Updated successfully");
 
-                } catch (Exception e) {
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                        .body("Update failed: " + e.getMessage());
-                }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Update failed: " + e.getMessage());
         }
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteReceipt(@PathVariable Integer id) {
