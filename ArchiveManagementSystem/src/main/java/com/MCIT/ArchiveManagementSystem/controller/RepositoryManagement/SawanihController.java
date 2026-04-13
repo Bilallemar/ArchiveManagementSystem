@@ -3,7 +3,9 @@ package com.MCIT.ArchiveManagementSystem.controller.RepositoryManagement;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +79,8 @@ public class SawanihController {
     @PostMapping(consumes = { "multipart/form-data" })
     public Sawanih createSawanih(
             @RequestPart("sawanih") String sawanihJson,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) throws IOException {
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson) throws IOException {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -86,14 +89,21 @@ public class SawanihController {
         Management management = new Management();
         management.setManagementId(HIFZIYA_MANAGEMENT_ID);
         sawanih.setManagement(management);
-        return sawanihService.createSawanih(sawanih, fileURL);
+
+            List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isBlank()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+        return sawanihService.createSawanih(sawanih, fileURL, scannerFiles);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateSawanih(
             @PathVariable Integer id,
             @RequestPart("sawanih") String sawanihJson,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson) {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         try {
@@ -101,7 +111,14 @@ public class SawanihController {
             mapper.registerModule(new JavaTimeModule());
             Sawanih sawanih = mapper.readValue(sawanihJson, Sawanih.class);
 
-            Sawanih updatedSawanih = sawanihService.updateSawanih(id, sawanih, fileURL);
+
+
+                List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isBlank()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+            Sawanih updatedSawanih = sawanihService.updateSawanih(id, sawanih, fileURL, scannerFiles);
 
             return ResponseEntity.ok(updatedSawanih);
 

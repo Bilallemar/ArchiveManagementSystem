@@ -1,11 +1,17 @@
 package com.MCIT.ArchiveManagementSystem.services.StorageManagementService;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +31,11 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class MakzanAnnualReportService {
+        @Value("${spring.file.directory}") // ✅ add this
+        private String uploadDir;
 
+        @Value("${scanner.folder.path}") // ✅ add this
+        private String scannerFolderPath;
         private static final Logger logger = LoggerFactory.getLogger(MakzanAnnualReportService.class);
         private static final String TABLE_NAME = "makzan_annual_report";
 
@@ -91,16 +101,16 @@ public class MakzanAnnualReportService {
         @Transactional
         public MakzanAnnualReport createAnnualReport(
                         MakzanAnnualReport annualReport,
-                        MultipartFile[] fileURL) {
+                        MultipartFile[] fileURL, List<String> scannerFiles) {
 
                 // 1. Save main entity first
                 annualReport = makzanAnnualReportRepository.save(annualReport);
                 logger.info("MakzanAnnualReport created with id: {}", annualReport.getId());
+                List<FileEntity> fileEntities = new ArrayList<>();
 
                 // 2. Save files
                 if (fileURL != null && fileURL.length > 0) {
                         List<String> storedPaths = fileService.savefiles(fileURL, annualReport);
-                        List<FileEntity> fileEntities = new ArrayList<>();
 
                         for (int i = 0; i < fileURL.length; i++) {
                                 MultipartFile file = fileURL[i];
@@ -119,6 +129,36 @@ public class MakzanAnnualReportService {
                                 logger.info("File queued for save: {}", safeName);
                         }
 
+                        if (scannerFiles != null && !scannerFiles.isEmpty()) {
+                                for (String scannerFileName : scannerFiles) {
+                                        try {
+                                                Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                                                String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                                                Path destPath = Paths.get(uploadDir, uniqueName);
+
+                                                Files.createDirectories(Paths.get(uploadDir));
+                                                Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                                                String fileType = Files.probeContentType(sourcePath);
+
+                                                FileEntity fe = new FileEntity();
+                                                fe.setFilePath(uniqueName);
+                                                fe.setFileName(scannerFileName);
+                                                fe.setFileType(fileType != null ? fileType
+                                                                : "application/octet-stream");
+                                                fe.setFileSize(Files.size(sourcePath));
+                                                fe.setMakzanAnnualReport(annualReport);
+                                                fileRepository.save(fe);
+                                                fileEntities.add(fe);
+                                                System.out.println("✅ Scanner file copied: " + scannerFileName);
+
+                                        } catch (java.io.IOException e) { // ✅ fully qualified to be safe
+                                                System.err.println("❌ Failed to copy scanner file: "
+                                                                + scannerFileName + " - " + e.getMessage());
+                                        }
+                                }
+                        }
+
                         annualReport.setFiles(fileEntities);
                         // ✅ cascade=CascadeType.ALL saves the files automatically
                         makzanAnnualReportRepository.save(annualReport);
@@ -135,10 +175,11 @@ public class MakzanAnnualReportService {
 
         // ─── UPDATE ─────────────────────────────────────────────────────────────────
         @Transactional
-        public void updateAnnualReport(
+        public MakzanAnnualReport updateAnnualReport(
                         Integer id,
                         MakzanAnnualReport annualReportDetails,
-                        MultipartFile[] fileURL) {
+                        MultipartFile[] fileURL, List<String> scannerFiles
+                ) {
 
                 MakzanAnnualReport existingReport = makzanAnnualReportRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("AnnualReport not found with id: " + id));
@@ -150,53 +191,80 @@ public class MakzanAnnualReportService {
                 existingReport.setDocType(annualReportDetails.getDocType());
                 existingReport.setSummaryWaseqa(annualReportDetails.getSummaryWaseqa());
                 existingReport.setDescription(annualReportDetails.getDescription());
+                existingReport.setCabinetFile(annualReportDetails.getCabinetFile());
 
                 logger.info("Updating MakzanAnnualReport id: {}", id);
+                boolean hasNewFiles = (fileURL != null && fileURL.length > 0);
+                boolean hasScannerFiles = (scannerFiles != null && !scannerFiles.isEmpty());
 
-                // Update files only if new files were provided
-                if (fileURL != null && fileURL.length > 0) {
-
+                if (hasNewFiles || hasScannerFiles) {
+                        // ✅ Delete old files from disk and DB
                         if (existingReport.getFiles() != null && !existingReport.getFiles().isEmpty()) {
                                 for (FileEntity oldFile : existingReport.getFiles()) {
-                                        try {
                                                 fileService.deleteFile(oldFile.getFilePath());
-                                        } catch (Exception e) {
-                                                logger.warn("Could not delete file: {}", e.getMessage());
-                                        }
+                                        logger.info("Deleted old file: {}", oldFile.getFileName());
                                 }
-                                existingReport.getFiles().clear(); // ← orphanRemoval handles DB delete
-                                makzanAnnualReportRepository.saveAndFlush(existingReport); // ← flush BEFORE adding new
-                                                                                           // files
-                        }
-
-                        List<String> storedPaths = fileService.savefiles(fileURL, existingReport);
-
-                        for (int i = 0; i < fileURL.length; i++) {
-                                MultipartFile f = fileURL[i];
-                                if (f == null || f.isEmpty())
-                                        continue;
-
-                                String safeName = sanitizeFileName(f.getOriginalFilename());
-
-                                FileEntity fe = new FileEntity();
-                                fe.setFilePath(storedPaths.get(i));
-                                fe.setFileName(safeName);
-                                fe.setFileType(f.getContentType());
-                                fe.setMakzanAnnualReport(existingReport);
-
-                                existingReport.getFiles().add(fe); // ← add to existing list, don't replace it
-                                logger.info("New file queued: {}", safeName);
+                                existingReport.getFiles().clear();
+                                fileRepository.flush(); // ✅ make sure deletes happen before inserts
                         }
                 }
 
-                makzanAnnualReportRepository.save(existingReport);
+                // ── Handle manual uploaded files ──────────────────────
+                if (hasNewFiles) {
+                        List<String> storedPaths = fileService.savefiles(fileURL, existingReport);
 
-                auditLogHelper.logUpdate(
-                                TABLE_NAME,
-                                id.longValue(),
+                        for (int i = 0; i < fileURL.length; i++) {
+                                MultipartFile file = fileURL[i];
+                                if (file == null || file.isEmpty())
+                                        continue;
+
+
+                                FileEntity fe = new FileEntity();
+                                fe.setFilePath(storedPaths.get(i));
+                                fe.setFileName(file.getOriginalFilename()); // ✅ keep original name
+                                fe.setFileType(file.getContentType());
+                                fe.setFileSize(file.getSize());
+                                fe.setMakzanAnnualReport(existingReport);
+                                fileRepository.save(fe);
+                                existingReport.getFiles().add(fe);
+                                System.out.println("✅ Manual file saved on update: " + file.getOriginalFilename());
+                        }
+                }
+
+                // ── Handle scanner files ───────────────────────────────
+                if (hasScannerFiles) {
+                        for (String scannerFileName : scannerFiles) {
+                                try {
+                                        Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                                        String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                                        Path destPath = Paths.get(uploadDir, uniqueName);
+
+                                        Files.createDirectories(Paths.get(uploadDir));
+                                        Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                                        String fileType = Files.probeContentType(sourcePath);
+
+                                        FileEntity fe = new FileEntity();
+                                        fe.setFilePath(uniqueName);
+                                        fe.setFileName(scannerFileName);
+                                        fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                                        fe.setFileSize(Files.size(sourcePath));
+                                        fe.setMakzanAnnualReport(existingReport);
+                                        fileRepository.save(fe);
+                                        existingReport.getFiles().add(fe);
+                                        System.out.println("✅ Scanner file on update: " + scannerFileName);
+
+                                } catch (java.io.IOException e) {
+                                        System.err.println("❌ Scanner file failed: " + scannerFileName + " - "
+                                                        + e.getMessage());
+                        }
+                }
+                }
+
+                MakzanAnnualReport updated = makzanAnnualReportRepository.save(existingReport);
+                auditLogHelper.logUpdate(TABLE_NAME, existingReport.getId().longValue(),
                                 existingReport.getDescription());
-
-                logger.info("Update completed for MakzanAnnualReport id: {}", id);
+                return updated;
         }
 
         // ─── DELETE ─────────────────────────────────────────────────────────────────

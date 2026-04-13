@@ -1,6 +1,8 @@
 package com.MCIT.ArchiveManagementSystem.controller.StorageManagementControllers;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -81,7 +83,8 @@ public class MakzanSubmissionReportController {
 
                         @RequestPart("submissionReport") String submissionReportJson,
 
-                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+                        @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson
 
         ) throws IOException {
 
@@ -99,10 +102,16 @@ public class MakzanSubmissionReportController {
                 Management management = new Management();
                 management.setManagementId(MAKHZAN_MANAGEMENT_ID);
                 report.setManagement(management);
+                List<String> scannerFiles = new ArrayList<>();
+                if (scannerFilesJson != null && !scannerFilesJson.isBlank()) {
+                        scannerFiles = mapper.readValue(scannerFilesJson,
+                                        mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+                }
                 return makzanSubmissionReportService
                                 .createMakzanSubmissionReport(
                                                 report,
-                                                fileURL);
+                                                fileURL,
+                                                scannerFiles);
         }
 
         @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -112,7 +121,8 @@ public class MakzanSubmissionReportController {
 
                         @RequestPart("submissionReport") String submissionReportJson,
 
-                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+                        @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson
 
         ) {
 
@@ -129,12 +139,19 @@ public class MakzanSubmissionReportController {
                         MakzanSubmissionReport report = mapper.readValue(
                                         submissionReportJson,
                                         MakzanSubmissionReport.class);
+                        List<String> scannerFiles = new ArrayList<>();
+                        if (scannerFilesJson != null && !scannerFilesJson.isBlank()) {
+                                scannerFiles = mapper.readValue(scannerFilesJson,
+                                                mapper.getTypeFactory().constructCollectionType(List.class,
+                                                                String.class));
+                        }
 
                         makzanSubmissionReportService
                                         .updateMakzanSubmissionReport(
                                                         id,
                                                         report,
-                                                        fileURL);
+                                                        fileURL,
+                                                        scannerFiles);
 
                         return ResponseEntity.ok("Updated successfully");
 

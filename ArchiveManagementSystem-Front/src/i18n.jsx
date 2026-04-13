@@ -1,81 +1,107 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import { setDocumentDirection, getStoredLanguage } from "./utils/languageUtils";
+import { getStoredLanguage, setDocumentDirection } from "./utils/languageUtils";
 
 // ================== Pashto ==================
-import psLogin from "./locales/ps/login.json";
+import psArchive from "./locales/ps/Archive/archive.json";
+import psUserDetails from "./locales/ps/UserDetails.json";
+import psUserProfile from "./locales/ps/UserProfile.json";
 import psForgotPassword from "./locales/ps/forgotPassword.json";
+import psLandingPage from "./locales/ps/landingPage.json";
+import psLogin from "./locales/ps/login.json";
+import psNavbar from "./locales/ps/navbar.json";
 import psUserManagement from "./locales/ps/userManagement.json";
 import psUsers from "./locales/ps/users.json";
-import psNavbar from "./locales/ps/navbar.json";
-import psUserProfile from "./locales/ps/UserProfile.json";
-import psUserDetails from "./locales/ps/UserDetails.json";
-import psSidebarLayout from "./locales/ps/SidebarLayout.json";
-import psLandingPage from "./locales/ps/landingPage.json";
-import psArchive from "./locales/ps/Archive/archive.json";
 // import psArchiveList from "./locales/ps/Archive/archivelist.json";
 // import psEditArchiveDialog from "./locales/ps/Archive/EditArchiveDialog.json"; // ✅ new
 // import psViewArchive from "./locales/ps/Archive/ViewArchive.json";
-import psManagementUtils from "./locales/ps/managementUtils.json";
+import psAuditDetails from "./locales/ps/AdminAuditLogsDetails.json";
+import psNasharat from "./locales/ps/Archive/nasharat.json";
+import psCabinetManagement from "./locales/ps/Cabinetmanagement.json";
+import psCreateUserDialog from "./locales/ps/CreateUserDialog.json";
 import psAddHazari from "./locales/ps/Hifziya/HifziyaHazari/AddHazari.json";
-import psHifziyaWaradaSadera from "./locales/ps/Hifziya/WaradaSadera/waradaSaderaList.json";
 import psSawanih from "./locales/ps/Hifziya/Sawanih/sawanih.json";
+import psShuraAaliResolutions from "./locales/ps/Hifziya/ShuraAaliResolution.json";
+import psHifziyaWaradaSadera from "./locales/ps/Hifziya/WaradaSadera/waradaSaderaList.json";
+import psLocationManagement from "./locales/ps/LocationManagement.json";
+import psMasterData from "./locales/ps/MasterDataManagement.json";
+import psSidebarLayout from "./locales/ps/SidebarLayout.json";
 import psMakzanReceipt from "./locales/ps/Storage/MakzanReceipt/MakzanReceipt.json";
 import psMakzanSubmissionReport from "./locales/ps/Storage/MakzanSubmissionReport/MakzanSubmissionReport.json";
-import psMakhzanAnnualReport from "./locales/ps/Storage/MakzanAnnualReport/MakzanAnnualReport.json";
 import psMakhzanWaradaSadera from "./locales/ps/Storage/MakzanWaradaSadera/MakhzanWaradaSadera.json";
 import psBreadcrumbs from "./locales/ps/breadcrumbs.json";
-import psShuraAaliResolutions from "./locales/ps/Hifziya/ShuraAaliResolution.json";
+import psManagementUtils from "./locales/ps/managementUtils.json";
+import psMakhzanAnnualReport from "./locales/ps/Storage/MakzanAnnualReport/MakzanAnnualReport.json";
+import psAdminAuditLogs from "./locales/ps/AdminAuditLogs.json";
 
 // ================== Dari ==================
-import faLogin from "./locales/fa/login.json";
-import faForgotPassword from "./locales/fa/forgotPassword.json";
-import faUserManagement from "./locales/fa/userManagement.json";
-import faUsers from "./locales/fa/users.json";
-import faUserDetails from "./locales/fa/UserDetails.json";
-import faUserProfile from "./locales/fa/UserProfile.json";
-import faNavbar from "./locales/fa/navbar.json";
-import faSidebarLayout from "./locales/fa/SidebarLayout.json";
-import faLandingPage from "./locales/fa/landingPage.json";
+import faAdminAuditLogs from "./locales/fa/AdminAuditLogs.json";
 import faArchive from "./locales/fa/Archive/archive.json";
 // import faArchiveList from "./locales/fa/archivelist.json";
 // import faEditArchiveDialog from "./locales/fa/EditArchiveDialog.json"; // ✅ new
 // import faViewArchive from "./locales/fa/ViewArchive.json";
-import faManagementUtils from "./locales/fa/managementUtils.json";
+import faAuditDetails from "./locales/fa/AdminAuditLogsDetails.json";
+import faNasharat from "./locales/fa/Archive/nasharat.json";
+import faCabinetManagement from "./locales/fa/Cabinetmanagement.json";
+import faCreateUserDialog from "./locales/fa/CreateUserDialog.json";
 import faAddHazari from "./locales/fa/Hifziya/HifziyaHazari/addHazari.json";
-import faHifziyaWaradaSadera from "./locales/fa/Hifziya/WaradaSadera/waradaSaderaList.json";
 import faSawanih from "./locales/fa/Hifziya/Sawanih/sawanih.json";
+import faShuraAaliResolutions from "./locales/fa/Hifziya/ShuraAaliResolution.json";
+import faHifziyaWaradaSadera from "./locales/fa/Hifziya/WaradaSadera/waradaSaderaList.json";
+import faLocationManagement from "./locales/fa/LocationManagement.json";
+import faMasterData from "./locales/fa/MasterDataManagement.json";
+import faSidebarLayout from "./locales/fa/SidebarLayout.json";
+import faMakhzanAnnualReport from "./locales/fa/Storage/MakzanAnnualReport/MakzanAnnualReport.json";
 import faMakzanReceipt from "./locales/fa/Storage/MakzanReceipt/MakzanReceipt.json";
 import faMakzanSubmissionReport from "./locales/fa/Storage/MakzanSubmissionReport/MakzanSubmissionReport.json";
-import faMakhzanAnnualReport from "./locales/fa/Storage/MakzanAnnualReport/MakzanAnnualReport.json";
 import faMakhzanWaradaSadera from "./locales/fa/Storage/MakzanWaradaSadera/MakhzanWaradaSadera.json";
+import faUserDetails from "./locales/fa/UserDetails.json";
+import faUserProfile from "./locales/fa/UserProfile.json";
 import faBreadcrumbs from "./locales/fa/breadcrumbs.json";
-import faShuraAaliResolutions from "./locales/fa/Hifziya/ShuraAaliResolution.json";
+import faForgotPassword from "./locales/fa/forgotPassword.json";
+import faLandingPage from "./locales/fa/landingPage.json";
+import faLogin from "./locales/fa/login.json";
+import faManagementUtils from "./locales/fa/managementUtils.json";
+import faNavbar from "./locales/fa/navbar.json";
+import faUserManagement from "./locales/fa/userManagement.json";
+import faUsers from "./locales/fa/users.json";
 // ================== English ==================
-import enLogin from "./locales/en/login.json";
-import enForgotPassword from "./locales/en/forgotPassword.json";
-import enUserManagement from "./locales/en/userManagement.json";
-import enUsers from "./locales/en/users.json";
-import enUserDetails from "./locales/en/UserDetails.json";
-import enUserProfile from "./locales/en/UserProfile.json";
-import enNavbar from "./locales/en/navbar.json";
-import enSidebarLayout from "./locales/en/SidebarLayout.json";
-import enLandingPage from "./locales/en/landingPage.json";
+import enAdminAuditLogs from "./locales/en/AdminAuditLogs.json";
 import enArchive from "./locales/en/Archive/archive.json";
 // import enArchiveList from "./locales/en/archivelist.json";
 // import enEditArchiveDialog from "./locales/en/EditArchiveDialog.json"; // ✅ new
 // import enViewArchive from "./locales/en/ViewArchive.json";
-import enManagementUtils from "./locales/en/managementUtils.json";
+import enAuditDetails from "./locales/en/AdminAuditLogsDetails.json";
+import enNasharat from "./locales/en/Archive/nasharat.json";
+import enCabinetManagement from "./locales/en/Cabinetmanagement.json";
+import enCreateUserDialog from "./locales/en/CreateUserDialog.json";
 import enAddHazari from "./locales/en/Hifziya/HifziyaHazari/addHazari.json";
-import enHifziyaWaradaSadera from "./locales/en/Hifziya/WaradaSadera/waradaSaderaList.json";
 import enSawanih from "./locales/en/Hifziya/Sawanih/sawanih.json";
+import enShuraAaliResolutions from "./locales/en/Hifziya/ShuraAaliResolution.json";
+import enHifziyaWaradaSadera from "./locales/en/Hifziya/WaradaSadera/waradaSaderaList.json";
+import enLocationManagement from "./locales/en/LocationManagement.json";
+import enMasterData from "./locales/en/MasterDataManagement.json";
+import enSidebarLayout from "./locales/en/SidebarLayout.json";
+import enMakhzanAnnualReport from "./locales/en/Storage/MakzanAnnualReport/MakzanAnnualReport.json";
 import enMakzanReceipt from "./locales/en/Storage/MakzanReceipt/MakzanReceipt.json";
 import enMakzanSubmissionReport from "./locales/en/Storage/MakzanSubmissionReport/MakzanSubmissionReport.json";
-import enMakhzanAnnualReport from "./locales/en/Storage/MakzanAnnualReport/MakzanAnnualReport.json";
 import enMakhzanWaradaSadera from "./locales/en/Storage/MakzanWaradaSadera/MakhzanWaradaSadera.json";
+import enUserDetails from "./locales/en/UserDetails.json";
+import enUserProfile from "./locales/en/UserProfile.json";
 import enBreadcrumbs from "./locales/en/breadcrumbs.json";
-import enShuraAaliResolutions from "./locales/en/Hifziya/ShuraAaliResolution.json";
+import enForgotPassword from "./locales/en/forgotPassword.json";
+import enLandingPage from "./locales/en/landingPage.json";
+import enLogin from "./locales/en/login.json";
+import enManagementUtils from "./locales/en/managementUtils.json";
+import enNavbar from "./locales/en/navbar.json";
+import enUserManagement from "./locales/en/userManagement.json";
+import enUsers from "./locales/en/users.json";
 
+console.log("psAdminAuditLogs imported?", !!psAdminAuditLogs);
+console.log(
+  "First few keys in psAdminAuditLogs:",
+  Object.keys(psAdminAuditLogs).slice(0, 5),
+);
 const initialLanguage = getStoredLanguage();
 
 i18n.use(initReactI18next).init({
@@ -91,9 +117,8 @@ i18n.use(initReactI18next).init({
       SidebarLayout: psSidebarLayout,
       landingPage: psLandingPage, // ✅ added
       archive: psArchive,
-      // archivelist: psArchiveList, // ✅ added
-      // editArchiveDialog: psEditArchiveDialog, // ✅ added
-      // ViewArchive: psViewArchive, // ✅ added
+      MasterDataManagement: psMasterData,
+      CabinetManagement: psCabinetManagement,
       managementUtils: psManagementUtils,
       addHazari: psAddHazari,
       hifziyaWaradaSadera: psHifziyaWaradaSadera,
@@ -104,6 +129,11 @@ i18n.use(initReactI18next).init({
       makhzanWaradaSadera: psMakhzanWaradaSadera,
       breadcrumbs: psBreadcrumbs,
       shuraAali: psShuraAaliResolutions,
+      adminAuditLogs: psAdminAuditLogs,
+      auditLogsDetails: psAuditDetails,
+      locationManagement: psLocationManagement,
+      createUserDialog: psCreateUserDialog,
+      nasharat: psNasharat,
     },
 
     fa: {
@@ -117,9 +147,8 @@ i18n.use(initReactI18next).init({
       SidebarLayout: faSidebarLayout,
       landingPage: faLandingPage,
       archive: faArchive,
-      // archivelist: faArchiveList,
-      // editArchiveDialog: faEditArchiveDialog, // ✅ added
-      // ViewArchive: faViewArchive, // ✅ added
+      MasterDataManagement: faMasterData,
+      CabinetManagement: faCabinetManagement,
       managementUtils: faManagementUtils,
       addHazari: faAddHazari,
       hifziyaWaradaSadera: faHifziyaWaradaSadera,
@@ -130,6 +159,11 @@ i18n.use(initReactI18next).init({
       makhzanWaradaSadera: faMakhzanWaradaSadera,
       breadcrumbs: faBreadcrumbs,
       shuraAali: faShuraAaliResolutions,
+      adminAuditLogs: faAdminAuditLogs,
+      auditLogsDetails: faAuditDetails,
+      locationManagement: faLocationManagement,
+      createUserDialog: faCreateUserDialog,
+      nasharat: faNasharat,
     },
 
     en: {
@@ -143,9 +177,8 @@ i18n.use(initReactI18next).init({
       SidebarLayout: enSidebarLayout,
       landingPage: enLandingPage,
       archive: enArchive,
-      // archivelist: enArchiveList,
-      // editArchiveDialog: enEditArchiveDialog, // ✅ added
-      // ViewArchive: enViewArchive, // ✅ added
+      MasterDataManagement: enMasterData,
+      CabinetManagement: enCabinetManagement,
       managementUtils: enManagementUtils,
       addHazari: enAddHazari,
       hifziyaWaradaSadera: enHifziyaWaradaSadera,
@@ -156,6 +189,11 @@ i18n.use(initReactI18next).init({
       makhzanWaradaSadera: enMakhzanWaradaSadera,
       breadcrumbs: enBreadcrumbs,
       shuraAali: enShuraAaliResolutions,
+      adminAuditLogs: enAdminAuditLogs,
+      auditLogsDetails: enAuditDetails,
+      locationManagement: enLocationManagement,
+      createUserDialog: enCreateUserDialog,
+      nasharat: enNasharat,
     },
   },
 
@@ -188,6 +226,13 @@ i18n.use(initReactI18next).init({
     "makhzanWaradaSadera",
     "breadcrumbs",
     "shuraAali",
+    "MasterDataManagement",
+    "CabinetManagement",
+    "adminAuditLogs",
+    "auditLogsDetails",
+    "locationManagement",
+    "createUserDialog",
+    "nasharat",
   ],
 
   defaultNS: "login",

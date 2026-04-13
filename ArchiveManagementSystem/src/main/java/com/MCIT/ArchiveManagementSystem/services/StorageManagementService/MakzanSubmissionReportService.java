@@ -1,11 +1,17 @@
 package com.MCIT.ArchiveManagementSystem.services.StorageManagementService;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +31,11 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class MakzanSubmissionReportService {
+        @Value("${spring.file.directory}")
+        private String uploadDir;
+
+        @Value("${scanner.folder.path}")
+        private String scannerFolderPath;
         private final MakzanSubmissionReportRepository makzanSubmissionReportRepository;
         private final AuditLogHelper auditLogHelper;
         private static final Logger logger = LoggerFactory.getLogger(MakzanSubmissionReportService.class);
@@ -78,204 +89,149 @@ public class MakzanSubmissionReportService {
         @Transactional
         public MakzanSubmissionReport createMakzanSubmissionReport(
                         MakzanSubmissionReport report,
-                        MultipartFile[] fileURL) {
+                        MultipartFile[] fileURL,
+                        List<String> scannerFileNames) {
 
                 report = makzanSubmissionReportRepository.save(report);
+                List<FileEntity> fileEntities = new ArrayList<>(); // ✅ moved outside
 
+                // ── Manual files ──────────────────────────────────────────
                 if (fileURL != null && fileURL.length > 0) {
-
                         List<String> storedPaths = fileService.savefiles(fileURL, report);
 
-                        List<FileEntity> fileEntities = new ArrayList<>();
-
                         for (int i = 0; i < fileURL.length; i++) {
-
                                 MultipartFile file = fileURL[i];
+                                if (file == null || file.isEmpty())
+                                        continue;
 
-                                FileEntity fileEntity = new FileEntity();
-
-                                fileEntity.setFilePath(
-                                                storedPaths.get(i));
-
-                                fileEntity.setFileName(
-                                                file.getOriginalFilename());
-
-                                fileEntity.setFileType(
-                                                file.getContentType());
-
-                                fileEntity.setMakzanSubmissionReport(
-                                                report);
-
-                                fileRepository.save(fileEntity);
-
-                                fileEntities.add(fileEntity);
+                                FileEntity fe = new FileEntity();
+                                fe.setFilePath(storedPaths.get(i));
+                                fe.setFileName(file.getOriginalFilename());
+                                fe.setFileType(file.getContentType());
+                                fe.setFileSize(file.getSize());
+                                fe.setMakzanSubmissionReport(report);
+                                fileRepository.save(fe);
+                                fileEntities.add(fe);
+                                System.out.println("✅ Manual file saved: " + file.getOriginalFilename());
                         }
-
-                        report.setFiles(fileEntities);
-                        makzanSubmissionReportRepository.save(report);
                 }
 
-                auditLogHelper.logCreate(
-                                TABLE_NAME,
-                                report.getId().longValue(),
-                                report.getDescription());
+                // ── Scanner files ─────────────────────────────────────────
+                if (scannerFileNames != null && !scannerFileNames.isEmpty()) {
+                        for (String scannerFileName : scannerFileNames) {
+                                try {
+                                        Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                                        String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                                        Path destPath = Paths.get(uploadDir, uniqueName);
 
+                                        Files.createDirectories(Paths.get(uploadDir));
+                                        Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                                        String fileType = Files.probeContentType(sourcePath);
+
+                                        FileEntity fe = new FileEntity();
+                                        fe.setFilePath(uniqueName);
+                                        fe.setFileName(scannerFileName);
+                                        fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                                        fe.setFileSize(Files.size(sourcePath));
+                                        fe.setMakzanSubmissionReport(report);
+                                        fileRepository.save(fe);
+                                        fileEntities.add(fe);
+                                        System.out.println("✅ Scanner file saved: " + scannerFileName);
+
+                                } catch (java.io.IOException e) {
+                                        logger.error("❌ Failed to copy scanner file: {}", scannerFileName, e);
+                        }
+                        }
+                }
+
+                // ✅ Always set files even if empty
+                        report.setFiles(fileEntities);
+                        makzanSubmissionReportRepository.save(report);
+
+                auditLogHelper.logCreate(TABLE_NAME, report.getId().longValue(), report.getDescription());
                 return report;
         }
 
         @Transactional
         public void updateMakzanSubmissionReport(
                         Integer id,
-                        MakzanSubmissionReport makzanSubmissionReportDetails,
-                        MultipartFile[] fileURL) {
+                        MakzanSubmissionReport reportDetails,
+                        MultipartFile[] fileURL,
+                        List<String> scannerFileNames) { // ✅ add parameter
 
-                MakzanSubmissionReport existingReport = makzanSubmissionReportRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException(
-                                                "MakzanSubmissionReport not found with id: " + id));
+                MakzanSubmissionReport existing = makzanSubmissionReportRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Not found: " + id));
 
-                // Update fields
-                existingReport.setProvince(makzanSubmissionReportDetails.getProvince());
-                existingReport.setDistrict(makzanSubmissionReportDetails.getDistrict());
-                existingReport.setYear(makzanSubmissionReportDetails.getYear());
-                existingReport.setDocType(makzanSubmissionReportDetails.getDocType());
-                existingReport.setSummaryWaseqa(makzanSubmissionReportDetails.getSummaryWaseqa());
-                existingReport.setDescription(makzanSubmissionReportDetails.getDescription());
+                // ── Update fields ─────────────────────────────────────
+                existing.setProvince(reportDetails.getProvince());
+                existing.setDistrict(reportDetails.getDistrict());
+                existing.setYear(reportDetails.getYear());
+                existing.setDocType(reportDetails.getDocType());
+                existing.setSummaryWaseqa(reportDetails.getSummaryWaseqa());
+                existing.setDescription(reportDetails.getDescription());
+                existing.setCabinetFile(reportDetails.getCabinetFile());
 
-                logger.info("Updating MakzanSubmissionReport id: {}", id);
+                boolean hasNewFiles = (fileURL != null && fileURL.length > 0);
+                boolean hasScannerFiles = (scannerFileNames != null && !scannerFileNames.isEmpty());
 
-                // Update files only if new files were provided
-                if (fileURL != null && fileURL.length > 0) {
-
-                        if (existingReport.getFiles() != null && !existingReport.getFiles().isEmpty()) {
-                                for (FileEntity oldFile : existingReport.getFiles()) {
-                                        try {
-                                                fileService.deleteFile(oldFile.getFilePath());
-                                        } catch (Exception e) {
-                                                logger.warn("Could not delete file: {}", e.getMessage());
-                                        }
+                // ── Delete old files only if new ones are coming ──────
+                if (hasNewFiles || hasScannerFiles) {
+                        if (existing.getFiles() != null && !existing.getFiles().isEmpty()) {
+                                for (FileEntity old : existing.getFiles()) {
+                                        fileService.deleteFile(old.getFilePath());
                                 }
-                                existingReport.getFiles().clear(); // ← orphanRemoval handles DB delete
-                                makzanSubmissionReportRepository.saveAndFlush(existingReport); // ← flush BEFORE adding
-                                                                                               // new
-                                                                                               // files
-                        }
-
-                        List<String> storedPaths = fileService.savefiles(fileURL, existingReport);
-
-                        for (int i = 0; i < fileURL.length; i++) {
-                                MultipartFile f = fileURL[i];
-                                if (f == null || f.isEmpty())
-                                        continue;
-
-                                String safeName = sanitizeFileName(f.getOriginalFilename());
-
-                                FileEntity fe = new FileEntity();
-                                fe.setFilePath(storedPaths.get(i));
-                                fe.setFileName(safeName);
-                                fe.setFileType(f.getContentType());
-                                fe.setMakzanSubmissionReport(existingReport);
-
-                                existingReport.getFiles().add(fe); // ← add to existing list, don't replace it
-                                logger.info("New file queued: {}", safeName);
+                                existing.getFiles().clear();
+                                makzanSubmissionReportRepository.saveAndFlush(existing);
                         }
                 }
 
-                makzanSubmissionReportRepository.save(existingReport);
+                // ── Manual files ──────────────────────────────────────
+                if (hasNewFiles) {
+                        List<String> storedPaths = fileService.savefiles(fileURL, existing);
+                        for (int i = 0; i < fileURL.length; i++) {
+                                MultipartFile file = fileURL[i];
+                                if (file == null || file.isEmpty())
+                                        continue;
 
-                auditLogHelper.logUpdate(
-                                TABLE_NAME,
-                                id.longValue(),
-                                existingReport.getDescription());
-
-                logger.info("Update completed for MakzanAnnualReport id: {}", id);
+                                FileEntity fe = new FileEntity();
+                                fe.setFilePath(storedPaths.get(i));
+                                fe.setFileName(file.getOriginalFilename()); // ✅ no sanitize
+                                fe.setFileType(file.getContentType());
+                                fe.setFileSize(file.getSize());
+                                fe.setMakzanSubmissionReport(existing);
+                                fileRepository.save(fe);
+                                existing.getFiles().add(fe);
         }
+                }
 
-        // @Transactional
-        // public MakzanSubmissionReport updateMakzanSubmissionReport(
-        // Integer id,
-        // MakzanSubmissionReport reportDetails,
-        // MultipartFile[] fileURL) {
+                // ── Scanner files ─────────────────────────────────────
+                if (hasScannerFiles) {
+                        for (String scannerFileName : scannerFileNames) {
+                                try {
+                                        Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                                        String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                                        Path destPath = Paths.get(uploadDir, uniqueName);
+                                        Files.createDirectories(Paths.get(uploadDir));
+                                        Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
 
-        // MakzanSubmissionReport existingReport =
-        // makzanSubmissionReportRepository.findById(id)
-        // .orElseThrow(() -> new RuntimeException(
-        // "Report not found with id: " + id));
+                                        FileEntity fe = new FileEntity();
+                                        fe.setFilePath(uniqueName);
+                                        fe.setFileName(scannerFileName);
+                                        fe.setFileType(Files.probeContentType(sourcePath));
+                                        fe.setFileSize(Files.size(sourcePath));
+                                        fe.setMakzanSubmissionReport(existing); // ✅ set correct parent
+                                        fileRepository.save(fe);
+                                        existing.getFiles().add(fe);
+                                } catch (java.io.IOException e) {
+                                        logger.error("Failed to copy scanner file: {}", scannerFileName, e);
+                                }
+                        }
+                }
 
-        // existingReport.setProvince(
-        // reportDetails.getProvince());
-
-        // existingReport.setDistrict(
-        // reportDetails.getDistrict());
-
-        // existingReport.setYear(
-        // reportDetails.getYear());
-
-        // existingReport.setDocType(
-        // reportDetails.getDocType());
-
-        // existingReport.setSummaryWaseqa(
-        // reportDetails.getSummaryWaseqa());
-
-        // existingReport.setDescription(
-        // reportDetails.getDescription());
-
-        // if (fileURL != null && fileURL.length > 0) {
-
-        // if (existingReport.getFiles() != null) {
-
-        // for (FileEntity oldFile : existingReport.getFiles()) {
-
-        // fileService.deleteFile(
-        // oldFile.getFilePath());
-
-        // fileRepository.delete(oldFile);
-        // }
-
-        // existingReport.getFiles().clear();
-        // }
-
-        // List<String> storedPaths = fileService.savefiles(
-        // fileURL,
-        // existingReport);
-
-        // List<FileEntity> newFiles = new ArrayList<>();
-
-        // for (int i = 0; i < fileURL.length; i++) {
-
-        // MultipartFile f = fileURL[i];
-
-        // FileEntity fe = new FileEntity();
-
-        // fe.setFilePath(
-        // storedPaths.get(i));
-
-        // fe.setFileName(
-        // f.getOriginalFilename());
-
-        // fe.setFileType(
-        // f.getContentType());
-
-        // fe.setMakzanSubmissionReport(
-        // existingReport);
-
-        // fileRepository.save(fe);
-
-        // newFiles.add(fe);
-        // }
-
-        // existingReport.setFiles(newFiles);
-        // }
-
-        // MakzanSubmissionReport updated =
-        // makzanSubmissionReportRepository.save(existingReport);
-
-        // auditLogHelper.logUpdate(
-        // TABLE_NAME,
-        // id.longValue(),
-        // updated.getDescription());
-
-        // return updated;
-        // }
+                makzanSubmissionReportRepository.save(existing);
+                auditLogHelper.logUpdate(TABLE_NAME, id.longValue(), existing.getDescription());
+        }
 
         public void deleteMakzanSubmissionReport(Integer id) {
                 MakzanSubmissionReport annualReport = makzanSubmissionReportRepository.findById(id)

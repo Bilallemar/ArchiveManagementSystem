@@ -108,16 +108,21 @@ public class HifziyaHazariController {
     public ResponseEntity<?> updateHifziyaHazari(
             @PathVariable Integer id,
             @RequestPart("hifziyaHazari") String registrationJson,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestParam(value = "scannerFiles", required = false) String scannerFilesJson) {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
             HifziyaHazari receivedHifziyaHazari = mapper.readValue(registrationJson, HifziyaHazari.class);
-
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isBlank()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
             HifziyaHazari updatedHifziyaHazari = hifziyaHazariService.updateHifziyaHazari(id, receivedHifziyaHazari,
-                    fileURL);
+                    fileURL, scannerFiles);
 
             return ResponseEntity.ok(updatedHifziyaHazari);
 

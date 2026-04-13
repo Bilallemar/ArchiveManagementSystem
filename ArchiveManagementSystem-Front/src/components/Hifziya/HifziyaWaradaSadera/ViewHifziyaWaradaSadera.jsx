@@ -212,7 +212,80 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
               </Typography>
             </Box>
           </Grid>
+          {report.cabinetFile && (
+            <>
+              <Grid item xs={12}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  color="primary.main"
+                >
+                  د کابینې پته (Cabinet Address)
+                </Typography>
+                <Divider sx={{ mt: 1 }} />
+              </Grid>
 
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    کابینه (Cabinet)
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    پوړ (Floor)
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    شیلف (Shelf)
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    فایل (File)
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+            </>
+          )}
           {/* Files Section */}
           <Grid item xs={12} sx={{ mt: 3 }}>
             <Typography

@@ -1,181 +1,33 @@
-// import React, { useEffect, useState } from "react";
-// import api from "../../services/api";
-// import { Link } from "react-router-dom";
-// import { DataGrid } from "@mui/x-data-grid";
-// import { Blocks } from "react-loader-spinner";
-// import toast from "react-hot-toast";
-// import { auditLogsTruncateTexts } from "../../utils/truncateText.js";
-// import { auditLogcolumns } from "../../utils/auditLogColumns.js";
-
-// import Errors from "../Errors.js";
-// import moment from "moment";
-
-// // // ---------------- Columns ----------------
-// // export const auditLogcolumns = [
-// //   {
-// //     field: "action",
-// //     headerName: "Action",
-// //     width: 160,
-// //     headerAlign: "center",
-// //     align: "center",
-// //     headerClassName: "text-black font-semibold border",
-// //     cellClassName: "text-slate-700 font-normal border",
-// //   },
-// //   {
-// //     field: "username",
-// //     headerName: "UserName",
-// //     width: 180,
-// //     headerAlign: "center",
-// //     align: "center",
-// //     headerClassName: "text-black font-semibold border",
-// //     cellClassName: "text-slate-700 font-normal border",
-// //   },
-// //   {
-// //     field: "timestamp",
-// //     headerName: "TimeStamp",
-// //     width: 220,
-// //     headerAlign: "center",
-// //     align: "center",
-// //     headerClassName: "text-black font-semibold border",
-// //     cellClassName: "text-slate-700 font-normal border",
-// //   },
-// //   {
-// //     field: "recordId",
-// //     headerName: "Record ID",
-// //     width: 160,
-// //     headerAlign: "center",
-// //     align: "center",
-// //     headerClassName: "text-black font-semibold border",
-// //     cellClassName: "text-slate-700 font-normal border",
-// //   },
-// //   {
-// //     field: "recordContent",
-// //     headerName: "Note Content",
-// //     width: 260,
-// //     headerAlign: "center",
-// //     align: "center",
-// //     headerClassName: "text-black font-semibold border",
-// //     cellClassName: "text-slate-700 font-normal border",
-// //     renderCell: (params) => {
-// //       const text = params?.value || "—";
-// //       return (
-// //         <p className="text-slate-700 text-center">
-// //           {auditLogsTruncateTexts(text)}
-// //         </p>
-// //       );
-// //     },
-// //   },
-// //   {
-// //     field: "view",
-// //     headerName: "Action",
-// //     width: 150,
-// //     headerAlign: "center",
-// //     align: "center",
-// //     sortable: false,
-// //     renderCell: (params) => (
-// //       <Link
-// //         to={`/admin/audit-logs/${params.row.recordId}`}
-// //         className="h-full flex justify-center items-center"
-// //       >
-// //         <button className="bg-btnColor text-white px-4 h-9 rounded-md">
-// //           View
-// //         </button>
-// //       </Link>
-// //     ),
-// //   },
-// // ];
-
-// // ---------------- Component ----------------
-// const AdminAuditLogs = () => {
-//   const [auditLogs, setAuditLogs] = useState([]);
-//   const [error, setError] = useState(null);
-//   const [loading, setLoading] = useState(false);
-
-//   const fetchAuditLogs = async () => {
-//     setLoading(true);
-//     try {
-//       const response = await api.get("/audit");
-//       setAuditLogs(response.data);
-//     } catch (err) {
-//       setError(err?.response?.data?.message);
-//       toast.error("Error fetching audit logs");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchAuditLogs();
-//   }, []);
-
-//   const rows = auditLogs.map((item) => ({
-//     id: item.id,
-//     action: item.action,
-//     username: item.username,
-//     tableName: item.tableName,
-//     recordId: item.recordId,
-//     recordContent: item.recordContent,
-//     timestamp: moment(item.timestamp).format("MMMM DD, YYYY, hh:mm A"),
-//   }));
-
-//   if (error) return <Errors message={error} />;
-
-//   return (
-//     <div className="p-4">
-//       <div className="py-4">
-//         <h1 className="text-center text-2xl font-bold text-slate-800 uppercase">
-//           Audit Logs
-//         </h1>
-//       </div>
-
-//       {loading ? (
-//         <div className="flex flex-col justify-center items-center h-72">
-//           <Blocks height="70" width="70" color="#4fa94d" visible={true} />
-//           <span>Please wait...</span>
-//         </div>
-//       ) : (
-//         <div className="overflow-x-auto w-full mx-auto">
-//           <DataGrid
-//             className="w-fit mx-auto px-0"
-//             rows={rows}
-//             columns={auditLogcolumns}
-//             initialState={{ pagination: { paginationModel: { pageSize: 6 } } }}
-//             pageSizeOptions={[6]}
-//             disableRowSelectionOnClick
-//             disableColumnResize
-//           />
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default AdminAuditLogs;
-import React, { useEffect, useState } from "react";
+import { Visibility } from "@mui/icons-material";
 import {
+  Alert,
   Box,
+  Button,
   Card,
-  Typography,
+  Chip,
+  CircularProgress,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  CircularProgress,
-  Alert,
-  Button,
   TablePagination,
+  TableRow,
+  Typography,
 } from "@mui/material";
-import { Visibility } from "@mui/icons-material";
+import moment from "moment";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import toast from "react-hot-toast";
-import moment from "moment";
+import getAuditLogsTexts from "../../helpers/getAuditLogsTexts"; // ← adjust path
 
 const AdminAuditLogs = () => {
+  const { t } = useTranslation("adminAuditLogs");
+  const texts = getAuditLogsTexts(t);
+
   const [auditLogs, setAuditLogs] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -186,12 +38,15 @@ const AdminAuditLogs = () => {
 
   const fetchAuditLogs = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await api.get("/audit");
-      setAuditLogs(response.data);
+      setAuditLogs(response.data || []);
     } catch (err) {
-      setError(err?.response?.data?.message);
-      toast.error("Error fetching audit logs");
+      const errorMessage =
+        err?.response?.data?.message || texts.error.fetchFailed;
+      setError(errorMessage);
+      toast.error(texts.error.fetchFailed);
     } finally {
       setLoading(false);
     }
@@ -211,14 +66,15 @@ const AdminAuditLogs = () => {
   };
 
   const truncateText = (text, maxLength = 50) => {
-    if (!text) return "—";
+    if (!text) return texts.unknown;
     return text.length > maxLength
       ? `${text.substring(0, maxLength)}...`
       : text;
   };
 
   const getActionColor = (action) => {
-    switch (action) {
+    const upper = (action || "").toUpperCase();
+    switch (upper) {
       case "CREATE":
         return "success";
       case "UPDATE":
@@ -238,52 +94,58 @@ const AdminAuditLogs = () => {
     );
   }
 
+  const createCount = auditLogs.filter((log) => log.action === "CREATE").length;
+  const updateCount = auditLogs.filter((log) => log.action === "UPDATE").length;
+  const deleteCount = auditLogs.filter((log) => log.action === "DELETE").length;
+  const totalCount = auditLogs.length;
+
+  const displayedLogs = auditLogs.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   return (
     <Box sx={{ padding: 3 }}>
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
-        Audit Logs
+        {texts.title}
       </Typography>
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        Track all system activities including create, update, and delete
-        operations across all tables.
+        {texts.description}
       </Alert>
 
       {/* Statistics Cards */}
       <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap" }}>
         <Card sx={{ padding: 2, minWidth: 150, boxShadow: 2 }}>
           <Typography variant="h6" color="success.main">
-            CREATE
+            {texts.stats.create}
           </Typography>
-          <Typography variant="h4">
-            {auditLogs.filter((log) => log.action === "CREATE").length}
-          </Typography>
+          <Typography variant="h4">{createCount}</Typography>
           <Typography variant="caption" color="text.secondary">
-            New Records
+            {texts.stats.createLabel}
           </Typography>
         </Card>
+
         <Card sx={{ padding: 2, minWidth: 150, boxShadow: 2 }}>
           <Typography variant="h6" color="info.main">
-            UPDATE
+            {texts.stats.update}
           </Typography>
-          <Typography variant="h4">
-            {auditLogs.filter((log) => log.action === "UPDATE").length}
-          </Typography>
+          <Typography variant="h4">{updateCount}</Typography>
           <Typography variant="caption" color="text.secondary">
-            Modified Records
+            {texts.stats.updateLabel}
           </Typography>
         </Card>
+
         <Card sx={{ padding: 2, minWidth: 150, boxShadow: 2 }}>
           <Typography variant="h6" color="error.main">
-            DELETE
+            {texts.stats.delete}
           </Typography>
-          <Typography variant="h4">
-            {auditLogs.filter((log) => log.action === "DELETE").length}
-          </Typography>
+          <Typography variant="h4">{deleteCount}</Typography>
           <Typography variant="caption" color="text.secondary">
-            Deleted Records
+            {texts.stats.deleteLabel}
           </Typography>
         </Card>
+
         <Card
           sx={{
             padding: 2,
@@ -292,9 +154,9 @@ const AdminAuditLogs = () => {
             bgcolor: "primary.light",
           }}
         >
-          <Typography variant="h6">Total Logs</Typography>
-          <Typography variant="h4">{auditLogs.length}</Typography>
-          <Typography variant="caption">All Activities</Typography>
+          <Typography variant="h6">{texts.stats.total}</Typography>
+          <Typography variant="h4">{totalCount}</Typography>
+          <Typography variant="caption">{texts.stats.totalLabel}</Typography>
         </Card>
       </Box>
 
@@ -307,9 +169,14 @@ const AdminAuditLogs = () => {
               justifyContent: "center",
               alignItems: "center",
               height: "400px",
+              flexDirection: "column",
+              gap: 2,
             }}
           >
             <CircularProgress />
+            <Typography variant="body2" color="text.secondary">
+              {texts.loading}
+            </Typography>
           </Box>
         ) : (
           <>
@@ -317,39 +184,58 @@ const AdminAuditLogs = () => {
               <Table>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                    <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Username</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Table/Model</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Record ID</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Content</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Timestamp</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.action}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.username}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.tableModel}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.recordId}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.content}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.timestamp}
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
-                      Actions
+                      {texts.table.actions}
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {auditLogs
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((log) => (
+                  {displayedLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          {texts.noData}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    displayedLogs.map((log) => (
                       <TableRow key={log.id} hover>
                         <TableCell>
                           <Chip
-                            label={log.action}
+                            label={log.action || texts.unknown}
                             size="small"
                             color={getActionColor(log.action)}
                           />
                         </TableCell>
-                        <TableCell>{log.username || "—"}</TableCell>
+                        <TableCell>{log.username || texts.unknown}</TableCell>
                         <TableCell>
                           <Chip
-                            label={log.tableName || "—"}
+                            label={log.tableName || texts.unknown}
                             size="small"
                             variant="outlined"
                             color="primary"
                           />
                         </TableCell>
-                        <TableCell>{log.recordId || "—"}</TableCell>
+                        <TableCell>{log.recordId || texts.unknown}</TableCell>
                         <TableCell>
                           <Typography variant="body2">
                             {truncateText(log.recordContent)}
@@ -360,9 +246,11 @@ const AdminAuditLogs = () => {
                             variant="body2"
                             sx={{ color: "text.secondary" }}
                           >
-                            {moment(log.timestamp).format(
-                              "MMM DD, YYYY hh:mm A"
-                            )}
+                            {log.timestamp
+                              ? moment(log.timestamp).format(
+                                  "MMM DD, YYYY hh:mm A",
+                                )
+                              : texts.unknown}
                           </Typography>
                         </TableCell>
                         <TableCell align="center">
@@ -373,15 +261,18 @@ const AdminAuditLogs = () => {
                             onClick={() =>
                               navigate(`/admin/audit-logs/${log.recordId}`)
                             }
+                            disabled={!log.recordId}
                           >
-                            View
+                            {texts.button.view}
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
+
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, 50]}
               component="div"
@@ -390,6 +281,10 @@ const AdminAuditLogs = () => {
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage={texts.pagination.rowsPerPage}
+              labelDisplayedRows={({ from, to, count }) =>
+                texts.pagination.displayedRows({ from, to, count })
+              }
             />
           </>
         )}

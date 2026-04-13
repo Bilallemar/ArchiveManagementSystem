@@ -10,9 +10,12 @@ import jakarta.persistence.*;
 
 import com.MCIT.ArchiveManagementSystem.models.District;
 import com.MCIT.ArchiveManagementSystem.models.DocType;
+import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Province;
+import com.MCIT.ArchiveManagementSystem.models.CabinetAddress.CabinetFile;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -55,7 +58,12 @@ private District district;
     private String description;
 
     @OneToMany(mappedBy = "makzanSubmissionReport", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude          // ADD THIS
+  @ToString.Exclude // ADD THIS
     @EqualsAndHashCode.Exclude // ADD THIS
     private List<FileEntity> files = new ArrayList<>();
+
+  @ManyToOne
+  @JoinColumn(name = "cabinet_file_id")
+  private CabinetFile cabinetFile;
+
 }

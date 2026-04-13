@@ -9,6 +9,7 @@
   "incidents": "سوانح",
   "shuraAaliResolutions": "د عالي شورا پریکړې او یادښتونه",
   "archive": "آرشیف",
+  "nasharat": "نشرات",
   "annualReports": "کلنی راپور",
   "makhzanwaradaSadera": "  وارداه او صادراه",
   "receipts": "رسیدونه",
@@ -17,6 +18,7 @@
   "managementNames": {
     "archive": "آرشیف",
     "hifziya": "حفظیه",
-    "makhzan": "مخزن"
+    "makhzan": "مخزن",
+    "nasharat": "تنظیمات"
   }
 }

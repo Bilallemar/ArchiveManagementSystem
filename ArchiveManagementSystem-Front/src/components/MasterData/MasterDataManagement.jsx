@@ -1,65 +1,80 @@
-import React, { useState, useEffect } from "react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import BusinessIcon from "@mui/icons-material/Business"; // organizations
+import AccountTreeIcon from "@mui/icons-material/AccountTree"; // departments
+import CategoryIcon from "@mui/icons-material/Category"; // types
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight"; // subTypes
+import DescriptionIcon from "@mui/icons-material/Description"; // docTypes
+import LocationOnIcon from "@mui/icons-material/LocationOn"; // locations
+import Inventory2Icon from "@mui/icons-material/Inventory2"; // cabinetManagement
+
 import {
   Box,
-  Tabs,
-  Tab,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Tabs,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
+  Typography,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import api from "../../services/api";
+import LocationManagement from "../LocationManagement";
+import CabinetManagement from "./Cabinetmanagement";
 
 export default function MasterDataManagement() {
   const [activeTab, setActiveTab] = useState(0);
+  const { t } = useTranslation("MasterDataManagement");
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" sx={{ mb: 3, fontWeight: "bold" }}>
-        د معلوماتو مدیریت
+        {t("title")}
       </Typography>
-
       <Card>
         <Tabs
           value={activeTab}
           onChange={(e, v) => setActiveTab(v)}
           sx={{ borderBottom: 1, borderColor: "divider" }}
         >
-          <Tab label="ادارې " />
-          <Tab label="څانګې " />
-          <Tab label="ډولونه " />
-          <Tab label="فرعی ډولونه " />
-          <Tab label="داسنادو ډولونه " />
+  <Tab icon={<BusinessIcon />} iconPosition="start" label={t("organizations")} />
+  <Tab icon={<AccountTreeIcon />} iconPosition="start" label={t("departments")} />
+  <Tab icon={<CategoryIcon />} iconPosition="start" label={t("types")} />
+  <Tab icon={<SubdirectoryArrowRightIcon />} iconPosition="start" label={t("subTypes")} />
+  <Tab icon={<DescriptionIcon />} iconPosition="start" label={t("docTypes")} />
+  <Tab icon={<LocationOnIcon />} iconPosition="start" label={t("locations")} />
+  <Tab icon={<Inventory2Icon />} iconPosition="start" label={t("cabinetManagement")} />
         </Tabs>
-
         <CardContent>
-          {activeTab === 0 && <OrgManagement />}
-          {activeTab === 1 && <DepartmentManagement />}
-          {activeTab === 2 && <TypeManagement />}
-          {activeTab === 3 && <SubTypeManagement />}
-          {activeTab === 4 && <DocTypeManagement />}
+          {activeTab === 0 && <OrgManagement t={t} />}
+          {activeTab === 1 && <DepartmentManagement t={t} />}
+          {activeTab === 2 && <TypeManagement t={t} />}
+          {activeTab === 3 && <SubTypeManagement t={t} />}
+          {activeTab === 4 && <DocTypeManagement t={t} />}
+          {activeTab === 5 && <LocationManagement t={t} />}
+          {activeTab === 6 && <CabinetManagement />}
         </CardContent>
       </Card>
     </Box>
@@ -67,7 +82,7 @@ export default function MasterDataManagement() {
 }
 
 // ================ DOC TYPE MANAGEMENT ================
-function DocTypeManagement() {
+function DocTypeManagement({ t }) {
   const [docTypes, setDocTypes] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingDocType, setEditingDocType] = useState(null);
@@ -77,7 +92,8 @@ function DocTypeManagement() {
     isActive: true,
   });
   const [loading, setLoading] = useState(false);
-
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
   useEffect(() => {
     loadDocTypes();
   }, []);
@@ -88,56 +104,70 @@ function DocTypeManagement() {
       setDocTypes(response.data);
     } catch (error) {
       console.error("Error loading doc types:", error);
-      toast.error("د سند ډولونو لوډولو کې ستونزه");
+      toast.error(t("loadError"));
     }
   };
-
+  const handleDeleteClick = (id) => {
+    setSelectedId(id);
+    setOpenDeleteDialog(true);
+  };
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
-      toast.error("نوم ضروری دی");
+      toast.error(t("requiredName"));
       return;
     }
-
     setLoading(true);
     try {
       if (editingDocType) {
         await api.put(`/doc-type/${editingDocType.id}`, formData);
-        toast.success("د سند ډول تازه شو");
+        toast.success(t("docTypeUpdated"));
       } else {
         await api.post("/doc-type", formData);
-        toast.success("د سند ډول اضافه شو");
+        toast.success(t("docTypeAdded"));
       }
       await loadDocTypes();
       handleCloseDialog();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("عملیه ناکامه شوه");
+      toast.error(t("operationFailed"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("ایا تاسو ډاډه یاست؟")) {
-      try {
-        await api.delete(`/doc-type/${id}`);
-        toast.success("د سند ډول حذف شو");
-        await loadDocTypes();
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("حذف ناکام شو");
-      }
-    }
-  };
-
-  const handleToggleActive = async (id) => {
+  // const handleDelete = async (id) => {
+  //   if (window.confirm(t("confirmDelete"))) {
+  //     try {
+  //       await api.delete(`/doc-type/${id}`);
+  //       toast.success(t("docTypeDeleted"));
+  //       await loadDocTypes();
+  //     } catch (error) {
+  //       console.error("Error:", error);
+  //       toast.error(t("deleteFailed"));
+  //     }
+  //   }
+  // };
+  const handleDelete = async () => {
     try {
-      await api.put(`/doc-type/${id}/toggle-active`);
-      toast.success("حالت بدل شو");
+      await api.delete(`/doc-type/${selectedId}`);
+      toast.success(t("docTypeDeleted"));
       await loadDocTypes();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("حالت بدلول ناکام شو");
+      toast.error(t("deleteFailed"));
+    } finally {
+      setOpenDeleteDialog(false);
+      setSelectedId(null);
+    }
+  };
+  const handleToggleActive = async (id) => {
+    try {
+      await api.put(`/doc-type/${id}/toggle-active`);
+      toast.success(t("toggleStatusSuccess"));
+      await loadDocTypes();
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(t("toggleStatusFailed"));
     }
   };
 
@@ -160,14 +190,14 @@ function DocTypeManagement() {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h6">د سند ډولونه</Typography>
+        <Typography variant="h6">{t("docTypes")}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setDialogOpen(true)}
-          sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+          sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "#1d252e" } }}
         >
-          نوی سند ډول
+          {t("newDocType")}
         </Button>
       </Box>
 
@@ -175,11 +205,11 @@ function DocTypeManagement() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>نوم</TableCell>
-              <TableCell>تفصیل</TableCell>
-              <TableCell>حالت</TableCell>
-              <TableCell align="right">عملیات</TableCell>
+              <TableCell>{t("id")}</TableCell>
+              <TableCell>{t("name")}</TableCell>
+              <TableCell>{t("description")}</TableCell>
+              <TableCell>{t("status")}</TableCell>
+              <TableCell align="right">{t("actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -196,7 +226,7 @@ function DocTypeManagement() {
                     onClick={() => handleToggleActive(docType.id)}
                     sx={{ minWidth: 80 }}
                   >
-                    {docType.isActive ? "فعال" : "غیرفعال"}
+                    {docType.isActive ? t("active") : t("inactive")}
                   </Button>
                 </TableCell>
                 <TableCell align="right">
@@ -207,7 +237,7 @@ function DocTypeManagement() {
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    onClick={() => handleDelete(docType.id)}
+                    onClick={() => handleDeleteClick(docType.id)}
                     color="error"
                   >
                     <DeleteIcon />
@@ -226,12 +256,12 @@ function DocTypeManagement() {
         fullWidth
       >
         <DialogTitle>
-          {editingDocType ? "د سند ډول تازه کول" : "نوی سند ډول"}
+          {editingDocType ? t("editDocTypeTitle") : t("newDocTypeTitle")}
         </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="د سند ډول نوم"
+            label={t("docTypeNameLabel")}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             margin="normal"
@@ -239,7 +269,7 @@ function DocTypeManagement() {
           />
           <TextField
             fullWidth
-            label="تفصیل"
+            label={t("description")}
             value={formData.description}
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
@@ -249,28 +279,48 @@ function DocTypeManagement() {
             rows={2}
           />
           <FormControl fullWidth margin="normal">
-            <InputLabel>حالت</InputLabel>
+            <InputLabel>{t("status")}</InputLabel>
             <Select
               value={formData.isActive}
               onChange={(e) =>
                 setFormData({ ...formData, isActive: e.target.value })
               }
-              label="حالت"
+              label={t("status")}
             >
-              <MenuItem value={true}>فعال</MenuItem>
-              <MenuItem value={false}>غیرفعال</MenuItem>
+              <MenuItem value={true}>{t("active")}</MenuItem>
+              <MenuItem value={false}>{t("inactive")}</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>لغوه</Button>
+          <Button onClick={handleCloseDialog}>{t("cancel")}</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={loading}
-            sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+            sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
           >
-            {loading ? <CircularProgress size={20} /> : "ذخیره"}
+            {loading ? <CircularProgress size={20} /> : t("save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>{t("confirmDelete")}</DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>{t("deleteMessage")}</DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {t("cancel")}
+          </Button>
+
+          <Button onClick={handleDelete} color="error" variant="contained">
+            {t("delete")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -279,12 +329,14 @@ function DocTypeManagement() {
 }
 
 // ================ ORGANIZATION MANAGEMENT ================
-function OrgManagement() {
+function OrgManagement({ t }) {
   const [orgs, setOrgs] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState(null);
   const [formData, setFormData] = useState({ name: "" });
   const [loading, setLoading] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     loadOrgs();
@@ -296,48 +348,62 @@ function OrgManagement() {
       setOrgs(response.data);
     } catch (error) {
       console.error("Error loading orgs:", error);
-      toast.error("د ادارو لوډولو کې ستونزه");
+      toast.error(t("loadOrgsError"));
     }
   };
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
-      toast.error("نوم ضروری دی");
+      toast.error(t("requiredName"));
       return;
     }
-
     setLoading(true);
     try {
       if (editingOrg) {
         await api.put(`/org/${editingOrg.id}`, formData);
-        toast.success("اداره تازه شوه");
+        toast.success(t("organizationUpdated"));
       } else {
         await api.post("/org", formData);
-        toast.success("اداره اضافه شوه");
+        toast.success(t("organizationAdded"));
       }
       await loadOrgs();
       handleCloseDialog();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("عملیه ناکامه شوه");
+      toast.error(t("operationFailed"));
     } finally {
       setLoading(false);
     }
   };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("ایا تاسو ډاډه یاست؟")) {
-      try {
-        await api.delete(`/org/${id}`);
-        toast.success("اداره حذف شوه");
-        await loadOrgs();
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("حذف ناکام شو");
-      }
+  const handleDeleteClick = (id) => {
+    setSelectedId(id);
+    setOpenDeleteDialog(true);
+  };
+  // const handleDelete = async (id) => {
+  //   if (window.confirm(t("confirmDelete"))) {
+  //     try {
+  //       await api.delete(`/org/${id}`);
+  //       toast.success(t("organizationDeleted"));
+  //       await loadOrgs();
+  //     } catch (error) {
+  //       console.error("Error:", error);
+  //       toast.error(t("deleteFailed"));
+  //     }
+  //   }
+  // };
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/org/${selectedId}`);
+      toast.success(t("organizationDeleted"));
+      await loadOrgs();
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(t("deleteFailed"));
+    } finally {
+      setOpenDeleteDialog(false);
+      setSelectedId(null);
     }
   };
-
   const handleEdit = (org) => {
     setEditingOrg(org);
     setFormData({ name: org.name });
@@ -353,14 +419,14 @@ function OrgManagement() {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h6">ادارې</Typography>
+        <Typography variant="h6">{t("organizations")}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setDialogOpen(true)}
-          sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+          sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
         >
-          نوې اداره
+          {t("newOrganization")}
         </Button>
       </Box>
 
@@ -368,9 +434,9 @@ function OrgManagement() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>نوم</TableCell>
-              <TableCell align="right">عملیات</TableCell>
+              <TableCell>{t("id")}</TableCell>
+              <TableCell>{t("name")}</TableCell>
+              <TableCell align="right">{t("actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -383,7 +449,7 @@ function OrgManagement() {
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    onClick={() => handleDelete(org.id)}
+                    onClick={() => handleDeleteClick(org.id)}
                     color="error"
                   >
                     <DeleteIcon />
@@ -401,11 +467,13 @@ function OrgManagement() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>{editingOrg ? "اداره تازه کول" : "نوې اداره"}</DialogTitle>
+        <DialogTitle>
+          {editingOrg ? t("editOrganizationTitle") : t("newOrganizationTitle")}
+        </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="د ادارې نوم"
+            label={t("orgNameLabel")}
             value={formData.name}
             onChange={(e) => setFormData({ name: e.target.value })}
             margin="normal"
@@ -413,14 +481,34 @@ function OrgManagement() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>لغوه</Button>
+          <Button onClick={handleCloseDialog}>{t("cancel")}</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={loading}
-            sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+            sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
           >
-            {loading ? <CircularProgress size={20} /> : "ذخیره"}
+            {loading ? <CircularProgress size={20} /> : t("save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>{t("confirmDelete")}</DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>{t("deleteMessage")}</DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {t("cancel")}
+          </Button>
+
+          <Button onClick={handleDelete} color="error" variant="contained">
+            {t("delete")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -429,13 +517,15 @@ function OrgManagement() {
 }
 
 // ================ DEPARTMENT MANAGEMENT ================
-function DepartmentManagement() {
+function DepartmentManagement({ t }) {
   const [departments, setDepartments] = useState([]);
   const [orgs, setOrgs] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingDept, setEditingDept] = useState(null);
   const [formData, setFormData] = useState({ name: "", orgId: "" });
   const [loading, setLoading] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -451,53 +541,66 @@ function DepartmentManagement() {
       setOrgs(orgRes.data);
     } catch (error) {
       console.error("Error loading data:", error);
-      toast.error("د معلوماتو لوډولو کې ستونزه");
+      toast.error(t("loadDepartmentsError"));
     }
   };
-
+  const handleDeleteClick = (id) => {
+    setSelectedId(id);
+    setOpenDeleteDialog(true);
+  };
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.orgId) {
-      toast.error("نوم او اداره دواړه ضروری دي");
+      toast.error(t("nameAndOrgRequired"));
       return;
     }
-
     setLoading(true);
     try {
       const payload = {
         name: formData.name,
         org: { id: formData.orgId },
       };
-
       if (editingDept) {
         await api.put(`/departments/${editingDept.id}`, payload);
-        toast.success("څانګه تازه شوه");
+        toast.success(t("departmentUpdated"));
       } else {
         await api.post("/departments", payload);
-        toast.success("څانګه اضافه شوه");
+        toast.success(t("departmentAdded"));
       }
       await loadData();
       handleCloseDialog();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("عملیه ناکامه شوه");
+      toast.error(t("operationFailed"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("ایا تاسو ډاډه یاست؟")) {
-      try {
-        await api.delete(`/departments/${id}`);
-        toast.success("څانګه حذف شوه");
-        await loadData();
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("حذف ناکام شو");
-      }
+  // const handleDelete = async (id) => {
+  //   if (window.confirm(t("confirmDelete"))) {
+  //     try {
+  //       await api.delete(`/departments/${id}`);
+  //       toast.success(t("departmentDeleted"));
+  //       await loadData();
+  //     } catch (error) {
+  //       console.error("Error:", error);
+  //       toast.error(t("deleteFailed"));
+  //     }
+  //   }
+  // };
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/departments/${selectedId}`);
+      toast.success(t("departmentDeleted"));
+      await loadData();
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(t("deleteFailed"));
+    } finally {
+      setOpenDeleteDialog(false);
+      setSelectedId(null);
     }
   };
-
   const handleEdit = (dept) => {
     setEditingDept(dept);
     setFormData({
@@ -516,14 +619,14 @@ function DepartmentManagement() {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h6">څانګې</Typography>
+        <Typography variant="h6">{t("departments")}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setDialogOpen(true)}
-          sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+          sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
         >
-          نوې څانګه
+          {t("newDepartment")}
         </Button>
       </Box>
 
@@ -531,10 +634,10 @@ function DepartmentManagement() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>نوم</TableCell>
-              <TableCell>اداره</TableCell>
-              <TableCell align="right">عملیات</TableCell>
+              <TableCell>{t("id")}</TableCell>
+              <TableCell>{t("name")}</TableCell>
+              <TableCell>{t("organization")}</TableCell>
+              <TableCell align="right">{t("actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -548,7 +651,7 @@ function DepartmentManagement() {
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    onClick={() => handleDelete(dept.id)}
+                    onClick={() => handleDeleteClick(dept.id)}
                     color="error"
                   >
                     <DeleteIcon />
@@ -567,25 +670,25 @@ function DepartmentManagement() {
         fullWidth
       >
         <DialogTitle>
-          {editingDept ? "څانګه تازه کول" : "نوې څانګه"}
+          {editingDept ? t("editDepartmentTitle") : t("newDepartmentTitle")}
         </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="د څانګې نوم"
+            label={t("departmentNameLabel")}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             margin="normal"
             required
           />
           <FormControl fullWidth margin="normal" required>
-            <InputLabel>اداره</InputLabel>
+            <InputLabel>{t("organization")}</InputLabel>
             <Select
               value={formData.orgId}
               onChange={(e) =>
                 setFormData({ ...formData, orgId: e.target.value })
               }
-              label="اداره"
+              label={t("organization")}
             >
               {orgs.map((org) => (
                 <MenuItem key={org.id} value={org.id}>
@@ -596,14 +699,34 @@ function DepartmentManagement() {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>لغوه</Button>
+          <Button onClick={handleCloseDialog}>{t("cancel")}</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={loading}
-            sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+            sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
           >
-            {loading ? <CircularProgress size={20} /> : "ذخیره"}
+            {loading ? <CircularProgress size={20} /> : t("save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>{t("confirmDelete")}</DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>{t("deleteMessage")}</DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {t("cancel")}
+          </Button>
+
+          <Button onClick={handleDelete} color="error" variant="contained">
+            {t("delete")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -612,12 +735,14 @@ function DepartmentManagement() {
 }
 
 // ================ TYPE MANAGEMENT ================
-function TypeManagement() {
+function TypeManagement({ t }) {
   const [types, setTypes] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState(null);
   const [formData, setFormData] = useState({ name: "" });
   const [loading, setLoading] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     loadTypes();
@@ -629,45 +754,49 @@ function TypeManagement() {
       setTypes(response.data);
     } catch (error) {
       console.error("Error loading types:", error);
-      toast.error("د ډولونو لوډولو کې ستونزه");
+      toast.error(t("loadTypesError"));
     }
   };
-
+  const handleDeleteClick = (id) => {
+    setSelectedId(id);
+    setOpenDeleteDialog(true);
+  };
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
-      toast.error("نوم ضروری دی");
+      toast.error(t("requiredName"));
       return;
     }
-
     setLoading(true);
     try {
       if (editingType) {
         await api.put(`/type/${editingType.id}`, formData);
-        toast.success("ډول تازه شو");
+        toast.success(t("typeUpdated"));
       } else {
         await api.post("/type", formData);
-        toast.success("ډول اضافه شو");
+        toast.success(t("typeAdded"));
       }
       await loadTypes();
       handleCloseDialog();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("عملیه ناکامه شوه");
+      toast.error(t("operationFailed"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("ایا تاسو ډاډه یاست؟")) {
-      try {
-        await api.delete(`/type/${id}`);
-        toast.success("ډول حذف شو");
-        await loadTypes();
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("حذف ناکام شو");
-      }
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/type/${selectedId}`);
+      toast.success(t("typeDeleted"));
+      await loadTypes();
+      setOpenDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting type:", error);
+      toast.error(t("deleteTypeError"));
+    } finally {
+      setOpenDeleteDialog(false);
+      setSelectedId(null);
     }
   };
 
@@ -686,14 +815,14 @@ function TypeManagement() {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h6">ډولونه</Typography>
+        <Typography variant="h6">{t("types")}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setDialogOpen(true)}
-          sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+          sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
         >
-          نوی ډول
+          {t("newType")}
         </Button>
       </Box>
 
@@ -701,9 +830,9 @@ function TypeManagement() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>نوم</TableCell>
-              <TableCell align="right">عملیات</TableCell>
+              <TableCell>{t("id")}</TableCell>
+              <TableCell>{t("name")}</TableCell>
+              <TableCell align="right">{t("actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -716,7 +845,7 @@ function TypeManagement() {
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    onClick={() => handleDelete(type.id)}
+                    onClick={() => handleDeleteClick(type.id)}
                     color="error"
                   >
                     <DeleteIcon />
@@ -734,11 +863,13 @@ function TypeManagement() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>{editingType ? "ډول تازه کول" : "نوی ډول"}</DialogTitle>
+        <DialogTitle>
+          {editingType ? t("editTypeTitle") : t("newTypeTitle")}
+        </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="د ډول نوم"
+            label={t("typeNameLabel")}
             value={formData.name}
             onChange={(e) => setFormData({ name: e.target.value })}
             margin="normal"
@@ -746,14 +877,34 @@ function TypeManagement() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>لغوه</Button>
+          <Button onClick={handleCloseDialog}>{t("cancel")}</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={loading}
-            sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+            sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
           >
-            {loading ? <CircularProgress size={20} /> : "ذخیره"}
+            {loading ? <CircularProgress size={20} /> : t("save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>{t("confirmDelete")}</DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>{t("deleteMessage")}</DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {t("cancel")}
+          </Button>
+
+          <Button onClick={handleDelete} color="error" variant="contained">
+            {t("delete")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -762,13 +913,15 @@ function TypeManagement() {
 }
 
 // ================ SUBTYPE MANAGEMENT ================
-function SubTypeManagement() {
+function SubTypeManagement({ t }) {
   const [subTypes, setSubTypes] = useState([]);
   const [types, setTypes] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSubType, setEditingSubType] = useState(null);
   const [formData, setFormData] = useState({ name: "", typeId: "" });
   const [loading, setLoading] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -784,50 +937,54 @@ function SubTypeManagement() {
       setTypes(typeRes.data);
     } catch (error) {
       console.error("Error loading data:", error);
-      toast.error("د معلوماتو لوډولو کې ستونزه");
+      toast.error(t("loadTypesError"));
     }
   };
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.typeId) {
-      toast.error("نوم او ډول دواړه ضروری دي");
+      toast.error(t("nameAndTypeRequired"));
       return;
     }
-
     setLoading(true);
     try {
       const payload = {
         name: formData.name,
         type: { id: formData.typeId },
       };
-
       if (editingSubType) {
         await api.put(`/sub-type/${editingSubType.id}`, payload);
-        toast.success("فرعی ډول تازه شو");
+        toast.success(t("subTypeUpdated"));
       } else {
         await api.post("/sub-type", payload);
-        toast.success("فرعی ډول اضافه شو");
+        toast.success(t("subTypeAdded"));
       }
       await loadData();
       handleCloseDialog();
     } catch (error) {
       console.error("Error:", error);
-      toast.error("عملیه ناکامه شوه");
+      toast.error(t("operationFailed"));
     } finally {
       setLoading(false);
     }
   };
+  const handleDeleteClick = (id) => {
+    setSelectedId(id);
+    setOpenDeleteDialog(true);
+  };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("ایا تاسو ډاډه یاست؟")) {
-      try {
-        await api.delete(`/sub-type/${id}`);
-        toast.success("فرعی ډول حذف شو");
-        await loadData();
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("حذف ناکام شو");
-      }
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/sub-type/${selectedId}`);
+      toast.success(t("subTypeDeleted"));
+      await loadData();
+      setOpenDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting sub-type:", error);
+      toast.error(t("operationFailed"));
+    } finally {
+      setOpenDeleteDialog(false);
+      setSelectedId(null);
     }
   };
 
@@ -849,14 +1006,14 @@ function SubTypeManagement() {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h6">فرعی ډولونه</Typography>
+        <Typography variant="h6">{t("subTypes")}</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setDialogOpen(true)}
-          sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+          sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
         >
-          نوی فرعی ډول
+          {t("newSubType")}
         </Button>
       </Box>
 
@@ -864,10 +1021,10 @@ function SubTypeManagement() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>نوم</TableCell>
-              <TableCell>ډول</TableCell>
-              <TableCell align="right">عملیات</TableCell>
+              <TableCell>{t("id")}</TableCell>
+              <TableCell>{t("name")}</TableCell>
+              <TableCell>{t("type")}</TableCell>
+              <TableCell align="right">{t("actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -884,7 +1041,7 @@ function SubTypeManagement() {
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    onClick={() => handleDelete(subType.id)}
+                    onClick={() => handleDeleteClick(subType.id)}
                     color="error"
                   >
                     <DeleteIcon />
@@ -903,25 +1060,25 @@ function SubTypeManagement() {
         fullWidth
       >
         <DialogTitle>
-          {editingSubType ? "فرعی ډول تازه کول" : "نوی فرعی ډول"}
+          {editingSubType ? t("editSubTypeTitle") : t("newSubTypeTitle")}
         </DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="د فرعی ډول نوم"
+            label={t("subTypeNameLabel")}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             margin="normal"
             required
           />
           <FormControl fullWidth margin="normal" required>
-            <InputLabel>ډول</InputLabel>
+            <InputLabel>{t("type")}</InputLabel>
             <Select
               value={formData.typeId}
               onChange={(e) =>
                 setFormData({ ...formData, typeId: e.target.value })
               }
-              label="ډول"
+              label={t("type")}
             >
               {types.map((type) => (
                 <MenuItem key={type.id} value={type.id}>
@@ -932,14 +1089,34 @@ function SubTypeManagement() {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>لغوه</Button>
+          <Button onClick={handleCloseDialog}>{t("cancel")}</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={loading}
-            sx={{ bgcolor: "black", "&:hover": { bgcolor: "#1d252e" } }}
+            sx={{ bgcolor: "primary", "&:hover": { bgcolor: "#1d252e" } }}
           >
-            {loading ? <CircularProgress size={20} /> : "ذخیره"}
+            {loading ? <CircularProgress size={20} /> : t("save")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>{t("confirmDelete")}</DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>{t("deleteMessage")}</DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {t("cancel")}
+          </Button>
+
+          <Button onClick={handleDelete} color="error" variant="contained">
+            {t("delete")}
           </Button>
         </DialogActions>
       </Dialog>

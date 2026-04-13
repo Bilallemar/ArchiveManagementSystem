@@ -3,6 +3,7 @@ package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
 import java.time.LocalDate;
 
 import com.MCIT.ArchiveManagementSystem.models.Management;
+import com.MCIT.ArchiveManagementSystem.models.CabinetAddress.CabinetFile;
 import com.MCIT.ArchiveManagementSystem.models.enums.ShuraAliDirection;
 
 import jakarta.persistence.Column;
@@ -54,5 +55,9 @@ public class ShuraAaliResolution {
       @ManyToOne
     @JoinColumn(name = "management_id")
     private Management management;
+
+  @ManyToOne
+  @JoinColumn(name = "cabinet_file_id")
+  private CabinetFile cabinetFile;
 
 }

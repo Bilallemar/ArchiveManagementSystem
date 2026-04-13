@@ -61,17 +61,28 @@ export default function AddHazari() {
   const [detectedFiles, setDetectedFiles] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scannerFiles, setScannerFiles] = useState([]);
+  const [cabinets, setCabinets] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [shelves, setShelves] = useState([]);
+  const [cabinetFiles, setCabinetFiles] = useState([]);
+
+  const [selectedCabinet, setSelectedCabinet] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const [selectedShelf, setSelectedShelf] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
 
   // Load types & organizations
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [typesRes, orgsRes] = await Promise.all([
+        const [typesRes, orgsRes, cabinetsRes] = await Promise.all([
           api.get("/type"),
           api.get("/org"),
+          api.get("/cabinet"),
         ]);
         setTypes(typesRes.data || []);
         setOrgs(orgsRes.data || []);
+        setCabinets(cabinetsRes.data || []);
       } catch (error) {
         console.error("Failed to load data", error);
         toast.error(text.loadDataError || "د معلوماتو لوستلو کې ستونزه");
@@ -121,7 +132,47 @@ export default function AddHazari() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+  const handleCabinetChange = async (e) => {
+    const cabinetId = e.target.value;
+    setSelectedCabinet(cabinetId);
+    setSelectedFloor("");
+    setSelectedShelf("");
+    setSelectedFile("");
+    setFloors([]);
+    setShelves([]);
+    setCabinetFiles([]);
 
+    if (cabinetId) {
+      const res = await api.get(`/cabinet/${cabinetId}/floors`);
+      setFloors(res.data || []);
+    }
+  };
+
+  const handleFloorChange = async (e) => {
+    const floorId = e.target.value;
+    setSelectedFloor(floorId);
+    setSelectedShelf("");
+    setSelectedFile("");
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (floorId) {
+      const res = await api.get(`/cabinet/floors/${floorId}/shelves`);
+      setShelves(res.data || []);
+    }
+  };
+
+  const handleShelfChange = async (e) => {
+    const shelfId = e.target.value;
+    setSelectedShelf(shelfId);
+    setSelectedFile("");
+    setCabinetFiles([]);
+
+    if (shelfId) {
+      const res = await api.get(`/cabinet/shelves/${shelfId}/files`);
+      setCabinetFiles(res.data || []);
+    }
+  };
   const handleScan = async () => {
     setIsScanning(true);
     try {
@@ -177,7 +228,7 @@ export default function AddHazari() {
     try {
       const fd = new FormData();
 
-      const yearAsInteger = new Date(formData.year).getFullYear();
+      const yearAsInteger = parseInt(formData.year);
 
       const payload = {
         volume: formData.volume?.trim() || null,
@@ -185,6 +236,7 @@ export default function AddHazari() {
         subType: { id: Number(formData.subType) },
         year: yearAsInteger,
         org: { id: Number(formData.org) },
+        cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null,
         description: formData.description?.trim() || null,
         isIndraj: isIndrajFromUrl, // ← taken from URL, not from form
       };
@@ -550,7 +602,95 @@ export default function AddHazari() {
                       onChange={handleInputChange}
                     />
                   </Grid>
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="bold"
+                      sx={{ mb: 1 }}
+                    >
+                      د کابینې پته (Cabinet Address)
+                    </Typography>
+                  </Grid>
 
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>کابینه (Cabinet)</InputLabel>
+                      <Select
+                        value={String(selectedCabinet)}
+                        onChange={handleCabinetChange}
+                        label="کابینه (Cabinet)"
+                      >
+                        {cabinets.map((c) => (
+                          <MenuItem key={c.id} value={String(c.id)}>
+                            {c.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedCabinet}
+                    >
+                      <InputLabel>پوړ (Floor)</InputLabel>
+                      <Select
+                        value={String(selectedFloor)}
+                        onChange={handleFloorChange}
+                        label="پوړ (Floor)"
+                      >
+                        {floors.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedFloor}
+                    >
+                      <InputLabel>شیلف (Shelf)</InputLabel>
+                      <Select
+                        value={String(selectedShelf)}
+                        onChange={handleShelfChange}
+                        label="شیلف (Shelf)"
+                      >
+                        {shelves.map((s) => (
+                          <MenuItem key={s.id} value={String(s.id)}>
+                            {s.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedShelf}
+                    >
+                      <InputLabel>فایل (File)</InputLabel>
+                      <Select
+                        value={String(selectedFile)}
+                        onChange={(e) => setSelectedFile(e.target.value)}
+                        label="فایل (File)"
+                      >
+                        {cabinetFiles.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
                   {/* Description */}
                   <Grid item xs={12}>
                     <TextField

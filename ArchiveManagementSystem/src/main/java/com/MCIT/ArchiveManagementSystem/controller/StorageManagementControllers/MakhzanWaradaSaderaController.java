@@ -3,7 +3,9 @@ package com.MCIT.ArchiveManagementSystem.controller.StorageManagementControllers
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +87,9 @@ public class MakhzanWaradaSaderaController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public MakhzanWaradaSadera create(
             @RequestPart("makhzanWaradaSadera") String json,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL)
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson)
+            
             throws IOException {
 
         managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
@@ -97,34 +101,22 @@ public class MakhzanWaradaSaderaController {
         Management management = new Management();
         management.setManagementId(MAKHZAN_MANAGEMENT_ID);
         entity.setManagement(management);
-        return service.create(entity, fileURL);
+
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isEmpty()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+
+        return service.create(entity, fileURL, scannerFiles);
     }
 
-    // @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    // public ResponseEntity<MakhzanWaradaSadera> update(
-    // @PathVariable Integer id,
-    // @RequestPart("makhzanWaradaSadera") String json,
-    // @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
-
-    // managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
-
-    // try {
-    // ObjectMapper mapper = new ObjectMapper();
-    // mapper.registerModule(new JavaTimeModule());
-
-    // MakhzanWaradaSadera entity =
-    // mapper.readValue(json, MakhzanWaradaSadera.class);
-
-    // return ResponseEntity.ok(service.update(id, entity, fileURL));
-    // } catch (Exception e) {
-    // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    // }
-    // }
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MakhzanWaradaSadera> updateMakhzanWaradaSadera(
             @PathVariable Integer id,
             @RequestPart("makhzanWaradaSadera") String registrationJson,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) // JSON string د Receipts object
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson) // JSON string د Receipts object
                                                                                        // لپاره
     {
         managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
@@ -135,10 +127,14 @@ public class MakhzanWaradaSaderaController {
             mapper.registerModule(new JavaTimeModule());
             MakhzanWaradaSadera recivedMakhzanWaradaSadera = mapper.readValue(registrationJson,
                     MakhzanWaradaSadera.class);
-
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isEmpty()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
             // service ته پاس کوو
             MakhzanWaradaSadera updatedMakhzanWaradaSadera = service.updateMakhzanWaradaSadera(id,
-                    recivedMakhzanWaradaSadera, fileURL);
+                    recivedMakhzanWaradaSadera, fileURL, scannerFiles);
 
             return ResponseEntity.ok(updatedMakhzanWaradaSadera);
         } catch (Exception e) {

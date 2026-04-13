@@ -134,6 +134,12 @@ export const getNavigationItems = () => {
         translationKey: "incidents",
       },
       {
+        path: "/minot-makatib",
+        label: i18n.t("managementUtils:minotMakatib", "مینوټ مکاتب"),
+        management: MANAGEMENTS.HIFZIYA,
+        translationKey: "minotMakatib",
+      },
+      {
         path: "/shura-aali-resolutions",
         label: i18n.t("managementUtils:shuraAaliResolutions"),
         management: MANAGEMENTS.HIFZIYA,
@@ -145,6 +151,12 @@ export const getNavigationItems = () => {
         label: i18n.t("managementUtils:archive"),
         management: MANAGEMENTS.ARCHIVE,
         translationKey: "archive",
+      },
+      {
+        path: "/nasharat",
+        label: i18n.t("managementUtils:nasharat"),
+        management: MANAGEMENTS.ARCHIVE,
+        translationKey: "nasharat",
       },
       {
         path: "/makzan-annual-reports",
@@ -198,6 +210,12 @@ export const getNavigationItems = () => {
         translationKey: "incidents",
       },
       {
+        path: "/minot-makatib",
+        label: i18n.t("managementUtils:minotMakatib"),
+        translationKey: "minotMakatib",
+      },
+
+      {
         path: "/shura-aali-resolutions",
         label: i18n.t("managementUtils:shuraAaliResolutions"),
         translationKey: "shuraAaliResolutions",
@@ -209,6 +227,11 @@ export const getNavigationItems = () => {
         path: "/archive",
         label: i18n.t("managementUtils:archive"),
         translationKey: "archive",
+      },
+      {
+        path: "/nasharat",
+        label: i18n.t("managementUtils:nasharat"),
+        translationKey: "nasharat",
       },
     ],
     [MANAGEMENTS.MAKHZAN]: [

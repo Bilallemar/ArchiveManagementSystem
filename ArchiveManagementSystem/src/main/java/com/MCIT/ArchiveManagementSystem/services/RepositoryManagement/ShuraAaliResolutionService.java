@@ -73,6 +73,7 @@ public class ShuraAaliResolutionService {
         existing.setResolutionNo(details.getResolutionNo());
         existing.setApprovalYear(details.getApprovalYear());
         existing.setRemarks(details.getRemarks());
+        existing.setCabinetFile(details.getCabinetFile());
 
         return repository.save(existing);
     }

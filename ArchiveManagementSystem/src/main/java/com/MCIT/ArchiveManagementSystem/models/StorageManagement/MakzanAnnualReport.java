@@ -8,6 +8,7 @@ import com.MCIT.ArchiveManagementSystem.models.DocType;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Province;
+import com.MCIT.ArchiveManagementSystem.models.CabinetAddress.CabinetFile;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -57,4 +58,8 @@ public class MakzanAnnualReport {
   @ToString.Exclude // ADD THIS
   @EqualsAndHashCode.Exclude // ADD THIS
   private List<FileEntity> files = new ArrayList<>();
+
+  @ManyToOne
+  @JoinColumn(name = "cabinet_file_id")
+  private CabinetFile cabinetFile;
 }

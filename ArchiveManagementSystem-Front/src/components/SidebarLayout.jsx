@@ -86,11 +86,13 @@ export default function SidebarLayout({ children }) {
 
     navigationItems.forEach((item) => {
       if (item.path === "/") g.dashboard.push(item);
-      else if (item.path.includes("archive")) g.archive.push(item);
+      else if (item.path.includes("archive") || item.path.includes("nasharat"))
+        g.archive.push(item);
       else if (
         item.path.includes("sawanih") ||
         item.path === "/shura-aali-resolutions" ||
-        item.path.includes("hifziya")
+        item.path.includes("hifziya") ||
+        item.path.includes("minot-makatib")
       )
         g.hifziya.push(item);
       else if (

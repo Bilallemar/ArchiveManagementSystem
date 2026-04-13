@@ -1,6 +1,8 @@
 package com.MCIT.ArchiveManagementSystem.controller.StorageManagementControllers;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -79,7 +81,9 @@ public class MakzanAnnualReportController {
 
                         @RequestPart("annualReport") String annualReportJson,
 
-                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+
+                        @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson
 
         ) throws IOException {
 
@@ -97,8 +101,15 @@ public class MakzanAnnualReportController {
                 Management management = new Management();
                 management.setManagementId(MAKHZAN_MANAGEMENT_ID);
                 report.setManagement(management);
+
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isEmpty()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+
                 return makzanAnnualReportService
-                                .createAnnualReport(report, fileURL);
+                                .createAnnualReport(report, fileURL, scannerFiles);
         }
 
         @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -108,7 +119,8 @@ public class MakzanAnnualReportController {
 
                         @RequestPart("annualReport") String annualReportJson,
 
-                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+                        @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+                        @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson
 
         ) {
                 managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
@@ -121,7 +133,13 @@ public class MakzanAnnualReportController {
                                         annualReportJson,
                                         MakzanAnnualReport.class);
 
-                        makzanAnnualReportService.updateAnnualReport(id, report, fileURL);
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isEmpty()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+
+                        makzanAnnualReportService.updateAnnualReport(id, report, fileURL, scannerFiles);
 
                         // ✅ Return success message only — no entity serialization
                         return ResponseEntity.ok("Updated successfully");

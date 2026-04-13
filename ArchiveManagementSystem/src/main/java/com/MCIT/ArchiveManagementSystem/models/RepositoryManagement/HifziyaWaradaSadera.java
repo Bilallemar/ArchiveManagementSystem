@@ -6,14 +6,16 @@ import java.util.List;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
+import com.MCIT.ArchiveManagementSystem.models.CabinetAddress.CabinetFile;
 import com.MCIT.ArchiveManagementSystem.models.enums.HifziyaWaradaSaderaDirection;
-import com.MCIT.ArchiveManagementSystem.models.enums.MakhzanWaradaSaderaDirection;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -48,11 +50,22 @@ public class HifziyaWaradaSadera {
     private String description;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private HifziyaWaradaSaderaDirection  direction;
+    private HifziyaWaradaSaderaDirection direction;
 
     @ManyToOne
     @JoinColumn(name = "management_id")
     private Management management;
-    @OneToMany(mappedBy = "hifziyaWaradaSadera", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    
+// In HifziyaWaradaSadera.java
+@OneToMany(mappedBy = "hifziyaWaradaSadera", 
+           cascade = CascadeType.ALL, 
+           orphanRemoval = true,
+           fetch = FetchType.EAGER)                                    // ✅
+@JsonIgnoreProperties({"hifziyaWaradaSadera", "hibernateLazyInitializer"})  // ✅
     private List<FileEntity> files = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "cabinet_file_id")
+    private CabinetFile cabinetFile;
 }

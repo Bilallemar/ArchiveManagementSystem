@@ -18,7 +18,6 @@ import {
   isRTLLanguage,
 } from "./utils/languageUtils";
 import ProtectedRoute from "./components/ProtectedRoute";
-import LandingPage from "./components/LandingPage";
 import AccessDenied from "./components/Auth/AccessDenied";
 import Admin from "./components/AuditLogs/Admin";
 import UserProfile from "./components/Auth/UserProfile";
@@ -58,9 +57,17 @@ import EditMakhzanWaradaSaderaDialog from "./components/StorageManagement/Makhza
 import AddShuraAaliResolution from "./components/Hifziya/ShuraAaliResolution/AddShuraAaliResolution";
 import EditShuraAaliResolutionDialog from "./components/Hifziya/ShuraAaliResolution/EditShuraAaliResolutionDialog";
 import ShuraAaliResolutionList from "./components/Hifziya/ShuraAaliResolution/ShuraAaliResolutionList";
+import LandingPage from "./components/LandingPage";
+import AddMinotMakatib from "./components/Hifziya/MinotMakatib/AddMinotMakatib";
+import EditMinotMakatibDialog from "./components/Hifziya/MinotMakatib/EditMinotMakatibDialog";
+import MinotMakatibList from "./components/Hifziya/MinotMakatib/MinotMakatibList";
+import NasharatList from "./components/ArchiveManagement/Nasharat/NasharatList";
+import AddNasharat from "./components/ArchiveManagement/Nasharat/AddNasharat";
+import EditNasharatDialog from "./components/ArchiveManagement/Nasharat/EditNasharatDialog";
 
-import { useMyContext } from "./store/ContextApi";
+
 import SidebarLayout from "./components/SidebarLayout";
+import { useMyContext } from "./store/ContextApi";
 
 const App = () => {
   const { i18n } = useTranslation();
@@ -213,7 +220,22 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
+         <Route
+  path="/minot-makatib"
+  element={
+    <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+      <MinotMakatibList />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/minot-makatib/add"
+  element={
+    <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+      <AddMinotMakatib />
+    </ProtectedRoute>
+  }
+/>
           {/* Archive Routes */}
           <Route
             path="/archive"
@@ -239,7 +261,30 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/nasharat"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+                <NasharatList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/nasharat/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+                <AddNasharat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/nasharat/:id"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+                <EditNasharatDialog />
+              </ProtectedRoute>
+            }
+          />
           {/* Makhzan Routes */}
           <Route
             path="/annual-reports-info"

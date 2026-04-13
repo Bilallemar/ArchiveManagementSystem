@@ -6,6 +6,7 @@ import java.util.List;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
+import com.MCIT.ArchiveManagementSystem.models.CabinetAddress.CabinetFile;
 import com.MCIT.ArchiveManagementSystem.models.enums.MakhzanWaradaSaderaDirection;
 
 import jakarta.persistence.CascadeType;
@@ -55,4 +56,8 @@ public class MakhzanWaradaSadera {
   private Management management;
   @OneToMany(mappedBy = "makhzanWaradaSadera", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<FileEntity> files = new ArrayList<>();
+
+  @ManyToOne
+  @JoinColumn(name = "cabinet_file_id")
+  private CabinetFile cabinetFile;
 }

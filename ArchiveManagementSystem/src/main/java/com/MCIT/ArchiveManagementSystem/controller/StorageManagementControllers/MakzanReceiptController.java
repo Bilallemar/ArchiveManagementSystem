@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +97,8 @@ public class MakzanReceiptController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public MakzanReceipt createReceipt(
             @RequestPart("receipts") String receipts,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson
 
     ) throws IOException {
         managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
@@ -106,33 +109,17 @@ public class MakzanReceiptController {
         Management management = new Management();
         management.setManagementId(MAKHZAN_MANAGEMENT_ID);
         recivedrMakzanReceipt.setManagement(management);
-        return receiptsService.createReceipt(recivedrMakzanReceipt, fileURL);
+
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isEmpty()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+
+        return receiptsService.createReceipt(recivedrMakzanReceipt, fileURL, scannerFiles);
     }
 
-    // @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    // public ResponseEntity<MakzanReceipt> updateReceipt(
-    // @PathVariable Integer id,
-    // @RequestPart("receipts") String receiptsJson, // JSON string د Receipts
-    // object لپاره
-    // @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) {
-    // managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
-
-    // try {
-    // // JSON string parse کوو
-    // ObjectMapper mapper = new ObjectMapper();
-    // mapper.registerModule(new JavaTimeModule());
-    // MakzanReceipt recivedReceipts = mapper.readValue(receiptsJson,
-    // MakzanReceipt.class);
-
-    // // service ته پاس کوو
-    // MakzanReceipt updatedReceipt = receiptsService.updateReceipt(id,
-    // recivedReceipts, fileURL);
-
-    // return ResponseEntity.ok(updatedReceipt);
-    // } catch (Exception e) {
-    // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    // }
-    // }
+   
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateReceipt(
 
@@ -140,7 +127,9 @@ public class MakzanReceiptController {
 
             @RequestPart("receipts") String receiptsJson,
 
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson
+
 
     ) {
         managementSecurity.validateManagementAccess(MAKHZAN_MANAGEMENT_ID);
@@ -153,7 +142,16 @@ public class MakzanReceiptController {
                     receiptsJson,
                     MakzanReceipt.class);
 
-            receiptsService.updateReceipt(id, report, fileURL);
+
+
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isEmpty()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+
+
+            receiptsService.updateReceipt(id, report, fileURL, scannerFiles);
 
             // ✅ Return success message only — no entity serialization
             return ResponseEntity.ok("Updated successfully");

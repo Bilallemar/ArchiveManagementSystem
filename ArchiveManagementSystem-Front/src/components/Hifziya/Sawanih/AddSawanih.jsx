@@ -59,19 +59,72 @@ export default function AddSawanih() {
     pageQuantity: "",
     files: [],
   });
-
+  const [scannerFiles, setScannerFiles] = useState([]);
   const [orgs, setOrgs] = useState([]);
+  const [cabinets, setCabinets] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [shelves, setShelves] = useState([]);
+  const [cabinetFiles, setCabinetFiles] = useState([]);
+
+  const [selectedCabinet, setSelectedCabinet] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const [selectedShelf, setSelectedShelf] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     api.get("/org").then((res) => setOrgs(res.data || []));
   }, []);
-
+  useEffect(() => {
+    api.get("/cabinet").then((res) => setCabinets(res.data || []));
+  }, []);
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+  // Add these 3 handlers below your existing handlers
 
+  const handleCabinetChange = async (e) => {
+    const cabinetId = e.target.value;
+    setSelectedCabinet(cabinetId);
+    setSelectedFloor("");
+    setSelectedShelf("");
+    setSelectedFile("");
+    setFloors([]);
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (cabinetId) {
+      const res = await api.get(`/cabinet/${cabinetId}/floors`);
+      setFloors(res.data || []);
+    }
+  };
+
+  const handleFloorChange = async (e) => {
+    const floorId = e.target.value;
+    setSelectedFloor(floorId);
+    setSelectedShelf("");
+    setSelectedFile("");
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (floorId) {
+      const res = await api.get(`/cabinet/floors/${floorId}/shelves`);
+      setShelves(res.data || []);
+    }
+  };
+
+  const handleShelfChange = async (e) => {
+    const shelfId = e.target.value;
+    setSelectedShelf(shelfId);
+    setSelectedFile("");
+    setCabinetFiles([]);
+
+    if (shelfId) {
+      const res = await api.get(`/cabinet/shelves/${shelfId}/files`);
+      setCabinetFiles(res.data || []);
+    }
+  };
   const handleHijriDateChange = (field) => (hijriDate) => {
     setFormData((prev) => ({ ...prev, [field]: hijriDate }));
   };
@@ -110,31 +163,12 @@ export default function AddSawanih() {
     }
   };
 
-  const handleLoadFromScanner = async () => {
+  const handleLoadFromScanner = () => {
     if (!detectedFiles.length)
       return toast.error(texts.noFiles || "هیڅ فایل نشته");
-
-    try {
-      const files = await Promise.all(
-        detectedFiles.map(async (f) => {
-          const res = await api.get(
-            `/scanner-folder/files/${f.name}/download`,
-            { responseType: "blob" },
-          );
-          return new File([res.data], f.name, {
-            type: res.headers["content-type"] || "application/octet-stream",
-          });
-        }),
-      );
-
-      setFormData((prev) => ({ ...prev, files }));
-      setDetectedFiles([]);
-      toast.success(
-        `${files.length} ${texts.scanner?.loadSuccess || "فایلونه لېږدول شول"}`,
-      );
-    } catch {
-      toast.error(texts.loadError || "فایلونو لېږدولو کې ستونزه");
-    }
+    setScannerFiles(detectedFiles.map((f) => f.name)); // ✅ just store names
+    setDetectedFiles([]);
+    toast.success(`${detectedFiles.length} فایلونه چمتو دي`);
   };
 
   const handleSubmit = async (e) => {
@@ -150,6 +184,7 @@ export default function AddSawanih() {
         incommingDate: convertHijriToGregorian(formData.incommingDate),
         outgoingDate: convertHijriToGregorian(formData.outgoingDate),
         org: { id: Number(formData.org) },
+        cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null,
         description: formData.description?.trim() || null,
         pageQuantity:
           !isSawanih && formData.pageQuantity
@@ -163,7 +198,7 @@ export default function AddSawanih() {
       if (!isSawanih) {
         formData.files.forEach((file) => fd.append("fileURL", file));
       }
-
+      fd.append("scannerFiles", JSON.stringify(scannerFiles));
       await createSawanih(fd);
       toast.success(texts.saveSuccess || "ثبت په بریالیتوب ترسره شو");
       navigate("/sawanih");
@@ -195,7 +230,13 @@ export default function AddSawanih() {
         </Typography>
       </Box>
 
-      <Card  sx={{ borderRadius: 2,  boxShadow: "0px 4px 15px rgba(0,0,0,0.07), 0px 8px 10px rgba(0,0,0,0.04)", }}>
+      <Card
+        sx={{
+          borderRadius: 2,
+          boxShadow:
+            "0px 4px 15px rgba(0,0,0,0.07), 0px 8px 10px rgba(0,0,0,0.04)",
+        }}
+      >
         <CardContent sx={{ p: { xs: 3, md: 5 } }}>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={4}>
@@ -301,7 +342,39 @@ export default function AddSawanih() {
                         </Box>
                       </Box>
                     )}
-
+                    {scannerFiles.length > 0 && (
+                      <Box>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="bold"
+                          sx={{ mb: 1 }}
+                        >
+                          د سکینر فایلونه ({scannerFiles.length})
+                        </Typography>
+                        <Stack
+                          spacing={0.5}
+                          sx={{ maxHeight: 150, overflowY: "auto" }}
+                        >
+                          {scannerFiles.map((name, i) => (
+                            <Chip
+                              key={i}
+                              label={name}
+                              size="small"
+                              onDelete={() =>
+                                setScannerFiles((prev) =>
+                                  prev.filter((_, idx) => idx !== i),
+                                )
+                              }
+                              sx={{
+                                bgcolor: "#4CAF50",
+                                color: "#fff",
+                                "& .MuiChip-deleteIcon": { color: "#fff" },
+                              }}
+                            />
+                          ))}
+                        </Stack>
+                      </Box>
+                    )}
                     {/* Manual Upload */}
                     <Button
                       variant="outlined"
@@ -466,7 +539,98 @@ export default function AddSawanih() {
                       />
                     </Grid>
                   )}
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="bold"
+                      sx={{ mb: 1 }}
+                    >
+                      د کابینې پته (Cabinet Address)
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>کابینه (Cabinet)</InputLabel>
+                      <Select
+                        value={String(selectedCabinet)} // ✅ String()
+                        onChange={handleCabinetChange}
+                        label="کابینه (Cabinet)"
+                      >
+                        {cabinets.map((c) => (
+                          <MenuItem key={c.id} value={String(c.id)}>
+                            {" "}
+                            {c.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
+                  <Grid item xs={12} md={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedCabinet}
+                    >
+                      <InputLabel>پوړ (Floor)</InputLabel>
+                      <Select
+                        value={String(selectedFloor)} // ✅ String()
+                        onChange={handleFloorChange}
+                        label="پوړ (Floor)"
+                      >
+                        {floors.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {" "}
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedFloor}
+                    >
+                      <InputLabel>شیلف (Shelf)</InputLabel>
+                      <Select
+                        value={String(selectedShelf)} // ✅ String()
+                        onChange={handleShelfChange}
+                        label="شیلف (Shelf)"
+                      >
+                        {shelves.map((s) => (
+                          <MenuItem key={s.id} value={String(s.id)}>
+                            {" "}
+                            {s.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedShelf}
+                    >
+                      <InputLabel>فایل (File)</InputLabel>
+                      <Select
+                        value={String(selectedFile)} // ✅ String()
+                        onChange={(e) => setSelectedFile(e.target.value)}
+                        label="فایل (File)"
+                      >
+                        {cabinetFiles.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {" "}
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
@@ -476,9 +640,11 @@ export default function AddSawanih() {
                       multiline
                       value={formData.description}
                       onChange={handleInputChange}
-                      sx={{       "& .MuiInputBase-root": {
+                      sx={{
+                        "& .MuiInputBase-root": {
                           height: 100,
-                        },}}
+                        },
+                      }}
                     />
                   </Grid>
 

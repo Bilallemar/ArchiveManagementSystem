@@ -1,0 +1,56 @@
+package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.MCIT.ArchiveManagementSystem.models.FileEntity;
+import com.MCIT.ArchiveManagementSystem.models.Management;
+import com.MCIT.ArchiveManagementSystem.models.Org;
+import com.MCIT.ArchiveManagementSystem.models.CabinetAddress.CabinetFile;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "minot_makatib")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MinotMakatib {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
+
+  private String cartonNumber;
+  private String letterNumber;
+  private Integer year;
+  private String subject;
+
+  @ManyToOne
+  @JoinColumn(name = "org")
+  private Org org;
+
+  @ManyToOne
+  @JoinColumn(name = "cabinet_file_id")
+  private CabinetFile cabinetFile;
+
+  @ManyToOne
+  @JoinColumn(name = "management_id")
+  private Management management;
+
+  private String description;
+
+  @OneToMany(mappedBy = "minotMakatib", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<FileEntity> files = new ArrayList<>();
+}

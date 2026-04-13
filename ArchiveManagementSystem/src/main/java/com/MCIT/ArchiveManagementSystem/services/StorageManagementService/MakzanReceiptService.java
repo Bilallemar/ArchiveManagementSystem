@@ -1,11 +1,17 @@
 package com.MCIT.ArchiveManagementSystem.services.StorageManagementService;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +35,13 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class MakzanReceiptService {
+
+    @Value("${spring.file.directory}") // ✅ add this
+    private String uploadDir;
+
+    @Value("${scanner.folder.path}") // ✅ add this
+    private String scannerFolderPath;
+
     private static final String TABLE_NAME = "makzan_receipt";
     private final AuditLogHelper auditLogHelper;
 
@@ -97,10 +110,14 @@ public class MakzanReceiptService {
     }
 
     @Transactional
-    public MakzanReceipt createReceipt(MakzanReceipt makzanReceipts, MultipartFile[] fileURL) {
+    public MakzanReceipt createReceipt(MakzanReceipt makzanReceipts, MultipartFile[] fileURL,
+            List<String> scannerFileNames) {
+        makzanReceipts = makzanReceiptRepository.save(makzanReceipts);
+
         System.out.println("Saving MakzanReceipt: " + makzanReceipts);
         // Save the main entity first (without files)
-        makzanReceipts = makzanReceiptRepository.save(makzanReceipts);
+        List<FileEntity> fileEntities = new ArrayList<>();
+
         if (fileURL != null && fileURL.length > 0) {
             System.out.println("Saving " + fileURL.length + " files");
 
@@ -108,7 +125,6 @@ public class MakzanReceiptService {
             List<String> storedPaths = fileService.savefiles(fileURL, makzanReceipts);
 
             // Create FileEntity for each uploaded file
-            List<FileEntity> fileEntities = new ArrayList<>();
             for (int i = 0; i < fileURL.length; i++) {
                 MultipartFile file = fileURL[i];
                 FileEntity fileEntity = new FileEntity();
@@ -122,9 +138,37 @@ public class MakzanReceiptService {
                 System.out.println("Saved file " + (i + 1) + ": " + file.getOriginalFilename());
             }
 
+            if (scannerFileNames != null && !scannerFileNames.isEmpty()) {
+                for (String scannerFileName : scannerFileNames) {
+                    try {
+                        Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                        String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                        Path destPath = Paths.get(uploadDir, uniqueName);
+
+                        Files.createDirectories(Paths.get(uploadDir));
+                        Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                        String fileType = Files.probeContentType(sourcePath);
+
+                        FileEntity fe = new FileEntity();
+                        fe.setFilePath(uniqueName);
+                        fe.setFileName(scannerFileName);
+                        fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                        fe.setFileSize(Files.size(sourcePath));
+                        fe.setMakzanReceipt(makzanReceipts);
+                        fileRepository.save(fe);
+                        fileEntities.add(fe);
+                        System.out.println("✅ Scanner file copied: " + scannerFileName);
+
+                    } catch (java.io.IOException e) { // ✅ fully qualified to be safe
+                        System.err.println("❌ Failed to copy scanner file: "
+                                + scannerFileName + " - " + e.getMessage());
+                    }
+                }
+            }
+
             makzanReceipts.setFiles(fileEntities);
-        } else {
-            System.out.println("No files to save in Service");
+
         }
 
         auditLogHelper.logCreate(TABLE_NAME, makzanReceipts.getId().longValue(),
@@ -132,64 +176,12 @@ public class MakzanReceiptService {
         return makzanReceipts;
     }
 
-    // @Transactional
-    // public MakzanReceipt updateReceipt(Integer id, MakzanReceipt
-    // makzanReceiptsDetails, MultipartFile[] fileURL) {
-    // // 1. موجوده ریکارډ ترلاسه کړه
-    // MakzanReceipt makzanReceipts = makzanReceiptRepository.findById(id)
-    // .orElseThrow(() -> new RuntimeException("Receipt not found with id: " + id));
-
-    // // 2. اصلي فیلډونه اپډېټ کړه
-    // makzanReceipts.setDocNo(makzanReceiptsDetails.getDocNo());
-    // makzanReceipts.setOrg(makzanReceiptsDetails.getOrg());
-
-    // makzanReceipts.setDepartment(makzanReceiptsDetails.getDepartment());
-    // makzanReceipts.setLetterNo(makzanReceiptsDetails.getLetterNo());
-    // makzanReceipts.setLetterDate(makzanReceiptsDetails.getLetterDate());
-    // makzanReceipts.setSubjectType(makzanReceiptsDetails.getSubjectType());
-    // makzanReceipts.setDescription(makzanReceiptsDetails.getDescription());
-
-    // // 3. فایلونه اپډېټ یا اضافه کړه که موجود وي
-    // if (fileURL != null && fileURL.length > 0) {
-    // // 3a. موجوده فایلونه حذف کړه
-    // if (makzanReceipts.getFiles() != null) {
-    // for (FileEntity oldFile : makzanReceipts.getFiles()) {
-    // fileService.deleteFile(oldFile.getFilePath()); // د حقیقي مسیر نه فایل حذف
-    // fileRepository.delete(oldFile); // DB نه حذف
-    // }
-    // makzanReceipts.getFiles().clear();
-    // }
-
-    // // 3b. نوي فایلونه ذخیره کړه
-    // List<String> storedPaths = fileService.savefiles(fileURL, makzanReceipts); //
-    // د څو فایلونو save method
-
-    // List<FileEntity> newAttachments = new ArrayList<>();
-    // for (int i = 0; i < fileURL.length; i++) {
-    // MultipartFile f = fileURL[i];
-    // FileEntity fe = new FileEntity();
-    // fe.setFilePath(storedPaths.get(i)); // حقیقي مسیر
-    // fe.setFileName(f.getOriginalFilename()); // د فایل اصل نوم
-    // fe.setFileType(f.getContentType()); // فایل ټایپ
-    // fe.setMakzanReceipt(makzanReceipts); // د ریکارډ سره رابطه
-    // fileRepository.save(fe); // DB ته ذخیره کړه
-    // newAttachments.add(fe);
-    // }
-
-    // makzanReceipts.setFiles(newAttachments);
-    // }
-
-    // auditLogHelper.logUpdate(TABLE_NAME, makzanReceipts.getId().longValue(),
-    // makzanReceipts.getDescription());
-
-    // // 4. وروستی ریکارډ ذخیره کړه او واپس یې کړه
-    // return makzanReceiptRepository.save(makzanReceipts);
-    // }
     @Transactional
-    public void updateReceipt(
+    public MakzanReceipt updateReceipt(
             Integer id,
             MakzanReceipt makzanReceiptDetails,
-            MultipartFile[] fileURL) {
+            MultipartFile[] fileURL,
+            List<String> scannerFileNames) {
 
         MakzanReceipt makzanReceipts = makzanReceiptRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MakzanReceipt not found with id: " + id));
@@ -203,53 +195,79 @@ public class MakzanReceiptService {
         makzanReceipts.setLetterDate(makzanReceiptDetails.getLetterDate());
         makzanReceipts.setSubjectType(makzanReceiptDetails.getSubjectType());
         makzanReceipts.setDescription(makzanReceiptDetails.getDescription());
+        makzanReceipts.setCabinetFile(makzanReceipts.getCabinetFile());
 
         logger.info("Updating MakzanReceipt id: {}", id);
 
-        // Update files only if new files were provided
-        if (fileURL != null && fileURL.length > 0) {
+        boolean hasNewFiles = (fileURL != null && fileURL.length > 0);
+        boolean hasScannerFiles = (scannerFileNames != null && !scannerFileNames.isEmpty());
 
+        if (hasNewFiles || hasScannerFiles) {
+            // ✅ Delete old files from disk and DB
             if (makzanReceipts.getFiles() != null && !makzanReceipts.getFiles().isEmpty()) {
                 for (FileEntity oldFile : makzanReceipts.getFiles()) {
-                    try {
                         fileService.deleteFile(oldFile.getFilePath());
-                    } catch (Exception e) {
-                        logger.warn("Could not delete file: {}", e.getMessage());
-                    }
+                    logger.info("Deleted old file: {}", oldFile.getFileName());
                 }
-                makzanReceipts.getFiles().clear(); // ← orphanRemoval handles DB delete
-                makzanReceiptRepository.saveAndFlush(makzanReceipts); // ← flush BEFORE adding new
-                                                                      // files
-            }
-
-            List<String> storedPaths = fileService.savefiles(fileURL, makzanReceipts);
-
-            for (int i = 0; i < fileURL.length; i++) {
-                MultipartFile f = fileURL[i];
-                if (f == null || f.isEmpty())
-                    continue;
-
-                String safeName = sanitizeFileName(f.getOriginalFilename());
-
-                FileEntity fe = new FileEntity();
-                fe.setFilePath(storedPaths.get(i));
-                fe.setFileName(safeName);
-                fe.setFileType(f.getContentType());
-                fe.setMakzanReceipt(makzanReceipts);
-
-                makzanReceipts.getFiles().add(fe); // ← add to existing list, don't replace it
-                logger.info("New file queued: {}", safeName);
+                makzanReceipts.getFiles().clear();
+                fileRepository.flush(); // ✅ make sure deletes happen before inserts
             }
         }
 
-        makzanReceiptRepository.save(makzanReceipts);
+        // ── Handle manual uploaded files ──────────────────────
+        if (hasNewFiles) {
+            List<String> storedPaths = fileService.savefiles(fileURL, makzanReceipts);
+            for (int i = 0; i < fileURL.length; i++) {
+                MultipartFile file = fileURL[i];
+                if (file == null || file.isEmpty())
+                    continue;
 
-        auditLogHelper.logUpdate(
-                TABLE_NAME,
-                id.longValue(),
+                FileEntity fe = new FileEntity();
+                fe.setFilePath(storedPaths.get(i));
+                fe.setFileName(file.getOriginalFilename()); // ✅ keep original name
+                fe.setFileType(file.getContentType());
+                fe.setFileSize(file.getSize());
+                fe.setMakzanReceipt(makzanReceipts);
+                fileRepository.save(fe);
+                makzanReceipts.getFiles().add(fe);
+                System.out.println("✅ Manual file saved on update: " + file.getOriginalFilename());
+            }
+        }
+
+        // ── Handle scanner files ───────────────────────────────
+        if (hasScannerFiles) {
+            for (String scannerFileName : scannerFileNames) {
+                try {
+                    Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                    String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                    Path destPath = Paths.get(uploadDir, uniqueName);
+
+                    Files.createDirectories(Paths.get(uploadDir));
+                    Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                    String fileType = Files.probeContentType(sourcePath);
+
+                    FileEntity fe = new FileEntity();
+                    fe.setFilePath(uniqueName);
+                    fe.setFileName(scannerFileName);
+                    fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                    fe.setFileSize(Files.size(sourcePath));
+                    fe.setMakzanReceipt(makzanReceipts);
+                    fileRepository.save(fe);
+                    makzanReceipts.getFiles().add(fe);
+                    System.out.println("✅ Scanner file on update: " + scannerFileName);
+
+                } catch (java.io.IOException e) {
+                    System.err.println("❌ Scanner file failed: " + scannerFileName + " - "
+                            + e.getMessage());
+            }
+        }
+        }
+
+        MakzanReceipt updated = makzanReceiptRepository.save(makzanReceipts);
+        auditLogHelper.logUpdate(TABLE_NAME, makzanReceipts.getId().longValue(),
                 makzanReceipts.getDescription());
-
-        logger.info("Update completed for MakzanReceipt id: {}", id);
+        return updated;
     }
 
     public void deleteReceipt(Integer id) {

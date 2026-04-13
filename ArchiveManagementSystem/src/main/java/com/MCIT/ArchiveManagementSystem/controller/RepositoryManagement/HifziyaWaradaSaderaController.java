@@ -3,7 +3,9 @@ package com.MCIT.ArchiveManagementSystem.controller.RepositoryManagement;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,42 +83,54 @@ public class HifziyaWaradaSaderaController {
     @PostMapping(consumes = { "multipart/form-data" })
     public HifziyaWaradaSadera createHifziyaWaradaSadera(
             @RequestPart("hifziyaWaradaSadera") String hifziyaWaradaSadera,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL
-
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson // ✅ add
     ) throws IOException {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        HifziyaWaradaSadera recivedrHifziyaWaradaSadera = mapper.readValue(hifziyaWaradaSadera,
-                HifziyaWaradaSadera.class);
+        HifziyaWaradaSadera received = mapper.readValue(hifziyaWaradaSadera, HifziyaWaradaSadera.class);
+
         Management management = new Management();
         management.setManagementId(HIFZIYA_MANAGEMENT_ID);
-        recivedrHifziyaWaradaSadera.setManagement(management);
-        return hifziyaWaradaSaderaService.createHifziyaWaradaSadera(recivedrHifziyaWaradaSadera, fileURL);
+        received.setManagement(management);
+
+        // ✅ Parse scanner file names
+        List<String> scannerFiles = new ArrayList<>();
+        if (scannerFilesJson != null && !scannerFilesJson.isBlank()) {
+            scannerFiles = mapper.readValue(scannerFilesJson,
+                    mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        }
+
+        return hifziyaWaradaSaderaService.createHifziyaWaradaSadera(received, fileURL, scannerFiles);
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<HifziyaWaradaSadera> updateHifziyaWaradaSadera(
             @PathVariable Integer id,
             @RequestPart("hifziyaWaradaSadera") String registrationJson,
-            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL) // JSON string د Receipts object
-                                                                                       // لپاره
-    {
+            @RequestPart(value = "fileURL", required = false) MultipartFile[] fileURL,
+            @RequestPart(value = "scannerFiles", required = false) String scannerFilesJson // ✅ add
+    ) {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);
 
         try {
-            // JSON string parse کوو
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new JavaTimeModule());
-            HifziyaWaradaSadera recivedHifziyaWaradaSadera = mapper.readValue(registrationJson,
-                    HifziyaWaradaSadera.class);
+            HifziyaWaradaSadera received = mapper.readValue(registrationJson, HifziyaWaradaSadera.class);
 
-            // service ته پاس کوو
-            HifziyaWaradaSadera updatedHifziyaWaradaSadera = hifziyaWaradaSaderaService.updateHifziyaWaradaSadera(id,
-                    recivedHifziyaWaradaSadera, fileURL);
+            // ✅ Parse scanner file names
+            List<String> scannerFiles = new ArrayList<>();
+            if (scannerFilesJson != null && !scannerFilesJson.isBlank()) {
+                scannerFiles = mapper.readValue(scannerFilesJson,
+                        mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+            }
 
-            return ResponseEntity.ok(updatedHifziyaWaradaSadera);
+            HifziyaWaradaSadera updated = hifziyaWaradaSaderaService
+                    .updateHifziyaWaradaSadera(id, received, fileURL, scannerFiles);
+
+            return ResponseEntity.ok(updated);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

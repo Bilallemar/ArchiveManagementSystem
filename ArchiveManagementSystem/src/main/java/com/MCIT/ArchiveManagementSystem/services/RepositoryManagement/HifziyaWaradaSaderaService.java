@@ -1,11 +1,17 @@
 package com.MCIT.ArchiveManagementSystem.services.RepositoryManagement;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +33,11 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class HifziyaWaradaSaderaService {
+    @Value("${spring.file.directory}") // ✅ add this
+    private String uploadDir;
 
+    @Value("${scanner.folder.path}") // ✅ add this
+    private String scannerFolderPath;
     private static final Logger logger = LoggerFactory.getLogger(HifziyaWaradaSaderaService.class);
     private static final String TABLE_NAME = "HifziyaWaradaSadera";
 
@@ -89,32 +99,87 @@ public class HifziyaWaradaSaderaService {
     }
 
     @Transactional
-    public HifziyaWaradaSadera createHifziyaWaradaSadera(HifziyaWaradaSadera hifziyaWaradaSadera,
-            MultipartFile[] fileURL) {
-        logger.info("Creating new HifziyaWaradaSadera: {}", hifziyaWaradaSadera);
+    public HifziyaWaradaSadera createHifziyaWaradaSadera(
+            HifziyaWaradaSadera hifziyaWaradaSadera,
+            MultipartFile[] fileURL,
+            List<String> scannerFileNames) { // ✅ new parameter
 
-        // Save main entity first
         hifziyaWaradaSadera = hifziyaWaradaSaderaRepository.save(hifziyaWaradaSadera);
+        System.out.println("✅ Saved with ID: " + hifziyaWaradaSadera.getId());
 
-        handleFileUploads(fileURL, hifziyaWaradaSadera);
+        List<FileEntity> fileEntities = new ArrayList<>();
 
-        auditLogHelper.logCreate(TABLE_NAME, hifziyaWaradaSadera.getId().longValue(),
+        // ── Handle manual uploaded files ──────────────────────────
+        if (fileURL != null && fileURL.length > 0) {
+            List<String> storedPaths = fileService.savefiles(fileURL, hifziyaWaradaSadera);
+
+            for (int i = 0; i < fileURL.length; i++) {
+                MultipartFile file = fileURL[i];
+                if (file == null || file.isEmpty())
+                    continue;
+
+                FileEntity fe = new FileEntity();
+                fe.setFilePath(storedPaths.get(i));
+                fe.setFileName(file.getOriginalFilename());
+                fe.setFileType(file.getContentType());
+                fe.setFileSize(file.getSize());
+                fe.setHifziyaWaradaSadera(hifziyaWaradaSadera);
+                fileRepository.save(fe);
+                fileEntities.add(fe);
+                System.out.println("✅ Manual file saved: " + file.getOriginalFilename());
+            }
+        }
+
+        // ── Handle scanner files ───────────────────────────────────
+        if (scannerFileNames != null && !scannerFileNames.isEmpty()) {
+            for (String scannerFileName : scannerFileNames) {
+                try {
+                    Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                    String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                    Path destPath = Paths.get(uploadDir, uniqueName);
+
+                    Files.createDirectories(Paths.get(uploadDir));
+                    Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                    String fileType = Files.probeContentType(sourcePath);
+
+                    FileEntity fe = new FileEntity();
+                    fe.setFilePath(uniqueName);
+                    fe.setFileName(scannerFileName);
+                    fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                    fe.setFileSize(Files.size(sourcePath));
+                    fe.setHifziyaWaradaSadera(hifziyaWaradaSadera);
+                    fileRepository.save(fe);
+                    fileEntities.add(fe);
+                    System.out.println("✅ Scanner file copied: " + scannerFileName);
+
+                } catch (java.io.IOException e) { // ✅ fully qualified to be safe
+                    System.err.println("❌ Failed to copy scanner file: "
+                            + scannerFileName + " - " + e.getMessage());
+                }
+            }
+        }
+
+        hifziyaWaradaSadera.setFiles(fileEntities);
+
+        auditLogHelper.logCreate(TABLE_NAME,
+                hifziyaWaradaSadera.getId().longValue(),
                 hifziyaWaradaSadera.getDescription());
 
         return hifziyaWaradaSadera;
     }
 
     @Transactional
-    public HifziyaWaradaSadera updateHifziyaWaradaSadera(Integer id,
+    public HifziyaWaradaSadera updateHifziyaWaradaSadera(
+            Integer id,
             HifziyaWaradaSadera hifziyaWaradaSaderaDetails,
-            MultipartFile[] fileURL) {
+            MultipartFile[] fileURL,
+            List<String> scannerFileNames) {
 
         HifziyaWaradaSadera existingDoc = hifziyaWaradaSaderaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("HifziyaWaradaSadera not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Not found: " + id));
 
-        logger.info("Updating HifziyaWaradaSadera id: {}", id);
-
-        // Update basic fields existing.setNo(details.getNo());
+        // ── Update fields ──────────────────────────────────────
         existingDoc.setNo(hifziyaWaradaSaderaDetails.getNo());
         existingDoc.setOrg(hifziyaWaradaSaderaDetails.getOrg());
 
@@ -125,84 +190,75 @@ public class HifziyaWaradaSaderaService {
         existingDoc.setSubjectType(hifziyaWaradaSaderaDetails.getSubjectType());
         existingDoc.setDescription(hifziyaWaradaSaderaDetails.getDescription());
         existingDoc.setDirection(hifziyaWaradaSaderaDetails.getDirection());
+        existingDoc.setCabinetFile(hifziyaWaradaSaderaDetails.getCabinetFile());
 
-        if (hifziyaWaradaSaderaDetails.getNo() != null) {
-            existingDoc.setNo(hifziyaWaradaSaderaDetails.getNo());
-        }
-        if (hifziyaWaradaSaderaDetails.getOrg() != null) {
-            existingDoc.setOrg(hifziyaWaradaSaderaDetails.getOrg());
-        }
+        // ── Only delete old files if NEW files are being uploaded ──
+        boolean hasNewFiles = (fileURL != null && fileURL.length > 0);
+        boolean hasScannerFiles = (scannerFileNames != null && !scannerFileNames.isEmpty());
 
-        // Handle file uploads (replace mode by default)
-        handleFileUploads(fileURL, existingDoc);
-
-        // Save updated entity
-        HifziyaWaradaSadera updated = hifziyaWaradaSaderaRepository.save(existingDoc);
-
-        auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(), existingDoc.getDescription());
-
-        logger.info("Update completed for id: {}", id);
-        return updated;
-    }
-
-    /**
-     * Common method for handling file uploads (used by both create and update)
-     */
-    private void handleFileUploads(MultipartFile[] fileURL, HifziyaWaradaSadera entity) {
-        if (fileURL == null || fileURL.length == 0) {
-            logger.info("No files provided for upload");
-            return;
-        }
-
-        logger.info("Processing {} file(s) for entity id: {}", fileURL.length, entity.getId());
-
-        // Initialize files list if null
-        if (entity.getFiles() == null) {
-            entity.setFiles(new ArrayList<>());
-        }
-
-        // Replace mode: delete existing files first
-        if (!entity.getFiles().isEmpty()) {
-            List<FileEntity> filesToDelete = new ArrayList<>(entity.getFiles());
-            for (FileEntity oldFile : filesToDelete) {
-                try {
-                    fileRepository.delete(oldFile);
+        if (hasNewFiles || hasScannerFiles) {
+            // ✅ Delete old files from disk and DB
+            if (existingDoc.getFiles() != null && !existingDoc.getFiles().isEmpty()) {
+                for (FileEntity oldFile : existingDoc.getFiles()) {
                     fileService.deleteFile(oldFile.getFilePath());
-                    logger.info("Deleted old file: {}", oldFile.getFileName());
-                } catch (Exception e) {
-                    logger.warn("Failed to delete old file {}: {}", oldFile.getFileName(), e.getMessage());
+                    fileRepository.delete(oldFile);
+                }
+                existingDoc.getFiles().clear();
+                fileRepository.flush();
+            }
+        }
+
+        // ── Handle manual uploaded files ──────────────────────
+        if (hasNewFiles) {
+            List<String> storedPaths = fileService.savefiles(fileURL, existingDoc);
+            for (int i = 0; i < fileURL.length; i++) {
+                MultipartFile file = fileURL[i];
+                if (file == null || file.isEmpty())
+                    continue;
+
+                FileEntity fe = new FileEntity();
+                fe.setFilePath(storedPaths.get(i));
+                fe.setFileName(file.getOriginalFilename()); // ✅ keep original name
+                fe.setFileType(file.getContentType());
+                fe.setFileSize(file.getSize());
+                fe.setHifziyaWaradaSadera(existingDoc);
+                fileRepository.save(fe);
+                existingDoc.getFiles().add(fe);
+                System.out.println("✅ Manual file saved on update: " + file.getOriginalFilename());
+            }
+        }
+        // ── Handle scanner files ───────────────────────────────
+        if (hasScannerFiles) {
+            for (String scannerFileName : scannerFileNames) {
+                try {
+                    Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                    String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                    Path destPath = Paths.get(uploadDir, uniqueName);
+
+                    Files.createDirectories(Paths.get(uploadDir));
+                    Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                    String fileType = Files.probeContentType(sourcePath);
+
+                    FileEntity fe = new FileEntity();
+                    fe.setFilePath(uniqueName);
+                    fe.setFileName(scannerFileName);
+                    fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                    fe.setFileSize(Files.size(sourcePath));
+                    fe.setHifziyaWaradaSadera(existingDoc);
+                    fileRepository.save(fe);
+                    existingDoc.getFiles().add(fe);
+                    System.out.println("✅ Scanner file on update: " + scannerFileName);
+
+                } catch (java.io.IOException e) {
+                    System.err.println("❌ Scanner file failed: " + scannerFileName + " - " + e.getMessage());
                 }
             }
-            entity.getFiles().clear();
         }
 
-        // Save new files to disk
-        List<String> storedPaths = fileService.savefiles(fileURL, entity);
-
-        // Create and save new FileEntity records
-        for (int i = 0; i < fileURL.length; i++) {
-            MultipartFile file = fileURL[i];
-            if (file == null || file.isEmpty()) {
-                continue;
-            }
-
-            // Sanitize filename to prevent Unicode issues in response
-            String originalName = file.getOriginalFilename();
-            String safeName = originalName != null
-                    ? originalName.replaceAll("[^\\p{ASCII}]", "_")
-                    : "file_" + System.currentTimeMillis();
-
-            FileEntity fileEntity = new FileEntity();
-            fileEntity.setFilePath(storedPaths.get(i));
-            fileEntity.setFileName(safeName); // Use sanitized name
-            fileEntity.setFileType(file.getContentType());
-            fileEntity.setHifziyaWaradaSadera(entity);
-
-            fileEntity = fileRepository.save(fileEntity);
-            entity.getFiles().add(fileEntity);
-
-            logger.info("Added new file: {} (original: {})", safeName, originalName);
-        }
+        HifziyaWaradaSadera updatedDoc = hifziyaWaradaSaderaRepository.save(existingDoc);
+        auditLogHelper.logUpdate(TABLE_NAME, id.longValue(), existingDoc.getDescription());
+        return updatedDoc;
     }
 
     public void deleteHifziyaWaradaSadera(Integer id) {

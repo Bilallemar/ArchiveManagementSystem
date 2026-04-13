@@ -1,9 +1,17 @@
 package com.MCIT.ArchiveManagementSystem.services.RepositoryManagement;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +30,12 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class SawanihService {
+    @Value("${spring.file.directory}") // ✅ add this
+    private String uploadDir;
 
+    @Value("${scanner.folder.path}") // ✅ add this
+    private String scannerFolderPath;
+    private static final Logger logger = LoggerFactory.getLogger(HifziyaWaradaSaderaService.class);
     private final SawanihRepository sawanihRepository;
     private final FileService fileService;
     private final FileRepository fileRepository;
@@ -67,34 +80,66 @@ public class SawanihService {
         return sawanihRepository.findById(id);
     }
 
-    public Sawanih createSawanih(Sawanih sawanih, MultipartFile[] fileURL) {
-        System.out.println("Saving Sawanih: " + sawanih);
+    public Sawanih createSawanih(Sawanih sawanih, MultipartFile[] fileURL,
+            List<String> scannerFiles) {
+        System.out.println("🔍 scannerFiles received: " + scannerFiles);
+        System.out.println("🔍 scannerFolderPath: " + scannerFolderPath);
+        System.out.println("🔍 uploadDir: " + uploadDir);
 
         // Save the main entity first
         sawanih = sawanihRepository.save(sawanih);
 
-        // If files exist, save them
+        List<FileEntity> fileEntities = new ArrayList<>(); // ← OUTSIDE everything
+
+        // Block 1: Handle manually uploaded files
         if (fileURL != null && fileURL.length > 0) {
-            System.out.println("Saving " + fileURL.length + " files");
-
-            // Save all files using fileService
+            System.out.println("Saving " + fileURL.length + " uploaded files");
             List<String> storedPaths = fileService.savefiles(fileURL, sawanih);
-
-            // Create FileEntity for each uploaded file
-            List<FileEntity> fileEntities = new ArrayList<>();
             for (int i = 0; i < fileURL.length; i++) {
                 MultipartFile file = fileURL[i];
-                FileEntity fileEntity = new FileEntity();
-                fileEntity.setFilePath(storedPaths.get(i));
-                fileEntity.setFileName(file.getOriginalFilename());
-                fileEntity.setFileType(file.getContentType());
-                fileEntity.setSawanih(sawanih);
-                fileRepository.save(fileEntity);
-                fileEntities.add(fileEntity);
-
-                System.out.println("Saved file " + (i + 1) + ": " + file.getOriginalFilename());
+                FileEntity fe = new FileEntity();
+                fe.setFilePath(storedPaths.get(i));
+                fe.setFileName(file.getOriginalFilename());
+                fe.setFileType(file.getContentType());
+                fe.setSawanih(sawanih);
+                fileRepository.save(fe);
+                fileEntities.add(fe);
+                System.out.println("✅ Saved uploaded file: " + file.getOriginalFilename());
             }
+        } // ← Block 1 ends here
 
+        // Block 2: Handle scanner files — OUTSIDE Block 1
+        if (scannerFiles != null && !scannerFiles.isEmpty()) {
+            System.out.println("📁 Processing " + scannerFiles.size() + " scanner files");
+            for (String name : scannerFiles) {
+                try {
+                    Path src = Paths.get(scannerFolderPath).resolve(name).normalize();
+                    System.out.println("🔍 Looking for: " + src.toAbsolutePath());
+                    if (!Files.exists(src)) {
+                        System.err.println("❌ Not found: " + src.toAbsolutePath());
+                        continue;
+                    }
+                    String uuid = UUID.randomUUID().toString();
+                    String newName = uuid + "_" + name;
+                    Path dest = Paths.get(uploadDir).resolve(newName).normalize();
+                    // Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+
+                    FileEntity fe = new FileEntity();
+                    fe.setFileName(name);
+                    fe.setFilePath(newName);
+                    fe.setFileType(name.endsWith(".pdf") ? "application/pdf" : "application/octet-stream");
+                    fe.setSawanih(sawanih);
+                    fileRepository.save(fe);
+                    fileEntities.add(fe);
+                    System.out.println("✅ Moved scanner file: " + name + " → " + newName);
+                } catch (Exception e) {
+                    System.err.println("❌ Failed to move: " + name + " → " + e.getMessage());
+            }
+            
+        } // ← Block 2 ends here
+
+        // OUTSIDE both blocks
             sawanih.setFiles(fileEntities);
         } else {
             System.out.println("No files to save in Service");
@@ -106,69 +151,89 @@ public class SawanihService {
     }
 
     @Transactional
-    public Sawanih updateSawanih(Integer id, Sawanih sawanihDetails, MultipartFile[] fileURL) {
-        Sawanih existingSawanih = sawanihRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sawanih not found with id: " + id));
+    public Sawanih updateSawanih(Integer id, Sawanih sawanihDetails, MultipartFile[] fileURL,
+            List<String> scannerFiles) {
+        Sawanih existingDoc = sawanihRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found: " + id));
 
-        existingSawanih.setName(sawanihDetails.getName());
-        existingSawanih.setFatherName(sawanihDetails.getFatherName());
-        existingSawanih.setIncommingDate(sawanihDetails.getIncommingDate());
-        existingSawanih.setOutgoingDate(sawanihDetails.getOutgoingDate());
-        existingSawanih.setOrg(sawanihDetails.getOrg());
-        existingSawanih.setPageQuantity(sawanihDetails.getPageQuantity());
-        existingSawanih.setDescription(sawanihDetails.getDescription());
+        existingDoc.setName(sawanihDetails.getName());
+        existingDoc.setFatherName(sawanihDetails.getFatherName());
+        existingDoc.setIncommingDate(sawanihDetails.getIncommingDate());
+        existingDoc.setOutgoingDate(sawanihDetails.getOutgoingDate());
+        existingDoc.setOrg(sawanihDetails.getOrg());
+        existingDoc.setPageQuantity(sawanihDetails.getPageQuantity());
+        existingDoc.setDescription(sawanihDetails.getDescription());
+        existingDoc.setCabinetFile(sawanihDetails.getCabinetFile());
 
         // Update or add files if provided
-        if (fileURL != null && fileURL.length > 0) {
-            System.out.println("📁 Updating files for record ID: " + id);
+        boolean hasNewFiles = (fileURL != null && fileURL.length > 0);
+        boolean hasScannerFiles = (scannerFiles != null && !scannerFiles.isEmpty());
 
-            // Delete old files from database and disk
-            if (existingSawanih.getFiles() != null && !existingSawanih.getFiles().isEmpty()) {
-                System.out.println("🗑️ Removing " + existingSawanih.getFiles().size() + " old files");
-
-                List<FileEntity> filesToDelete = new ArrayList<>(existingSawanih.getFiles());
-
-                for (FileEntity oldFile : filesToDelete) {
-                    try {
-                        System.out.println("Deleting file: " + oldFile.getFilePath());
+        if (hasNewFiles || hasScannerFiles) {
+            // ✅ Delete old files from disk and DB
+            if (existingDoc.getFiles() != null && !existingDoc.getFiles().isEmpty()) {
+                for (FileEntity oldFile : existingDoc.getFiles()) {
                         fileService.deleteFile(oldFile.getFilePath());
-                        fileRepository.delete(oldFile);
-                    } catch (Exception e) {
-                        // Log but don't stop the process if file doesn't exist
-                        System.err.println("⚠️ Could not delete file " + oldFile.getFilePath() + ": " + e.getMessage());
+                    logger.info("Deleted old file: {}", oldFile.getFileName());
                     }
-                }
-
-                existingSawanih.getFiles().clear();
+                existingDoc.getFiles().clear();
+                fileRepository.flush(); // ✅ make sure deletes happen before inserts
             }
-
-            // Save new files
-            System.out.println("💾 Saving " + fileURL.length + " new files");
-            List<String> storedPaths = fileService.savefiles(fileURL, existingSawanih);
-
-            List<FileEntity> newAttachments = new ArrayList<>();
-            for (int i = 0; i < fileURL.length; i++) {
-                MultipartFile f = fileURL[i];
-                FileEntity fe = new FileEntity();
-                fe.setFilePath(storedPaths.get(i));
-                fe.setFileName(f.getOriginalFilename());
-                fe.setFileType(f.getContentType());
-                fe.setSawanih(existingSawanih);
-                fileRepository.save(fe);
-                newAttachments.add(fe);
-                System.out.println("✅ Saved new file " + (i + 1) + ": " + f.getOriginalFilename());
-            }
-
-            if (existingSawanih.getFiles() == null) {
-                existingSawanih.setFiles(new ArrayList<>());
-            }
-            existingSawanih.getFiles().clear();
-            existingSawanih.getFiles().addAll(newAttachments);
         }
 
-        auditLogHelper.logUpdate(TABLE_NAME, existingSawanih.getId().longValue(), existingSawanih.getDescription());
+        // ── Handle manual uploaded files ──────────────────────
+        if (hasNewFiles) {
+            List<String> storedPaths = fileService.savefiles(fileURL, existingDoc);
+            for (int i = 0; i < fileURL.length; i++) {
+                MultipartFile file = fileURL[i];
+                if (file == null || file.isEmpty())
+                    continue;
 
-        return sawanihRepository.save(existingSawanih);
+                FileEntity fe = new FileEntity();
+                fe.setFilePath(storedPaths.get(i));
+                fe.setFileName(file.getOriginalFilename()); // ✅ keep original name
+                fe.setFileType(file.getContentType());
+                fe.setFileSize(file.getSize());
+                fe.setSawanih(existingDoc);
+                fileRepository.save(fe);
+                existingDoc.getFiles().add(fe);
+                System.out.println("✅ Manual file saved on update: " + file.getOriginalFilename());
+            }
+        }
+
+        // ── Handle scanner files ───────────────────────────────
+        if (hasScannerFiles) {
+            for (String scannerFileName : scannerFiles) {
+                try {
+                    Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                    String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                    Path destPath = Paths.get(uploadDir, uniqueName);
+
+                    Files.createDirectories(Paths.get(uploadDir));
+                    Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                    String fileType = Files.probeContentType(sourcePath);
+
+                    FileEntity fe = new FileEntity();
+                    fe.setFilePath(uniqueName);
+                    fe.setFileName(scannerFileName);
+                    fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                    fe.setFileSize(Files.size(sourcePath));
+                    fe.setSawanih(existingDoc);
+                    fileRepository.save(fe);
+                    existingDoc.getFiles().add(fe);
+                    System.out.println("✅ Scanner file on update: " + scannerFileName);
+
+                } catch (java.io.IOException e) {
+                    System.err.println("❌ Scanner file failed: " + scannerFileName + " - " + e.getMessage());
+        }
+            }
+        }
+
+        Sawanih updated = sawanihRepository.save(existingDoc);
+        auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(),
+                existingDoc.getDescription());
+        return updated;
     }
 
     public void deleteSawanih(Integer id) {

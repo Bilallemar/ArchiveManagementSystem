@@ -1,44 +1,50 @@
-import React, { useEffect, useState } from "react";
+import { ArrowBack } from "@mui/icons-material";
 import {
+  Alert,
   Box,
+  Button,
   Card,
-  Typography,
+  Chip,
+  CircularProgress,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  CircularProgress,
-  Alert,
   TablePagination,
+  TableRow,
+  Typography,
 } from "@mui/material";
-import { Button } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
-
-import { useParams } from "react-router-dom";
-import api from "../../services/api";
 import moment from "moment";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate, useParams } from "react-router-dom";
+import api from "../../services/api";
+import getAuditLogsDetailsTexts from "../../helpers/getAuditLogsDetailsTexts"; // adjust path
 
 const AuditLogsDetails = () => {
   const { recordId } = useParams();
+  const { t } = useTranslation("auditLogsDetails"); // ← change namespace if you used different name
+  const texts = getAuditLogsDetailsTexts(t);
+
   const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const navigate = useNavigate();
 
   const fetchLogs = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await api.get(`/audit/note/${recordId}`);
-      setAuditLogs(res.data);
+      setAuditLogs(res.data || []);
     } catch (err) {
-      setError(err?.response?.data?.message || "Error fetching logs");
+      const errMsg = err?.response?.data?.message || texts.error.fetch;
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -49,7 +55,7 @@ const AuditLogsDetails = () => {
   }, [recordId]);
 
   const getActionColor = (action) => {
-    switch (action) {
+    switch (action?.toUpperCase()) {
       case "CREATE":
         return "success";
       case "UPDATE":
@@ -69,6 +75,11 @@ const AuditLogsDetails = () => {
     );
   }
 
+  const displayedLogs = auditLogs.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
@@ -77,12 +88,12 @@ const AuditLogsDetails = () => {
           variant="outlined"
           onClick={() => navigate(-1)}
         >
-          Back
+          {texts.backButton}
         </Button>
       </Box>
 
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
-        Audit Logs for Record ID — {recordId}
+        {texts.pageTitle.replace("{{recordId}}", recordId)}
       </Typography>
 
       <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
@@ -93,13 +104,18 @@ const AuditLogsDetails = () => {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
+              flexDirection: "column",
+              gap: 2,
             }}
           >
             <CircularProgress />
+            <Typography variant="body2" color="text.secondary">
+              {texts.loading}
+            </Typography>
           </Box>
         ) : auditLogs.length === 0 ? (
           <Box sx={{ p: 3 }}>
-            <Alert severity="info">No logs found for this record.</Alert>
+            <Alert severity="info">{texts.noLogsFound}</Alert>
           </Box>
         ) : (
           <>
@@ -107,43 +123,55 @@ const AuditLogsDetails = () => {
               <Table>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                    <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Username</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Table</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Record ID</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Content</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Timestamp</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.action}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.username}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.tableName}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.recordId}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.content}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {texts.table.timestamp}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {auditLogs
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((log) => (
-                      <TableRow key={log.id} hover>
-                        <TableCell>
-                          <Chip
-                            label={log.action}
-                            size="small"
-                            color={getActionColor(log.action)}
-                          />
-                        </TableCell>
-                        <TableCell>{log.username || "—"}</TableCell>
-                        <TableCell>{log.tableName || "—"}</TableCell>
-                        <TableCell>{log.recordId || "—"}</TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {log.recordContent || "—"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {moment(log.timestamp).format(
-                              "MMM DD, YYYY hh:mm A"
-                            )}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                  {displayedLogs.map((log) => (
+                    <TableRow key={log.id} hover>
+                      <TableCell>
+                        <Chip
+                          label={log.action || texts.unknown}
+                          size="small"
+                          color={getActionColor(log.action)}
+                        />
+                      </TableCell>
+                      <TableCell>{log.username || texts.unknown}</TableCell>
+                      <TableCell>{log.tableName || texts.unknown}</TableCell>
+                      <TableCell>{log.recordId || texts.unknown}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {log.recordContent || texts.unknown}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {log.timestamp
+                            ? moment(log.timestamp).format(
+                                "MMM DD, YYYY hh:mm A",
+                              )
+                            : texts.unknown}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -159,6 +187,10 @@ const AuditLogsDetails = () => {
                 setPage(0);
               }}
               rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage={texts.pagination.rowsPerPage}
+              labelDisplayedRows={({ from, to, count }) =>
+                texts.pagination.displayedRows({ from, to, count })
+              }
             />
           </>
         )}

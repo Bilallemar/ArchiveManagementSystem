@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +40,8 @@ public class HifziyaHazariService {
 
     @Value("${spring.file.directory:C:/uploads}")
     private String uploadDir;
+
+    private static final Logger logger = LoggerFactory.getLogger(HifziyaWaradaSaderaService.class);
 
     public HifziyaHazariService(HifziyaHazariRepository hifziyaHazariRepository,
             FileService fileService,
@@ -145,7 +149,8 @@ public class HifziyaHazariService {
     }
 
     @Transactional
-    public HifziyaHazari updateHifziyaHazari(Integer id, HifziyaHazari hifziyaHazariDetails, MultipartFile[] fileURL) {
+    public HifziyaHazari updateHifziyaHazari(Integer id, HifziyaHazari hifziyaHazariDetails, MultipartFile[] fileURL,
+            List<String> scannerFiles) {
         HifziyaHazari existingDoc = hifziyaHazariRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("HifziyaHazari not found with id: " + id));
         existingDoc.setVolume(hifziyaHazariDetails.getVolume());
@@ -156,57 +161,77 @@ public class HifziyaHazariService {
         existingDoc.setOrg(hifziyaHazariDetails.getOrg());
         existingDoc.setDescription(hifziyaHazariDetails.getDescription());
         existingDoc.setIsIndraj(hifziyaHazariDetails.getIsIndraj());
+        existingDoc.setCabinetFile(hifziyaHazariDetails.getCabinetFile());
 
         // Update or add files if provided
-        if (fileURL != null && fileURL.length > 0) {
-            System.out.println("📁 Updating files for record ID: " + id);
+        boolean hasNewFiles = (fileURL != null && fileURL.length > 0);
+        boolean hasScannerFiles = (scannerFiles != null && !scannerFiles.isEmpty());
 
-            // Delete old files from database and disk
+        if (hasNewFiles || hasScannerFiles) {
+            // ✅ Delete old files from disk and DB
             if (existingDoc.getFiles() != null && !existingDoc.getFiles().isEmpty()) {
-                System.out.println("🗑️ Removing " + existingDoc.getFiles().size() + " old files");
-
-                List<FileEntity> filesToDelete = new ArrayList<>(existingDoc.getFiles());
-
-                for (FileEntity oldFile : filesToDelete) {
-                    try {
-                        System.out.println("Deleting file: " + oldFile.getFilePath());
+                for (FileEntity oldFile : existingDoc.getFiles()) {
                         fileService.deleteFile(oldFile.getFilePath());
-                        fileRepository.delete(oldFile);
-                    } catch (Exception e) {
-                        // Log but don't stop the process if file doesn't exist
-                        System.err.println("⚠️ Could not delete file " + oldFile.getFilePath() + ": " + e.getMessage());
+                    logger.info("Deleted old file: {}", oldFile.getFileName());
                     }
-                }
-
                 existingDoc.getFiles().clear();
+                fileRepository.flush(); // ✅ make sure deletes happen before inserts
+            }
             }
 
-            // Save new files
-            System.out.println("💾 Saving " + fileURL.length + " new files");
+        // ── Handle manual uploaded files ──────────────────────
+        if (hasNewFiles) {
             List<String> storedPaths = fileService.savefiles(fileURL, existingDoc);
-
-            List<FileEntity> newAttachments = new ArrayList<>();
             for (int i = 0; i < fileURL.length; i++) {
-                MultipartFile f = fileURL[i];
+                MultipartFile file = fileURL[i];
+                if (file == null || file.isEmpty())
+                    continue;
+
                 FileEntity fe = new FileEntity();
                 fe.setFilePath(storedPaths.get(i));
-                fe.setFileName(f.getOriginalFilename());
-                fe.setFileType(f.getContentType());
+                fe.setFileName(file.getOriginalFilename()); // ✅ keep original name
+                fe.setFileType(file.getContentType());
+                fe.setFileSize(file.getSize());
                 fe.setHifziyaHazari(existingDoc);
                 fileRepository.save(fe);
-                newAttachments.add(fe);
-                System.out.println("✅ Saved new file " + (i + 1) + ": " + f.getOriginalFilename());
+                existingDoc.getFiles().add(fe);
+                System.out.println("✅ Manual file saved on update: " + file.getOriginalFilename());
             }
-
-            if (existingDoc.getFiles() == null) {
-                existingDoc.setFiles(new ArrayList<>());
-            }
-            existingDoc.getFiles().clear();
-            existingDoc.getFiles().addAll(newAttachments);
         }
-        auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(), existingDoc.getDescription());
 
-        return hifziyaHazariRepository.save(existingDoc);
+        // ── Handle scanner files ───────────────────────────────
+        if (hasScannerFiles) {
+            for (String scannerFileName : scannerFiles) {
+                try {
+                    Path sourcePath = Paths.get(scannerFolderPath, scannerFileName);
+                    String uniqueName = UUID.randomUUID() + "_" + scannerFileName;
+                    Path destPath = Paths.get(uploadDir, uniqueName);
+
+                    Files.createDirectories(Paths.get(uploadDir));
+                    Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+
+                    String fileType = Files.probeContentType(sourcePath);
+
+                    FileEntity fe = new FileEntity();
+                    fe.setFilePath(uniqueName);
+                    fe.setFileName(scannerFileName);
+                    fe.setFileType(fileType != null ? fileType : "application/octet-stream");
+                    fe.setFileSize(Files.size(sourcePath));
+                    fe.setHifziyaHazari(existingDoc);
+                    fileRepository.save(fe);
+                    existingDoc.getFiles().add(fe);
+                    System.out.println("✅ Scanner file on update: " + scannerFileName);
+
+                } catch (java.io.IOException e) {
+                    System.err.println("❌ Scanner file failed: " + scannerFileName + " - " + e.getMessage());
+        }
+            }
+        }
+
+        HifziyaHazari updated = hifziyaHazariRepository.save(existingDoc);
+        auditLogHelper.logUpdate(TABLE_NAME, existingDoc.getId().longValue(),
+                existingDoc.getDescription());
+        return updated;
     }
 
     public void deleteHifziyaHazari(Integer id) {
