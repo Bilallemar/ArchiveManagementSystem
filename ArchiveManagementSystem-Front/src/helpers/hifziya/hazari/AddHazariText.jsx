@@ -6,6 +6,8 @@ const getAddHazariTexts = (t) => ({
   back: t("page.back"),
   newIndraj: t("page.newIndraj"),
   newHazari: t("page.newHazari"),
+  filter: t("filter"),
+  search: t("search"),
 
   // ===== Scanner =====
   scannerFolderPath: t("scanner.folderPath"),
@@ -71,6 +73,19 @@ const getAddHazariTexts = (t) => ({
   // ===== Delete Dialog =====
   deleteDialogTitle: t("deleteDialog.title"),
   deleteDialogText: t("deleteDialog.text"),
+
+  // ===== Cabinet =====
+  cabinetAddress: t("cabinetAddress"),
+  cabinet: t("cabinet"),
+  cabinets: t("cabinets"),
+  floor: t("floor"),
+  floors: t("floors"),
+  shelf: t("shelf"),
+  shelves: t("shelves"),
+  file: t("file"),
+  files: t("files"),
+  rowsPerPage: t("rowsPerPage"),
+  of: t("of"),
 });
 
 export default getAddHazariTexts;

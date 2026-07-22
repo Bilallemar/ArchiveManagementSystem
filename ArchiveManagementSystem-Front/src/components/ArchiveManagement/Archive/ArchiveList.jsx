@@ -329,6 +329,9 @@ export default function ArchiveList() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage={texts.rowsPerPage || "Rows per page:"}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to} ${texts.of} ${count !== -1 ? count : `${to}+`}`
+          }
         />
       </Paper>
 

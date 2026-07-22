@@ -242,7 +242,7 @@ export default function AddNasharat() {
                   size="small"
                   type="date"
                   name="receiveDate"
-                  label={t("receiveDate", "تاریخ دریافت")}
+                  label={t("incomingDate", "تاریخ دریافت")}
                   InputLabelProps={{ shrink: true }}
                   value={formData.receiveDate}
                   onChange={handleHijriDateChange("receiveDate")}

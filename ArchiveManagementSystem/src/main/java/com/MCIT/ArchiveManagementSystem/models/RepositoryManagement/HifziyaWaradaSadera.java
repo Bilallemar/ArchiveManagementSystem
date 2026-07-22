@@ -39,12 +39,17 @@ public class HifziyaWaradaSadera {
     private Integer id;
 
     private String no;
-    @ManyToOne
-    @JoinColumn(name = "org", nullable = false)
-    private Org org;
+ @ManyToOne
+@JoinColumn(name = "receiver_org_id", nullable = false)
+private Org receiverOrg;
+
+@ManyToOne
+@JoinColumn(name = "sender_org_id", nullable = false)
+private Org senderOrg;
     private String letterNumber;
     private String incommingDate;
     private String outgoingDate;
+    private String senderOrgDate;
     private String summary;
     private String subjectType;
     private String description;

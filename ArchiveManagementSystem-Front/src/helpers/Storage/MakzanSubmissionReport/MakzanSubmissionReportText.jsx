@@ -6,7 +6,10 @@ const getMakzanSubmissionReportTexts = (t) => {
     pageTitle: t("pageTitle"),
     newReport: t("newReport"),
     addNewReport: t("addNewReport"),
-
+    filter: t("filter"),
+    search: t("search"),
+    rowsPerPage: t("rowsPerPage"),
+    of: t("of"),
     // Table Column Headers
     province: t("province"),
     district: t("district"),
@@ -77,6 +80,16 @@ const getMakzanSubmissionReportTexts = (t) => {
     filesDetected: t("filesDetected"),
     scanError: t("scanError"),
     filesLoadError: t("filesLoadError"),
+    // ===== Cabinet =====
+    cabinetAddress: t("cabinetAddress"),
+    cabinet: t("cabinet"),
+    cabinets: t("cabinets"),
+    floor: t("floor"),
+    floors: t("floors"),
+    shelf: t("shelf"),
+    shelves: t("shelves"),
+    file: t("file"),
+    files: t("files"),
   };
 };
 

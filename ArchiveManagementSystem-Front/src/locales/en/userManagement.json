@@ -8,6 +8,8 @@
   "currentManagement": "Current Management",
   "assignNewManagement": "Assign New Management",
   "actions": "Actions",
+  "createdDate": "Created Date",
+  "newUser": "New User",
   "selectManagement": "Select Management",
   "assignButton": "Assign",
   "adminLabel": "Admin",

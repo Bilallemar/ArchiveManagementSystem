@@ -15,7 +15,8 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   headerDescription: t("table.headers.description"),
   headerDirection: t("table.headers.direction"),
   headerActions: t("table.headers.actions"),
-
+  rowsPerPage: t("rowsPerPage"),
+of: t("of"),  
   // Filter
   recordType: t("filter.recordType"),
   all: t("filter.all"),
@@ -24,6 +25,9 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   bookNumber: t("filter.bookNumber"),
   province: t("filter.province"),
   district: t("filter.district"),
+    filter: t("filter"),
+    search: t("search"),
+
 
   // Actions
   view: t("actions.view"),
@@ -106,6 +110,16 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   viewClose: t("view.close"),
   viewIncoming: t("viewIncoming"),
   viewOutgoing: t("viewOutgoing"),
+    // ===== Cabinet =====
+  cabinetAddress: t("cabinetAddress"),
+  cabinet: t("cabinet"),
+  cabinets: t("cabinets"),
+  floor: t("floor"),
+  floors: t("floors"),
+  shelf: t("shelf"),
+  shelves: t("shelves"),
+  file: t("file"),
+  files: t("files"),
 });
 
 export default getHifziyaWaradaSaderaTexts;

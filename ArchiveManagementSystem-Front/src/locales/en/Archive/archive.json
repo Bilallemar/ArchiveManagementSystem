@@ -20,7 +20,7 @@
   "sendDate": "Send Date",
   "submittedDate": "Submission Date",
 
-  "org": "Render",
+  "org": "Sender",
   "organization": "Receiver",
   "sender": "Sender",
   "receiver": "Receiver",
@@ -40,8 +40,10 @@
 
   "actions": "Actions",
   "rowsPerPage": "Rows per page",
+  "of": "Of",
 
   "search": "Search",
+  "filter": "Filter",
   "fieldDocNo": "Document Number",
   "fieldOrg": "Organization",
   "fieldYear": "Year",

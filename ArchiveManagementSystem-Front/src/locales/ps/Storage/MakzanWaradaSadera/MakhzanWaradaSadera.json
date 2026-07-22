@@ -110,5 +110,15 @@
     "close": "بندول"
   },
   "viewOutgoing": "د صادره اسنادو لیدل",
-  "viewIncoming": "د وارده اسنادو لیدل"
+  "viewIncoming": "د وارده اسنادو لیدل",
+  "cabinetAddress": "د آلماري پته اضافه کړئ",
+  "cabinet": "آلماري",
+  "floor": "پوړ",
+  "shelf": "شیلف",
+  "file": "فایل",
+  "files": "فایلونه",
+  "shelfs": "شیلفونه",
+  "floors": "پوړونه",
+    "rowsPerPage": "په هر مخ کې قطارونه",
+     "of": "له"
 }

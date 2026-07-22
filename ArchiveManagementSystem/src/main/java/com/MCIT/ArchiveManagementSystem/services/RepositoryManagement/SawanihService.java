@@ -71,6 +71,7 @@ public class SawanihService {
                 s.getId(),
                 s.getName(),
                 s.getFatherName(),
+                s.getParsalNumber(),
                 s.getIncommingDate(),
                 s.getOrg() != null ? s.getOrg().getName() : null,
                 s.getIsSawanih()));
@@ -135,11 +136,11 @@ public class SawanihService {
                     System.out.println("✅ Moved scanner file: " + name + " → " + newName);
                 } catch (Exception e) {
                     System.err.println("❌ Failed to move: " + name + " → " + e.getMessage());
-            }
-            
-        } // ← Block 2 ends here
+                }
 
-        // OUTSIDE both blocks
+            } // ← Block 2 ends here
+
+            // OUTSIDE both blocks
             sawanih.setFiles(fileEntities);
         } else {
             System.out.println("No files to save in Service");
@@ -161,6 +162,7 @@ public class SawanihService {
         existingDoc.setIncommingDate(sawanihDetails.getIncommingDate());
         existingDoc.setOutgoingDate(sawanihDetails.getOutgoingDate());
         existingDoc.setOrg(sawanihDetails.getOrg());
+        existingDoc.setParsalNumber(sawanihDetails.getParsalNumber());
         existingDoc.setPageQuantity(sawanihDetails.getPageQuantity());
         existingDoc.setDescription(sawanihDetails.getDescription());
         existingDoc.setCabinetFile(sawanihDetails.getCabinetFile());
@@ -173,9 +175,9 @@ public class SawanihService {
             // ✅ Delete old files from disk and DB
             if (existingDoc.getFiles() != null && !existingDoc.getFiles().isEmpty()) {
                 for (FileEntity oldFile : existingDoc.getFiles()) {
-                        fileService.deleteFile(oldFile.getFilePath());
+                    fileService.deleteFile(oldFile.getFilePath());
                     logger.info("Deleted old file: {}", oldFile.getFileName());
-                    }
+                }
                 existingDoc.getFiles().clear();
                 fileRepository.flush(); // ✅ make sure deletes happen before inserts
             }
@@ -226,7 +228,7 @@ public class SawanihService {
 
                 } catch (java.io.IOException e) {
                     System.err.println("❌ Scanner file failed: " + scannerFileName + " - " + e.getMessage());
-        }
+                }
             }
         }
 

@@ -68,16 +68,30 @@ export default function AddMakhzanWaradaSadera() {
   const [scannerFiles, setScannerFiles] = useState([]);
   const [docTypes, setDocTypes] = useState([]);
 
+  const [cabinets, setCabinets] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [shelves, setShelves] = useState([]);
+  const [cabinetFiles, setCabinetFiles] = useState([]);
+
+  const [selectedCabinet, setSelectedCabinet] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const [selectedShelf, setSelectedShelf] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [orgsRes, docTypesRes, scannerPathRes] = await Promise.all([
-          api.get("/org"),
-          api.get("/doc-type/active"),
-          api.get("/scanner-folder/path").catch(() => ({ data: { path: "" } })),
-        ]);
+        const [orgsRes, docTypesRes, cabinetRes, scannerPathRes] =
+          await Promise.all([
+            api.get("/org"),
+            api.get("/doc-type/active"),
+            api.get("/cabinet"),
+            api
+              .get("/scanner-folder/path")
+              .catch(() => ({ data: { path: "" } })),
+          ]);
         setOrgs(orgsRes.data || []);
         setDocTypes(docTypesRes.data || []);
+        setCabinets(cabinetRes.data || []);
         setScannerFolderPath(scannerPathRes.data.path || "");
       } catch (error) {
         console.error("Failed to load data", error);
@@ -128,7 +142,47 @@ export default function AddMakhzanWaradaSadera() {
       `${detectedFiles.length} ${text.loadSuccess || "فایلونه چمتو دي"}`,
     );
   };
+  const handleCabinetChange = async (e) => {
+    const cabinetId = e.target.value;
+    setSelectedCabinet(cabinetId);
+    setSelectedFloor("");
+    setSelectedShelf("");
+    setSelectedFile("");
+    setFloors([]);
+    setShelves([]);
+    setCabinetFiles([]);
 
+    if (cabinetId) {
+      const res = await api.get(`/cabinet/${cabinetId}/floors`);
+      setFloors(res.data || []);
+    }
+  };
+
+  const handleFloorChange = async (e) => {
+    const floorId = e.target.value;
+    setSelectedFloor(floorId);
+    setSelectedShelf("");
+    setSelectedFile("");
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (floorId) {
+      const res = await api.get(`/cabinet/floors/${floorId}/shelves`);
+      setShelves(res.data || []);
+    }
+  };
+
+  const handleShelfChange = async (e) => {
+    const shelfId = e.target.value;
+    setSelectedShelf(shelfId);
+    setSelectedFile("");
+    setCabinetFiles([]);
+
+    if (shelfId) {
+      const res = await api.get(`/cabinet/shelves/${shelfId}/files`);
+      setCabinetFiles(res.data || []);
+    }
+  };
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFormData((prev) => ({
@@ -175,6 +229,8 @@ export default function AddMakhzanWaradaSadera() {
         incommingDate: convertHijriToGregorian(formData.incommingDate) || null,
         // outgoingDate: convertHijriToGregorian(formData.outgoingDate) || null, // Will be sent only for outgoing, but can be null for incoming
         summary: formData.summary.trim() || null,
+        cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null,
+
         description: formData.description.trim() || null,
         subjectType: formData.subjectType || null,
         direction: direction,
@@ -599,6 +655,98 @@ export default function AddMakhzanWaradaSadera() {
                       value={formData.summary}
                       onChange={handleInputChange}
                     />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="bold"
+                      sx={{ mb: 1 }}
+                    >
+                      {text.cabinetAddress || "کابینې موقعیت"}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{text.cabinet || "کابینه (Cabinet)"}</InputLabel>
+                      <Select
+                        value={String(selectedCabinet)} // ✅ String()
+                        onChange={handleCabinetChange}
+                        label={text.cabinet || "کابینه (Cabinet)"}
+                      >
+                        {cabinets.map((c) => (
+                          <MenuItem key={c.id} value={String(c.id)}>
+                            {" "}
+                            {c.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedCabinet}
+                    >
+                      <InputLabel>{text.floor || "پوړ (Floor)"}</InputLabel>
+                      <Select
+                        value={String(selectedFloor)} // ✅ String()
+                        onChange={handleFloorChange}
+                        label={text.floor || "پوړ (Floor)"}
+                      >
+                        {floors.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {" "}
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedFloor}
+                    >
+                      <InputLabel>{text.shelf || "ځای (Shelf)"}</InputLabel>
+                      <Select
+                        value={String(selectedShelf)} // ✅ String()
+                        onChange={handleShelfChange}
+                        label={text.shelf || "ځای (Shelf)"}
+                      >
+                        {shelves.map((s) => (
+                          <MenuItem key={s.id} value={String(s.id)}>
+                            {" "}
+                            {s.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedShelf}
+                    >
+                      <InputLabel>{text.file || "فایل (File)"}</InputLabel>
+                      <Select
+                        value={String(selectedFile)} // ✅ String()
+                        onChange={(e) => setSelectedFile(e.target.value)}
+                        label={text.file || "فایل (File)"}
+                      >
+                        {cabinetFiles.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {" "}
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </Grid>
 
                   <Grid item xs={12}>

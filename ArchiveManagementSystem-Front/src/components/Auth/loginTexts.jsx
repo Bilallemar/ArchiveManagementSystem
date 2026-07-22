@@ -16,4 +16,5 @@ export const getLoginTexts = (t) => ({
   verify2FADescription: t("verify2FADescription"),
   verify2FAButton: t("verify2FAButton"),
   codeRequired: t("codeRequired"),
+  info: t("info"),
 });

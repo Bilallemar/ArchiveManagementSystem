@@ -108,7 +108,7 @@ export default function ViewNasharat({ open, onClose, nasharat }) {
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                {t("receiveDate", "تاریخ دریافت")}
+                {t("incomingDate", "تاریخ دریافت")}
               </Typography>
               <Typography variant="body1">
                 {formatHijriDateForDisplay(nasharat.receiveDate) || "—"}

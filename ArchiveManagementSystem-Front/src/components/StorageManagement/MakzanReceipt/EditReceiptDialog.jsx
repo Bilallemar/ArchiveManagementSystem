@@ -71,6 +71,16 @@ export default function EditReceiptDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [cabinets, setCabinets] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [shelves, setShelves] = useState([]);
+  const [cabinetFiles, setCabinetFiles] = useState([]);
+
+  const [selectedCabinet, setSelectedCabinet] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const [selectedShelf, setSelectedShelf] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
+
   const isInitialLoad = useRef(true);
 
   // ─── Load data when dialog opens ───────────────────────────────────────────
@@ -101,24 +111,96 @@ export default function EditReceiptDialog({
           newFiles: [],
         });
 
-        setExistingFiles(receipt.files || []);
-      } catch (error) {
-        console.error("Error loading edit dialog data:", error);
-        toast.error(texts.loadError || "د معلوماتو لوستل ناکام شول");
+        if (receipt.cabinetFile) {
+          const cf = receipt.cabinetFile;
+          const shelfId = cf.shelf?.id;
+          const floorId = cf.shelf?.floor?.id;
+          const cabinetId = cf.shelf?.floor?.cabinet?.id;
+
+          setSelectedFile(String(cf.id));
+          setSelectedShelf(String(shelfId));
+          setSelectedFloor(String(floorId));
+          setSelectedCabinet(String(cabinetId));
+
+          // Load the dropdown options so they are populated
+          try {
+            const [floorsRes, shelvesRes, filesRes, cabinetsRes] =
+              await Promise.all([
+                api.get(`/cabinet/${cabinetId}/floors`),
+                api.get(`/cabinet/floors/${floorId}/shelves`),
+                api.get(`/cabinet/shelves/${shelfId}/files`),
+                api.get("/cabinet"),
+              ]);
+            setCabinets(cabinetsRes.data || []);
+            setFloors(floorsRes.data || []);
+            setShelves(shelvesRes.data || []);
+            setCabinetFiles(filesRes.data || []);
+          } catch (err) {
+            console.error("Failed to load cabinet data", err);
+          }
+        } else {
+          // No cabinet yet — just load the cabinets list
+          const cabinetsRes = await api.get("/cabinet");
+          setCabinets(cabinetsRes.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error(text.loadError || "Error loading data");
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [open, receipt]);
+  }, [open, receipt, texts.loadError]);
 
   // ─── Input change ───────────────────────────────────────────────────────────
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+ // ✅ Cabinet cascade handlers
+  const handleCabinetChange = async (e) => {
+    const cabinetId = e.target.value;
+    setSelectedCabinet(cabinetId);
+    setSelectedFloor("");
+    setSelectedShelf("");
+    setSelectedFile("");
+    setFloors([]);
+    setShelves([]);
+    setCabinetFiles([]);
 
+    if (cabinetId) {
+      const res = await api.get(`/cabinet/${cabinetId}/floors`);
+      setFloors(res.data || []);
+    }
+  };
+
+  const handleFloorChange = async (e) => {
+    const floorId = e.target.value;
+    setSelectedFloor(floorId);
+    setSelectedShelf("");
+    setSelectedFile("");
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (floorId) {
+      const res = await api.get(`/cabinet/floors/${floorId}/shelves`);
+      setShelves(res.data || []);
+    }
+  };
+
+  const handleShelfChange = async (e) => {
+    const shelfId = e.target.value;
+    setSelectedShelf(shelfId);
+    setSelectedFile("");
+    setCabinetFiles([]);
+
+    if (shelfId) {
+      const res = await api.get(`/cabinet/shelves/${shelfId}/files`);
+      setCabinetFiles(res.data || []);
+    }
+  };
   // ─── Scanner ────────────────────────────────────────────────────────────────
   const handleScan = async () => {
     setIsScanning(true);
@@ -195,6 +277,7 @@ export default function EditReceiptDialog({
         letterNo: formData.letterNo,
         letterDate: convertHijriToGregorian(formData.letterDate),
         subjectType: formData.subjectType,
+        cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null,
         description: formData.description,
       };
 
@@ -596,7 +679,96 @@ export default function EditReceiptDialog({
                       onChange={handleHijriDateChange("letterDate")}
                     />
                   </Grid>
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="bold"
+                      sx={{ mb: 1 }}
+                    >
+                                          {text.cabinetAddress|| "پته کابینه (Cabinet Location)"}
 
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{texts.cabinet || "کابینه (Cabinet)"}</InputLabel>
+                      <Select
+                        value={String(selectedCabinet)}
+                        onChange={handleCabinetChange}
+                        label={texts.cabinet || "کابینه (Cabinet)"}
+                      >
+                        {cabinets.map((c) => (
+                          <MenuItem key={c.id} value={String(c.id)}>
+                            {c.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedCabinet}
+                    >
+                      <InputLabel>{texts.floor || "پوړ (Floor)"}</InputLabel>
+                      <Select
+                        value={String(selectedFloor)}
+                        onChange={handleFloorChange}
+                        label={texts.floor || "پوړ (Floor)"}
+                      >
+                        {floors.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedFloor}
+                    >
+                      <InputLabel>{texts.shelf || "شف (Shelf)"}</InputLabel>
+                      <Select
+                        value={String(selectedShelf)}
+                        onChange={handleShelfChange}
+                        label={texts.shelf || "شف (Shelf)"}
+                      >
+                        {shelves.map((s) => (
+                          <MenuItem key={s.id} value={String(s.id)}>
+                            {s.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedShelf}
+                    >
+                      <InputLabel>{texts.file || "اسناد (File)"}</InputLabel>
+                      <Select
+                        value={String(selectedFile)}
+                        onChange={(e) => setSelectedFile(e.target.value)}
+                        label={texts.file || "اسناد (File)"}
+                      >
+                        {cabinetFiles.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
                   {/* Description */}
                   <Grid item xs={12}>
                     <TextField

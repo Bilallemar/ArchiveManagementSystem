@@ -62,8 +62,18 @@ export default function EditMakhzanWaradaSaderaDialog({
   const [isLoading, setIsLoading] = useState(true);
   const [detectedFiles, setDetectedFiles] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
-  const [scannerFiles, setScannerFiles] = useState([]);
   const [docTypes, setDocTypes] = useState([]);
+  const [cabinets, setCabinets] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [shelves, setShelves] = useState([]);
+  const [cabinetFiles, setCabinetFiles] = useState([]);
+
+  const [selectedCabinet, setSelectedCabinet] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const [selectedShelf, setSelectedShelf] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
+  const [scannerFiles, setScannerFiles] = useState([]);
+
   const [scannerFolderPath, setScannerFolderPath] = useState("");
   const { t } = useTranslation("makhzanWaradaSadera");
   const text = getMakhzanWaradaSaderaTexts(t);
@@ -78,15 +88,12 @@ export default function EditMakhzanWaradaSaderaDialog({
       try {
         setIsLoading(true);
 
-        const [orgsRes, docTypesRes, scannerPathRes, recordRes] =
-          await Promise.all([
-            api.get("/org"),
-            api.get("/doc-type/active"),
-            api
-              .get("/scanner-folder/path")
-              .catch(() => ({ data: { path: "" } })),
-            // We already have record prop, but if needed you can re-fetch
-          ]);
+        const [orgsRes, docTypesRes, scannerPathRes] = await Promise.all([
+          api.get("/org"),
+          api.get("/doc-type/active"),
+          api.get("/scanner-folder/path").catch(() => ({ data: { path: "" } })),
+          // We already have record prop, but if needed you can re-fetch
+        ]);
 
         setOrgs(orgsRes.data || []);
         setDocTypes(docTypesRes.data || []);
@@ -108,7 +115,40 @@ export default function EditMakhzanWaradaSaderaDialog({
             newFiles: [],
           });
 
+  
           setExistingFiles(record.files || []);
+          if (record.cabinetFile) {
+            const cf = record.cabinetFile;
+            const shelfId = cf.shelf?.id;
+            const floorId = cf.shelf?.floor?.id;
+            const cabinetId = cf.shelf?.floor?.cabinet?.id;
+
+            setSelectedFile(String(cf.id));
+            setSelectedShelf(String(shelfId));
+            setSelectedFloor(String(floorId));
+            setSelectedCabinet(String(cabinetId));
+
+            // Load the dropdown options so they are populated
+            try {
+              const [floorsRes, shelvesRes, filesRes, cabinetsRes] =
+                await Promise.all([
+                  api.get(`/cabinet/${cabinetId}/floors`),
+                  api.get(`/cabinet/floors/${floorId}/shelves`),
+                  api.get(`/cabinet/shelves/${shelfId}/files`),
+                  api.get("/cabinet"),
+                ]);
+              setCabinets(cabinetsRes.data || []);
+              setFloors(floorsRes.data || []);
+              setShelves(shelvesRes.data || []);
+              setCabinetFiles(filesRes.data || []);
+            } catch (err) {
+              console.error("Failed to load cabinet data", err);
+            }
+          } else {
+            // No cabinet yet — just load the cabinets list
+            const cabinetsRes = await api.get("/cabinet");
+            setCabinets(cabinetsRes.data || []);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -120,7 +160,6 @@ export default function EditMakhzanWaradaSaderaDialog({
 
     loadData();
   }, [open, record, text.loadError]);
-
   const handleHijriDateChange = (field) => (hijriDate) => {
     setFormData((prev) => ({
       ...prev,
@@ -187,7 +226,48 @@ export default function EditMakhzanWaradaSaderaDialog({
       },
     );
   };
+  // ✅ Cabinet cascade handlers
+  const handleCabinetChange = async (e) => {
+    const cabinetId = e.target.value;
+    setSelectedCabinet(cabinetId);
+    setSelectedFloor("");
+    setSelectedShelf("");
+    setSelectedFile("");
+    setFloors([]);
+    setShelves([]);
+    setCabinetFiles([]);
 
+    if (cabinetId) {
+      const res = await api.get(`/cabinet/${cabinetId}/floors`);
+      setFloors(res.data || []);
+    }
+  };
+
+  const handleFloorChange = async (e) => {
+    const floorId = e.target.value;
+    setSelectedFloor(floorId);
+    setSelectedShelf("");
+    setSelectedFile("");
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (floorId) {
+      const res = await api.get(`/cabinet/floors/${floorId}/shelves`);
+      setShelves(res.data || []);
+    }
+  };
+
+  const handleShelfChange = async (e) => {
+    const shelfId = e.target.value;
+    setSelectedShelf(shelfId);
+    setSelectedFile("");
+    setCabinetFiles([]);
+
+    if (shelfId) {
+      const res = await api.get(`/cabinet/shelves/${shelfId}/files`);
+      setCabinetFiles(res.data || []);
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -211,6 +291,8 @@ export default function EditMakhzanWaradaSaderaDialog({
         incommingDate: convertHijriToGregorian(formData.incommingDate) || null,
         summary: formData.summary.trim() || null,
         subjectType: formData.subjectType || null,
+        cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null,
+
         description: formData.description.trim() || null,
         direction: direction,
       };
@@ -566,7 +648,7 @@ export default function EditMakhzanWaradaSaderaDialog({
                       label={text.incommingDate || "تاریخ وارده"}
                       InputLabelProps={{ shrink: true }}
                       value={formData.incommingDate}
-                      onChange={handleHijriDateChange}
+                      onChange={handleHijriDateChange("incommingDate")}
                     />
                   </Grid>
 
@@ -580,7 +662,7 @@ export default function EditMakhzanWaradaSaderaDialog({
                         label={text.outgoingDate || "تاریخ صادره"}
                         InputLabelProps={{ shrink: true }}
                         value={formData.outgoingDate}
-                        onChange={handleHijriDateChange}
+                        onChange={handleHijriDateChange("outgoingDate")}
                       />
                     </Grid>
                   )}
@@ -595,7 +677,95 @@ export default function EditMakhzanWaradaSaderaDialog({
                       onChange={handleInputChange}
                     />
                   </Grid>
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="bold"
+                      sx={{ mb: 1 }}
+                    >
+                     {text.cabinetAddress|| "پته کابینه (Cabinet Location)"}
+                    </Typography>
+                  </Grid>
 
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{text.cabinet || "کابینه (Cabinet)"}</InputLabel>
+                      <Select
+                        value={String(selectedCabinet)}
+                        onChange={handleCabinetChange}
+                        label={text.cabinet || "کابینه (Cabinet)"}
+                      >
+                        {cabinets.map((c) => (
+                          <MenuItem key={c.id} value={String(c.id)}>
+                            {c.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedCabinet}
+                    >
+                      <InputLabel>{text.floor || "پوړ (Floor)"}</InputLabel>
+                      <Select
+                        value={String(selectedFloor)}
+                        onChange={handleFloorChange}
+                        label={text.floor || "پوړ (Floor)"}
+                      >
+                        {floors.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedFloor}
+                    >
+                      <InputLabel>{text.shelf || "ځای (Shelf)"}</InputLabel>
+                      <Select
+                        value={String(selectedShelf)}
+                        onChange={handleShelfChange}
+                        label={text.shelf || "ځای (Shelf)"}
+                      >
+                        {shelves.map((s) => (
+                          <MenuItem key={s.id} value={String(s.id)}>
+                            {s.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={!selectedShelf}
+                    >
+                      <InputLabel>{text.file || "فایل (File)"}</InputLabel>
+                      <Select
+                        value={String(selectedFile)}
+                        onChange={(e) => setSelectedFile(e.target.value)}
+                        label={text.file || "فایل (File)"}
+                      >
+                        {cabinetFiles.map((f) => (
+                          <MenuItem key={f.id} value={String(f.id)}>
+                            {f.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
                   <Grid item xs={12}>
                     <TextField
                       fullWidth

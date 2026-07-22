@@ -651,17 +651,17 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                       fontWeight="bold"
                       sx={{ mb: 1 }}
                     >
-                      د کابینې پته (Cabinet Address)
+                     {text.cabinetAddress || "د آلماري پته"}
                     </Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>کابینه (Cabinet)</InputLabel>
+                      <InputLabel>{text.cabinet || "کابینه (Cabinet)"}</InputLabel>
                       <Select
                         value={String(selectedCabinet)}
                         onChange={handleCabinetChange}
-                        label="کابینه (Cabinet)"
+                        label={text.cabinet || "کابینه (Cabinet)"}
                       >
                         {cabinets.map((c) => (
                           <MenuItem key={c.id} value={String(c.id)}>
@@ -678,11 +678,11 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                       size="small"
                       disabled={!selectedCabinet}
                     >
-                      <InputLabel>پوړ (Floor)</InputLabel>
+                      <InputLabel>{text.floor || "پوړ (Floor)"}</InputLabel>
                       <Select
                         value={String(selectedFloor)}
                         onChange={handleFloorChange}
-                        label="پوړ (Floor)"
+                        label={text.floor || "پوړ (Floor)"}
                       >
                         {floors.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>
@@ -699,11 +699,11 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                       size="small"
                       disabled={!selectedFloor}
                     >
-                      <InputLabel>شیلف (Shelf)</InputLabel>
+                      <InputLabel>{text.shelf || "شیلف (Shelf)"}</InputLabel>
                       <Select
                         value={String(selectedShelf)}
                         onChange={handleShelfChange}
-                        label="شیلف (Shelf)"
+                        label={text.shelf || "شیلف (Shelf)"}
                       >
                         {shelves.map((s) => (
                           <MenuItem key={s.id} value={String(s.id)}>
@@ -720,11 +720,11 @@ export default function EditHazariDialog({ open, onClose, hazari, onSuccess }) {
                       size="small"
                       disabled={!selectedShelf}
                     >
-                      <InputLabel>فایل (File)</InputLabel>
+                      <InputLabel>{text.file || "فایل (File)"}</InputLabel>
                       <Select
                         value={String(selectedFile)}
                         onChange={(e) => setSelectedFile(e.target.value)}
-                        label="فایل (File)"
+                        label={text.file || "فایل (File)"}
                       >
                         {cabinetFiles.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>

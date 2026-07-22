@@ -329,13 +329,20 @@ export default function MakzanReceiptList() {
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
             count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(+e.target.value);
+              setPage(0);
+            }}
+            labelRowsPerPage={texts.rowsPerPage || "Rows per page:"}
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} ${texts.of} ${count !== -1 ? count : `${to}+`}`
+            }
           />
         </Paper>
       </Box>

@@ -1,27 +1,34 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
-  TextField,
-  InputAdornment,
   Box,
-  useMediaQuery,
-  useTheme,
+  FormControl,
+  InputAdornment,
+  InputLabel,
   MenuItem,
   Select,
-  FormControl,
-  InputLabel,
+  TextField,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import SearchIcon from "@mui/icons-material/Search";
+import getArchiveTexts from "../helpers/archive/getArchiveTexts";
 
 const Filter = ({
   value,
   onChange,
-  placeholder = "جستجو...",
+  placeholder,
   width = "300px",
   height = "40px",
   field,
   onFieldChange,
-  fields = [], // د فیلډونو لیست د props له لارې
+  fields = [],
 }) => {
+  const { t } = useTranslation("archive");
+  const texts = useMemo(() => getArchiveTexts(t), [t]);
+
+  const finalPlaceholder = placeholder || texts.search;
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -32,6 +39,7 @@ const Filter = ({
       alignItems="center"
       mb={2}
       gap={2}
+      flexWrap="wrap"
     >
       {/* فلټر Dropdown */}
       <FormControl
@@ -39,19 +47,19 @@ const Filter = ({
         variant="outlined"
         dir="rtl"
         sx={{
-          width: isMobile ? "70%" : "150px",
+          width: isMobile ? "100%" : "150px",
           "& .MuiOutlinedInput-root": {
             height: height,
             borderRadius: "8px",
           },
         }}
       >
-        <InputLabel id="field-label">فلټر</InputLabel>
+        <InputLabel id="field-label">{texts.filter}</InputLabel>
         <Select
           labelId="field-label"
           value={field}
           onChange={onFieldChange}
-          label="فلټر"
+          label={texts.filter}
         >
           {fields.map((f) => (
             <MenuItem key={f.value} value={f.value}>
@@ -61,14 +69,15 @@ const Filter = ({
         </Select>
       </FormControl>
 
-      {/* سرچ بار */}
+      {/* سرچ / جستجو */}
       <TextField
         variant="outlined"
         size="small"
-        placeholder={placeholder}
+        placeholder={finalPlaceholder}
         value={value}
         onChange={onChange}
         dir="rtl"
+        fullWidth={isMobile}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -77,15 +86,14 @@ const Filter = ({
           ),
         }}
         sx={{
-          width: isMobile ? "70%" : width,
+          width: isMobile ? "100%" : width,
           "& .MuiOutlinedInput-root": {
             height: height,
             borderRadius: "8px",
-            marginRight: isMobile ? "0" : "10px",
           },
         }}
-        onKeyPress={(e) => {
-          if (e.key === "Enter") e.preventDefault(); // د page reload مخنیوی
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
         }}
       />
     </Box>

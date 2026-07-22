@@ -8,7 +8,9 @@
     "editYadasht": "Edit Shura Aali Yadasht",
     "viewYadasht": "View Shura Aali Yadasht",
     "viewMosawaba": "View Shura Aali Mosawaba",
-    "back": "Back"
+    "back": "Back",
+    "filter": "Filter",
+    "search": "Search"
   },
   "table": {
     "id": "ID",
@@ -68,5 +70,15 @@
   "deleteDialog": {
     "confirmDelete": "Confirm Delete",
     "deleteWarning": "Are you sure you want to delete this resolution? This action cannot be undone."
-  }
+  },
+    "cabinetAddress": " Add Cabinet Address",
+  "cabinet": "Cabinet",
+  "floor": "Floor",
+  "shelf": "Shelf",
+  "file": "File",
+  "files": "Files",
+  "shelfs": "Shelfs",
+  "floors": "Floors",
+   "rowsPerPage": "Rows per page",
+  "of": "Of"
 }

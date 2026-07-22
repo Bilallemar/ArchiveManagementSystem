@@ -29,32 +29,32 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Sawanih {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
 
-    private String name;
-    private String fatherName;
+  private String name;
+  private String fatherName;
   private LocalDate incommingDate;
   private LocalDate outgoingDate;
-
-    @ManyToOne
-    @JoinColumn(name = "org")
-    private Org org;
+  private String parsalNumber;
 
   @ManyToOne
-    @JoinColumn(name = "management_id")
-    private Management management;
+  @JoinColumn(name = "org")
+  private Org org;
 
-    @OneToMany(mappedBy = "sawanih", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<FileEntity> files = new ArrayList<>();
-  
-    private String description;
-    private Integer pageQuantity;
-     private Boolean isSawanih;
+  @ManyToOne
+  @JoinColumn(name = "management_id")
+  private Management management;
+
+  @OneToMany(mappedBy = "sawanih", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<FileEntity> files = new ArrayList<>();
+
+  private String description;
+  private Integer pageQuantity;
+  private Boolean isSawanih;
 
   @ManyToOne
   @JoinColumn(name = "cabinet_file_id")
   private CabinetFile cabinetFile;
 }
-

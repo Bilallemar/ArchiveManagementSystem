@@ -6,14 +6,19 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  FormControl,
   Grid,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
+import api from "../../../services/api";
 
 import getShuraAaliResolutionTexts from "../../../helpers/hifziya/ShuraAaliResolutionTexts";
 import { createShuraAaliResolution } from "../../../services/RepositoryManagement/shuraAaliResolutionApi";
@@ -26,10 +31,22 @@ export default function AddShuraAaliResolution() {
   const searchParams = new URLSearchParams(location.search);
   const initialType = searchParams.get("type") || "MOSAWABA";
 
+  const [cabinets, setCabinets] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [shelves, setShelves] = useState([]);
+  const [cabinetFiles, setCabinetFiles] = useState([]);
+
+  const [selectedCabinet, setSelectedCabinet] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const [selectedShelf, setSelectedShelf] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
+
   const validType = ["MOSAWABA", "YADASHT"].includes(initialType)
     ? initialType
     : "MOSAWABA";
-
+  useEffect(() => {
+    api.get("/cabinet").then((res) => setCabinets(res.data || []));
+  }, []);
   const [form, setForm] = useState({
     sendDate: "",
     subject: "",
@@ -48,6 +65,48 @@ export default function AddShuraAaliResolution() {
     validType === "MOSAWABA"
       ? texts.newMusawaba || "نوې مصوبه"
       : texts.newYadasht || "نوې  یاداشت";
+
+  const handleCabinetChange = async (e) => {
+    const cabinetId = e.target.value;
+    setSelectedCabinet(cabinetId);
+    setSelectedFloor("");
+    setSelectedShelf("");
+    setSelectedFile("");
+    setFloors([]);
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (cabinetId) {
+      const res = await api.get(`/cabinet/${cabinetId}/floors`);
+      setFloors(res.data || []);
+    }
+  };
+
+  const handleFloorChange = async (e) => {
+    const floorId = e.target.value;
+    setSelectedFloor(floorId);
+    setSelectedShelf("");
+    setSelectedFile("");
+    setShelves([]);
+    setCabinetFiles([]);
+
+    if (floorId) {
+      const res = await api.get(`/cabinet/floors/${floorId}/shelves`);
+      setShelves(res.data || []);
+    }
+  };
+
+  const handleShelfChange = async (e) => {
+    const shelfId = e.target.value;
+    setSelectedShelf(shelfId);
+    setSelectedFile("");
+    setCabinetFiles([]);
+
+    if (shelfId) {
+      const res = await api.get(`/cabinet/shelves/${shelfId}/files`);
+      setCabinetFiles(res.data || []);
+    }
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -69,7 +128,12 @@ export default function AddShuraAaliResolution() {
     }
 
     try {
-      await createShuraAaliResolution(form);
+      const payload = {
+        ...form,
+        cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null, // ✅ add this
+      };
+
+      await createShuraAaliResolution(payload); // ✅ send payload, not form
       toast.success(texts.created);
       navigate("/shura-aali-resolutions");
     } catch (err) {
@@ -79,7 +143,6 @@ export default function AddShuraAaliResolution() {
       setSaving(false);
     }
   };
-
   return (
     <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
@@ -188,12 +251,93 @@ export default function AddShuraAaliResolution() {
                 />
               </Grid>
               <Grid item xs={12}>
+                <Typography
+                  variant="subtitle2"
+                  fontWeight="bold"
+                  sx={{ mb: 1 }}
+                >
+                  {texts.cabinetAddress || "د ذخیره کولو ځای (Storage Location)"}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>{texts.cabinet || "کابینه (Cabinet)"}</InputLabel>
+                  <Select
+                    value={String(selectedCabinet)} // ✅ String()
+                    onChange={handleCabinetChange}
+                    label={texts.cabinet || "کابینه (Cabinet)"}
+                  >
+                    {cabinets.map((c) => (
+                      <MenuItem key={c.id} value={String(c.id)}>
+                        {" "}
+                        {c.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth size="small" disabled={!selectedCabinet}>
+                  <InputLabel>{texts.floor || "پوړ (Floor)"}</InputLabel>
+                  <Select
+                    value={String(selectedFloor)} // ✅ String()
+                    onChange={handleFloorChange}
+                    label={texts.floor || "پوړ (Floor)"}
+                  >
+                    {floors.map((f) => (
+                      <MenuItem key={f.id} value={String(f.id)}>
+                        {" "}
+                        {f.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth size="small" disabled={!selectedFloor}>
+                  <InputLabel>{texts.shelf || "ځای (Shelf)"}</InputLabel>
+                  <Select
+                    value={String(selectedShelf)} // ✅ String()
+                    onChange={handleShelfChange}
+                    label={texts.shelf || "ځای (Shelf)"}
+                  >
+                    {shelves.map((s) => (
+                      <MenuItem key={s.id} value={String(s.id)}>
+                        {" "}
+                        {s.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth size="small" disabled={!selectedShelf}>
+                  <InputLabel>{texts.file || "فایل (File)"}</InputLabel>
+                  <Select
+                    value={String(selectedFile)} // ✅ String()
+                    onChange={(e) => setSelectedFile(e.target.value)}
+                    label={texts.file || "فایل (File)"}
+                  >
+                    {cabinetFiles.map((f) => (
+                      <MenuItem key={f.id} value={String(f.id)}>
+                        {" "}
+                        {f.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  multiline
-                  minRows={4}
-                  label={texts.remarks}
+                  size="small"
                   name="remarks"
+                  label={texts.remarks || "ملاحظات / توضیحات"}
+                  multiline
                   value={form.remarks}
                   onChange={handleChange}
                   placeholder={texts.remarksPlaceholder}

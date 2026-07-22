@@ -8,6 +8,8 @@
   "currentManagement": "مدیریت فعلی",
   "assignNewManagement": "تخصیص مدیریت جدید",
   "actions": "عملیات",
+  "createdDate": "تاریخ ایجاد",
+  "newUser": "کاربر جدید",
   "selectManagement": "انتخاب مدیریت",
   "assignButton": "تخصیص",
   "adminLabel": "مدیر",

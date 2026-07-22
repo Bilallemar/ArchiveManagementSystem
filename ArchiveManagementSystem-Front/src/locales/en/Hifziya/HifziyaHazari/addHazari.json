@@ -3,7 +3,11 @@
     "title": "Attendance Book",
     "back": "Back",
     "newIndraj": "New Registration",
-    "newHazari": "New Attendance"
+    "newHazari": "New Attendance",
+    "filter": "Filter",
+    "search": "Search",
+     "rowsPerPage": "Rows per page",
+  "of": "Of"
   },
   "scanner": {
     "folderPath": "Scanner Folder",
@@ -69,5 +73,13 @@
   "deleteDialog": {
     "title": "Delete Attendance?",
     "text": "Are you sure you want to delete this attendance? This action cannot be undone."
-  }
+  },
+  "cabinetAddress": " Add Cabinet Address",
+  "cabinet": "Cabinet",
+  "floor": "Floor",
+  "shelf": "Shelf",
+  "file": "File",
+  "files": "Files",
+  "shelfs": "Shelfs",
+  "floors": "Floors"
 }

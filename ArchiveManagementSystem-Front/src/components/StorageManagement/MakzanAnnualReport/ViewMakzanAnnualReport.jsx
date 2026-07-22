@@ -159,7 +159,81 @@ export default function ViewMakzanAnnualReport({ open, onClose, report }) {
               </Typography>
             </Box>
           </Grid>
+  {report.cabinetFile && (
+            <>
+              <Grid item xs={12}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  color="primary.main"
+                >
+                                      {texts.cabinetAddress|| "پته کابینه (Cabinet Location)"}
 
+                </Typography>
+                <Divider sx={{ mt: 1 }} />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.cabinet || "کابینه (Cabinet)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.floor || "پوړ (Floor)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.shelf || "شف (Shelf)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.file || "اسناد (File)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+            </>
+          )}
           {/* Files Section */}
           <Grid item xs={12} sx={{ mt: 1 }}>
             <Typography

@@ -39,8 +39,11 @@
 
   "actions": "اجراآت",
   "rowsPerPage": "په هر مخ کې قطارونه",
+     "of": "له",
+
 
   "search": "لټون",
+  "filter": "فلټر",
   "fieldDocNo": "د مکتوب شمېره",
   "fieldOrg": "اداره",
   "fieldYear": "کال",

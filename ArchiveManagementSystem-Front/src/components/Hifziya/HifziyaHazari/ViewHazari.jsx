@@ -19,7 +19,6 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import getAddHazariTexts from "../../../helpers/hifziya/hazari/AddHazariText";
 
@@ -168,7 +167,83 @@ export default function ViewHazari({ open, onClose, report }) {
               </CardContent>
             </Card>
           </Grid>
+          {report.cabinetFile && (
+            <>
+              <Grid item xs={12}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  color="primary.main"
+                >
+                  {texts.cabinetAddress || "کابینه"}
+                </Typography>
+                <Divider sx={{ mt: 1 }} />
+              </Grid>
 
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.cabinet || "آلمارۍ"}
+
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.floor || "پوړ (Floor)"}
+
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.shelf || "شیلف (Shelf)"}
+
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.file || "فایل (File)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+            </>
+          )}
           {/* Files Section */}
           <Grid item xs={12} sx={{ mt: 3 }}>
             <Typography
@@ -230,7 +305,7 @@ export default function ViewHazari({ open, onClose, report }) {
                       <IconButton
                         color="primary"
                         size="small"
-onClick={() => handleViewFile(file.filePath)}
+                        onClick={() => handleViewFile(file.filePath)}
                         title="فایل خلاص کړئ / ډاونلوډ کړئ"
                       >
                         <VisibilityIcon fontSize="small" />

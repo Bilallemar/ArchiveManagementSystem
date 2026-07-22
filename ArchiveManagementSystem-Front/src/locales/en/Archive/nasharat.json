@@ -42,6 +42,7 @@
   "rowsPerPage": "Rows per page",
 
   "search": "Search",
+  "filter": "Filter",
   "fieldDocNo": "Document Number",
   "fieldOrg": "Organization",
   "fieldYear": "Year",

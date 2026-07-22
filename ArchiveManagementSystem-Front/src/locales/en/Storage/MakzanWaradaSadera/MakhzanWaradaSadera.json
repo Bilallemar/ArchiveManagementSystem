@@ -25,7 +25,9 @@
     "makhzan": "Makhzan",
     "bookNumber": "Book Number",
     "province": "Province",
-    "district": "District"
+    "district": "District",
+    "filter": "Filter",
+    "search": "Search"
   },
   "actions": {
     "view": "View",
@@ -110,5 +112,15 @@
     "close": "Close"
   },
   "viewOutgoing": "View Outgoing Documents",
-  "viewIncoming": "View Incoming Documents"
+  "viewIncoming": "View Incoming Documents",
+  "cabinetAddress": " Add Cabinet Address",
+  "cabinet": "Cabinet",
+  "floor": "Floor",
+  "shelf": "Shelf",
+  "file": "File",
+  "files": "Files",
+  "shelfs": "Shelfs",
+  "floors": "Floors",
+   "rowsPerPage": "Rows per page",
+  "of": "Of"
 }

@@ -4,6 +4,7 @@
   "editRecord": "Edit Sawanih",
   "newSawanih": "New Sawanih",
   "newIsteqdam": "New Isteqdam",
+  "filter": "Filter",
 
   "name": "Name",
   "fatherName": "Father Name",
@@ -58,5 +59,15 @@
   "loadError": "Failed to load data",
   "noData": "No data available",
   "notAvailable": "Not available",
-  "noArchiveSelected": "No sawanih selected"
+  "noArchiveSelected": "No sawanih selected",
+
+  "cabinetAddress": " Add Cabinet Address",
+  "cabinet": "Cabinet",
+  "floor": "Floor",
+  "shelf": "Shelf",
+  "file": "File",
+  "files": "Files",
+  "shelfs": "Shelfs",
+  "floors": "Floors",
+  "of": "Of"
 }

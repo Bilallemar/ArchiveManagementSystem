@@ -26,6 +26,7 @@ public interface SawanihRepository extends JpaRepository<Sawanih, Integer> {
                     :term = ''
                     OR (:field = 'name'  AND LOWER(s.name) LIKE LOWER(CONCAT('%', :term, '%')))
                     OR (:field = 'org'     AND LOWER(o.name)   LIKE LOWER(CONCAT('%', :term, '%')))
+                    OR (:field = 'parsalNumber'     AND LOWER(s.parsalNumber)   LIKE LOWER(CONCAT('%', :term, '%')))
                     OR (:field = 'fatherName'    AND LOWER(s.fatherName)   LIKE LOWER(CONCAT('%', :term, '%')))
                   )
                 ORDER BY s.id DESC

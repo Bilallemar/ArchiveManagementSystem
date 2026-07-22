@@ -6,7 +6,8 @@ const getMakzanAnnualReportTexts = (t) => {
     pageTitle: t("pageTitle"),
     newReport: t("newReport"),
     addNewReport: t("addNewReport"),
-
+  filter: t("filter"),
+search: t("search"),
     // Table Column Headers
     province: t("province"),
     district: t("district"),
@@ -16,7 +17,8 @@ const getMakzanAnnualReportTexts = (t) => {
     summaryWaseqa: t("summaryWaseqa"),
     description: t("description"),
     actions: t("actions"),
-
+  rowsPerPage: t("rowsPerPage"),
+of: t("of"),  
     // Action Buttons
     view: t("view"),
     edit: t("edit"),
@@ -85,6 +87,17 @@ const getMakzanAnnualReportTexts = (t) => {
 
     // Buttons
     saveChanges: t("saveChanges"),
+
+      // ===== Cabinet =====
+  cabinetAddress: t("cabinetAddress"),
+  cabinet: t("cabinet"),
+  cabinets: t("cabinets"),
+  floor: t("floor"),
+  floors: t("floors"),
+  shelf: t("shelf"),
+  shelves: t("shelves"),
+  file: t("file"),
+  files: t("files"),
   };
 };
 

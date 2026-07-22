@@ -11,6 +11,8 @@ const getShuraAaliResolutionTexts = (t) => ({
   viewYadasht: t("page.viewYadasht"),
   viewMosawaba: t("page.viewMosawaba"),
   back: t("page.back"),
+  filter: t("filter"),
+search: t("search"),
 
   // ===== Table Columns =====
   id: t("table.id"),
@@ -70,6 +72,18 @@ const getShuraAaliResolutionTexts = (t) => ({
   // ===== Delete Dialog =====
   confirmDelete: t("deleteDialog.confirmDelete"),
   deleteWarning: t("deleteDialog.deleteWarning"),
+    // ===== Cabinet =====
+  cabinetAddress: t("cabinetAddress"),
+  cabinet: t("cabinet"),
+  cabinets: t("cabinets"),
+  floor: t("floor"),
+  floors: t("floors"),
+  shelf: t("shelf"),
+  shelves: t("shelves"),
+  file: t("file"),
+  files: t("files"),
+    rowsPerPage: t("rowsPerPage"),
+of: t("of"),  
 });
 
 export default getShuraAaliResolutionTexts;

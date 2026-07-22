@@ -47,7 +47,7 @@ export default function MakhzanWaradaSaderaList() {
   const { t } = useTranslation("makhzanWaradaSadera");
   const text = getMakhzanWaradaSaderaTexts(t);
   const navigate = useNavigate();
-
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [makhzanWaradaSadera, setMakhzanWaradaSadera] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -96,7 +96,7 @@ export default function MakhzanWaradaSaderaList() {
 
   const loadMakhzanWaradaSadera = useCallback(async () => {
     try {
-      setIsLoading(true); // ← start loading
+      setIsLoading(true);
       const params = {
         page,
         size: rowsPerPage,
@@ -111,7 +111,8 @@ export default function MakhzanWaradaSaderaList() {
     } catch (error) {
       toast.error(text.loadError || "د معلوماتو د بارولو کې ستونزه");
     } finally {
-      setIsLoading(false); // ← stop loading — always runs
+      setIsLoading(false);
+      setIsInitialLoad(false);
     }
   }, [page, rowsPerPage, field, debouncedTerm, tabValue]);
 
@@ -213,7 +214,7 @@ export default function MakhzanWaradaSaderaList() {
     setPage(0);
   };
 
-  if (isLoading) {
+  if (isInitialLoad) {
     return (
       <Box
         sx={{
@@ -378,16 +379,21 @@ export default function MakhzanWaradaSaderaList() {
               </TableBody>
             </Table>
           </TableContainer>
-
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
             count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Rows per page:"
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(+e.target.value);
+              setPage(0);
+            }}
+            labelRowsPerPage={text.rowsPerPage || "Rows per page:"}
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} ${text.of} ${count !== -1 ? count : `${to}+`}`
+            }
           />
         </Paper>
       </Box>

@@ -126,7 +126,16 @@ export default function ViewSawanih({ open, onClose, report }) {
               </Typography>
             </Box>
           </Grid>
-
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.parsalNumber || "پرسل نمبر"}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {report.parsalNumber || "—"}
+              </Typography>
+            </Box>
+          </Grid>
           {/* Row 2 */}
           <Grid item xs={12} sm={6}>
             <Box>
@@ -195,7 +204,80 @@ export default function ViewSawanih({ open, onClose, report }) {
               </CardContent>
             </Card>
           </Grid>
+          {report.cabinetFile && (
+            <>
+              <Grid item xs={12}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  color="primary.main"
+                >
+                  {texts.cabinetAddress || "محفوظ ځای (Cabinet Location)"}
+                </Typography>
+                <Divider sx={{ mt: 1 }} />
+              </Grid>
 
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.cabinet || "کابینه (Cabinet)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.floor || "پوړ (Floor)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.floor?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.shelf || "ځای (Shelf)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.shelf?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.file || "فایل (File)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {report.cabinetFile?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+            </>
+          )}
           {/* Files Section */}
           <Grid item xs={12} sx={{ mt: 3 }}>
             <Typography

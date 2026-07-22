@@ -40,8 +40,11 @@
 
   "actions": "اجراآت",
   "rowsPerPage": "تعداد در هر صفحه",
+     "of": "از",
+
 
   "search": "جستجو",
+  "filter": "فیلتر",
   "fieldDocNo": "نمبر مکتوب",
   "fieldOrg": "اداره",
   "fieldYear": "سال",

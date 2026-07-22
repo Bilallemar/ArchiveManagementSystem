@@ -23,12 +23,15 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Typography,
 } from "@mui/material";
+import PageBreadcrumbs from "../../Breadcrumbs/PageBreadcrumbs";
+
 import { red } from "@mui/material/colors";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import getMinotMakatibTexts from "../../../helpers/hifziya/MinotMakatib/MinotMakatibTexts";
 import {
   deleteMinotMakatib,
   getAllMinotMakatibs,
@@ -52,7 +55,8 @@ export default function MinotMakatibList() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-
+  const { t } = useTranslation("minotMakatib");
+  const text = getMinotMakatibTexts(t);
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedTerm(searchTerm);
@@ -72,7 +76,7 @@ export default function MinotMakatibList() {
       setRecords(res.data.content);
       setTotalCount(res.data.totalElements);
     } catch {
-      toast.error("د معلوماتو د بارولو کې ستونزه");
+      toast.error(text.loadError || "د معلوماتو د بارولو کې ستونزه");
     }
   }, [page, rowsPerPage, field, debouncedTerm]);
 
@@ -93,7 +97,7 @@ export default function MinotMakatibList() {
       setSelected(res.data);
       setOpenViewDialog(true);
     } catch {
-      toast.error("د معلوماتو د بارولو کې ستونزه");
+      toast.error(text.loadError || "د معلوماتو د بارولو کې ستونزه");
     }
     handleClose();
   };
@@ -104,7 +108,7 @@ export default function MinotMakatibList() {
       setSelected(res.data);
       setOpenEditDialog(true);
     } catch {
-      toast.error("د معلوماتو د بارولو کې ستونزه");
+      toast.error(text.loadError || "د معلوماتو د بارولو کې ستونزه");
     }
     handleClose();
   };
@@ -112,22 +116,22 @@ export default function MinotMakatibList() {
   const handleDelete = async () => {
     try {
       await deleteMinotMakatib(selected.id);
-      toast.success("ریکارډ حذف شو");
+      toast.success(text.deleteSuccess || "ریکارډ حذف شو");
       load();
     } catch {
-      toast.error("حذف کولو کې ستونزه");
+      toast.error(text.deleteError || "حذف کولو کې ستونزه");
     } finally {
       setOpenDeleteDialog(false);
     }
   };
 
   const columns = [
-    { id: "cartonNumber", label: "د کارتن شمېره" },
-    { id: "letterNumber", label: "د مکتوب شمېره" },
-    { id: "year", label: "کال" },
-    { id: "subject", label: "موضوع" },
-    { id: "orgName", label: "اداره" },
-    { id: "actions", label: "عملیات" },
+    { id: "cartonNumber", label: text.headercartonNumber || "د کارتن شمېره" },
+    { id: "letterNumber", label: text.headerLetterNumber || "د مکتوب شمېره" },
+    { id: "year", label: text.headeryear || "کال" },
+    { id: "subject", label: text.subject || "موضوع" },
+    { id: "orgName", label: text.headerOrg || "اداره" },
+    { id: "actions", label: text.headerActions || "عملیات" },
   ];
 
   return (
@@ -146,11 +150,11 @@ export default function MinotMakatibList() {
             startIcon={<AddIcon />}
             onClick={() => navigate("/minot-makatib/add")}
           >
-            نوی مینوټ مکاتب
+            {text.newRecord || "ریکارډ جدید"}
           </Button>
-          <Typography variant="h5" fontWeight="bold">
-            مینوټ مکاتب
-          </Typography>
+          <Box sx={{ textAlign: "right" }}>
+            <PageBreadcrumbs />
+          </Box>
         </Box>
 
         {/* Search */}
@@ -161,35 +165,20 @@ export default function MinotMakatibList() {
             field={field}
             onFieldChange={handleFieldChange}
             fields={[
-              { value: "cartonNumber", label: "د کارتن شمېره" },
-              { value: "letterNumber", label: "د مکتوب شمېره" },
-              { value: "subject", label: "موضوع" },
-              { value: "org", label: "اداره" },
+              {
+                value: "cartonNumber",
+                label: text.headercartonNumber || "د کارتن شمېره",
+              },
+              {
+                value: "letterNumber",
+                label: text.headerLetterNumber || "د مکتوب شمېره",
+              },
+              { value: "subject", label: text.subject || "موضوع" },
+              { value: "org", label: text.headerOrg || "اداره" },
             ]}
           />
         </Paper>
 
-        {/* <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-          <Filter
-            value={searchTerm}
-            onChange={handleSearch}
-            field={field}
-            onFieldChange={handleFieldChange}
-            fields={[
-              { value: "no", label: text.no || "شمېره" },
-              { value: "org", label: text.org || "اداره" },
-              {
-                value: "letterNumber",
-                label: text.letterNumber || "شمېره مکتوب",
-              },
-              {
-                value: "subjectType",
-                label: text.subjectType || "د لاسند ډول",
-              },
-            
-            ]}
-          />
-        </Paper> */}
         <Paper sx={{ overflow: "hidden", borderRadius: 2 }}>
           <TableContainer sx={{ maxHeight: 520 }}>
             <Table stickyHeader>
@@ -236,14 +225,14 @@ export default function MinotMakatibList() {
                             fontSize="small"
                             style={{ marginRight: 8 }}
                           />{" "}
-                          لیدل
+                          {text.view || "کتل"}
                         </MenuItem>
                         <MenuItem onClick={handleEdit}>
                           <EditIcon
                             fontSize="small"
                             style={{ marginRight: 8 }}
                           />{" "}
-                          سمول
+                          {text.edit || "سمول"}
                         </MenuItem>
                         <MenuItem
                           onClick={() => {
@@ -256,7 +245,7 @@ export default function MinotMakatibList() {
                             fontSize="small"
                             style={{ marginRight: 8, color: red[500] }}
                           />{" "}
-                          حذف
+                          {text.delete || "حذف"}
                         </MenuItem>
                       </Menu>
                     </TableCell>
@@ -265,8 +254,9 @@ export default function MinotMakatibList() {
               </TableBody>
             </Table>
           </TableContainer>
+
           <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
             count={totalCount}
             rowsPerPage={rowsPerPage}
@@ -276,6 +266,10 @@ export default function MinotMakatibList() {
               setRowsPerPage(+e.target.value);
               setPage(0);
             }}
+            labelRowsPerPage={text.rowsPerPage || "Rows per page:"}
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} ${text.of} ${count !== -1 ? count : `${to}+`}`
+            }
           />
         </Paper>
       </Box>
@@ -302,14 +296,18 @@ export default function MinotMakatibList() {
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
       >
-        <DialogTitle>حذف تایید</DialogTitle>
+        <DialogTitle>{text.deleteConfirm || "حذف تایید"}</DialogTitle>
         <DialogContent>
-          <DialogContentText>ایا غواړئ دا ریکارډ حذف کړئ؟</DialogContentText>
+          <DialogContentText>
+            {text.deleteMessage || "ایا غواړئ دا ریکارډ حذف کړئ؟"}
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>لغوه</Button>
+          <Button onClick={() => setOpenDeleteDialog(false)}>
+            {text.cancel || "لغوه"}
+          </Button>
           <Button onClick={handleDelete} color="error">
-            حذف
+            {text.delete || "حذف"}
           </Button>
         </DialogActions>
       </Dialog>

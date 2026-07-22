@@ -9,6 +9,7 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   // Table Headers
   headerNo: t("table.headers.no"),
   headerOrg: t("table.headers.org"),
+  headerSenderOrg: t("table.headers.senderOrg"),
   headerSubjectType: t("table.headers.subjectType"),
   headerLetterNumber: t("table.headers.letterNumber"),
   headerIncommingDate: t("table.headers.incommingDate"),
@@ -16,16 +17,21 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   headerSummary: t("table.headers.summary"),
   headerDescription: t("table.headers.description"),
   headerDirection: t("table.headers.direction"),
+  headerSenderOrgDate: t("table.headers.senderOrgDate"),
   headerActions: t("table.headers.actions"),
 
   // Filter
   recordType: t("filter.recordType"),
+
   all: t("filter.all"),
   incomming: t("filter.incomming"),
   outgoing: t("filter.outgoing"),
   bookNumber: t("filter.bookNumber"),
+  senderOrg: t("filter.senderOrg"),
   province: t("filter.province"),
   district: t("filter.district"),
+  filter: t("filter"),
+  search: t("search"),
 
   // Actions
   view: t("actions.view"),
@@ -74,12 +80,14 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   editMakhzan: t("edit.makhzan"),
   no: t("edit.no"),
   org: t("edit.org"),
+  senderOrg: t("edit.senderOrg"),
   subjectType: t("edit.subjectType"),
   letterNumber: t("edit.letterNumber"),
   incommingDate: t("edit.incommingDate"),
   outgoingDate: t("edit.outgoingDate"),
   summary: t("edit.summary"),
   description: t("edit.description"),
+  senderOrgDate: t("edit.senderOrgDate"),
   loading: t("edit.loading"),
   required: t("edit.required"),
   cancel: t("edit.cancel"),
@@ -97,6 +105,8 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   viewAddTitle: t("view.Addtitle"),
   viewTitle: t("view.title"),
   viewNumber: t("view.number"),
+  viewSenderOrg: t("view.senderOrg"),
+  viewSenderOrgDate: t("view.senderOrgDate"),
   viewOrganization: t("view.organization"),
   viewSubjectType: t("view.subjectType"),
   viewLetterNumber: t("view.letterNumber"),
@@ -106,6 +116,19 @@ const getHifziyaWaradaSaderaTexts = (t) => ({
   viewDescription: t("view.description"),
   viewNoData: t("view.noData"),
   viewClose: t("view.close"),
+
+  // ===== Cabinet =====
+  cabinetAddress: t("cabinetAddress"),
+  cabinet: t("cabinet"),
+  cabinets: t("cabinets"),
+  floor: t("floor"),
+  floors: t("floors"),
+  shelf: t("shelf"),
+  shelves: t("shelves"),
+  file: t("file"),
+  files: t("files"),
+  rowsPerPage: t("rowsPerPage"),
+  of: t("of"),
 });
 
 export default getHifziyaWaradaSaderaTexts;

@@ -52,5 +52,17 @@
   "noFilesFound": "No files found",
   "filesDetected": "Files detected successfully",
   "scanError": "Scan failed",
-  "filesLoadError": "Failed to load files"
+  "filesLoadError": "Failed to load files",
+    "cabinetAddress": " Add Cabinet Address",
+  "cabinet": "Cabinet",
+  "floor": "Floor",
+  "shelf": "Shelf",
+  "file": "File",
+  "files": "Files",
+  "shelfs": "Shelfs",
+  "floors": "Floors",
+  "filter": "Filter",
+  "search": "Search",
+   "rowsPerPage": "Rows per page",
+  "of": "Of"
 }

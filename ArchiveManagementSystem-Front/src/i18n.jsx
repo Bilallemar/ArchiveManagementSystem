@@ -33,6 +33,7 @@ import psBreadcrumbs from "./locales/ps/breadcrumbs.json";
 import psManagementUtils from "./locales/ps/managementUtils.json";
 import psMakhzanAnnualReport from "./locales/ps/Storage/MakzanAnnualReport/MakzanAnnualReport.json";
 import psAdminAuditLogs from "./locales/ps/AdminAuditLogs.json";
+import psMinotMakatib from "./locales/ps/Hifziya/MinotMakatib/MinotMakatib.json";
 
 // ================== Dari ==================
 import faAdminAuditLogs from "./locales/fa/AdminAuditLogs.json";
@@ -65,6 +66,7 @@ import faManagementUtils from "./locales/fa/managementUtils.json";
 import faNavbar from "./locales/fa/navbar.json";
 import faUserManagement from "./locales/fa/userManagement.json";
 import faUsers from "./locales/fa/users.json";
+import faMinotMakatib from "./locales/fa/Hifziya/MinotMakatib/MinotMakatib.json";
 // ================== English ==================
 import enAdminAuditLogs from "./locales/en/AdminAuditLogs.json";
 import enArchive from "./locales/en/Archive/archive.json";
@@ -96,6 +98,7 @@ import enManagementUtils from "./locales/en/managementUtils.json";
 import enNavbar from "./locales/en/navbar.json";
 import enUserManagement from "./locales/en/userManagement.json";
 import enUsers from "./locales/en/users.json";
+import enMinotMakatib from "./locales/en/Hifziya/MinotMakatib/MinotMakatib.json";
 
 console.log("psAdminAuditLogs imported?", !!psAdminAuditLogs);
 console.log(
@@ -134,6 +137,7 @@ i18n.use(initReactI18next).init({
       locationManagement: psLocationManagement,
       createUserDialog: psCreateUserDialog,
       nasharat: psNasharat,
+      minotMakatib: psMinotMakatib,
     },
 
     fa: {
@@ -164,6 +168,7 @@ i18n.use(initReactI18next).init({
       locationManagement: faLocationManagement,
       createUserDialog: faCreateUserDialog,
       nasharat: faNasharat,
+      minotMakatib: faMinotMakatib,
     },
 
     en: {
@@ -194,6 +199,7 @@ i18n.use(initReactI18next).init({
       locationManagement: enLocationManagement,
       createUserDialog: enCreateUserDialog,
       nasharat: enNasharat,
+      minotMakatib: enMinotMakatib,
     },
   },
 
@@ -233,6 +239,7 @@ i18n.use(initReactI18next).init({
     "locationManagement",
     "createUserDialog",
     "nasharat",
+    "minotMakatib",
   ],
 
   defaultNS: "login",

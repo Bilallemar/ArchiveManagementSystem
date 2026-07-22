@@ -1,70 +1,66 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import {
-  BrowserRouter as Router,
   Route,
+  BrowserRouter as Router,
   Routes,
   useLocation,
 } from "react-router-dom";
 
-import Login from "./components/Auth/Login";
-import Signup from "./components/Auth/Signup";
-import { MANAGEMENTS } from "./utils/managementUtils";
-import { ThemeProvider, CssBaseline } from "@mui/material";
-import { createAppTheme } from "./theme";
-import { useTranslation } from "react-i18next";
-import {
-  initializeDirection,
-  setDocumentDirection,
-  isRTLLanguage,
-} from "./utils/languageUtils";
-import ProtectedRoute from "./components/ProtectedRoute";
-import AccessDenied from "./components/Auth/AccessDenied";
-import Admin from "./components/AuditLogs/Admin";
-import UserProfile from "./components/Auth/UserProfile";
-import ForgotPassword from "./components/Auth/ForgotPassword";
-import OAuth2RedirectHandler from "./components/Auth/OAuth2RedirectHandler";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import { Toaster } from "react-hot-toast";
-import NotFound from "./components/NotFound";
-import ContactPage from "./components/contactPage/ContactPage";
-import AboutPage from "./components/aboutPage/AboutPage";
-import ResetPassword from "./components/Auth/ResetPassword";
+import { useTranslation } from "react-i18next";
 import UserManagementPanel from "./components/Admin/UserManagementPanel";
-import HazariList from "./components/Hifziya/HifziyaHazari/HazariList";
+import AddArchive from "./components/ArchiveManagement/Archive/AddArchive";
+import ArchiveList from "./components/ArchiveManagement/Archive/ArchiveList";
+import EditArchiveDialog from "./components/ArchiveManagement/Archive/EditArchiveDialog";
+import AddNasharat from "./components/ArchiveManagement/Nasharat/AddNasharat";
+import EditNasharatDialog from "./components/ArchiveManagement/Nasharat/EditNasharatDialog";
+import NasharatList from "./components/ArchiveManagement/Nasharat/NasharatList";
+import Admin from "./components/AuditLogs/Admin";
+import AccessDenied from "./components/Auth/AccessDenied";
+import ForgotPassword from "./components/Auth/ForgotPassword";
+import Login from "./components/Auth/Login";
+import OAuth2RedirectHandler from "./components/Auth/OAuth2RedirectHandler";
+import ResetPassword from "./components/Auth/ResetPassword";
+import Signup from "./components/Auth/Signup";
+import UserProfile from "./components/Auth/UserProfile";
+import ContactPage from "./components/contactPage/ContactPage";
 import AddHazari from "./components/Hifziya/HifziyaHazari/AddHazari";
 import EditHazariDialog from "./components/Hifziya/HifziyaHazari/EditHazariDialog";
-import HifziyaWaradaSaderaList from "./components/Hifziya/HifziyaWaradaSadera/HifziyaWaradaSaderaList";
+import HazariList from "./components/Hifziya/HifziyaHazari/HazariList";
 import AddHifziyaWaradaSadera from "./components/Hifziya/HifziyaWaradaSadera/AddHifziyaWaradaSadera";
 import EditHifziyaWaradaSaderaDialog from "./components/Hifziya/HifziyaWaradaSadera/EditHifziyaWaradaSaderaDialog";
-import SawanihList from "./components/Hifziya/Sawanih/SawanihList";
+import HifziyaWaradaSaderaList from "./components/Hifziya/HifziyaWaradaSadera/HifziyaWaradaSaderaList";
+import AddMinotMakatib from "./components/Hifziya/MinotMakatib/AddMinotMakatib";
+import MinotMakatibList from "./components/Hifziya/MinotMakatib/MinotMakatibList";
 import AddSawanih from "./components/Hifziya/Sawanih/AddSawanih";
 import EditSawanihDialog from "./components/Hifziya/Sawanih/EditSawanihDialog";
-import ArchiveList from "./components/ArchiveManagement/Archive/ArchiveList";
-import AddArchive from "./components/ArchiveManagement/Archive/AddArchive";
-import EditArchiveDialog from "./components/ArchiveManagement/Archive/EditArchiveDialog";
-import MakzanSubmissionReportList from "./components/StorageManagement/MakzanSubmissionReport/MakzanSubmissionReportList";
-import AddMakzanSubmissionReport from "./components/StorageManagement/MakzanSubmissionReport/AddMakzanSubmissionReport";
-import EditMakzanSubmissionReportDialog from "./components/StorageManagement/MakzanSubmissionReport/EditMakzanSubmissionReportDialog";
-import MakzanReceiptList from "./components/StorageManagement/MakzanReceipt/MakzanReceiptList";
-import AddMakzanReceipt from "./components/StorageManagement/MakzanReceipt/AddMakzanReceipt";
-import EditReceiptDialog from "./components/StorageManagement/MakzanReceipt/EditReceiptDialog";
-import MakzanAnnualReportList from "./components/StorageManagement/MakzanAnnualReport/MakzanAnnualReportList";
-import AddMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/AddMakzanAnnualReport";
-import EditMakzanAnnualReportDialog from "./components/StorageManagement/MakzanAnnualReport/EditMakzanAnnualReportDialog";
-import MasterDataManagement from "./components/MasterData/MasterDataManagement";
-import MakhzanWaradaSaderaList from "./components/StorageManagement/MakhzanWaradaSadera/MakhzanWaradaSaderaList";
-import AddMakhzanWaradaSadera from "./components/StorageManagement/MakhzanWaradaSadera/AddMakhzanWaradaSadera";
-import EditMakhzanWaradaSaderaDialog from "./components/StorageManagement/MakhzanWaradaSadera/EditMakhzanWaradaSaderaDialog";
+import SawanihList from "./components/Hifziya/Sawanih/SawanihList";
 import AddShuraAaliResolution from "./components/Hifziya/ShuraAaliResolution/AddShuraAaliResolution";
 import EditShuraAaliResolutionDialog from "./components/Hifziya/ShuraAaliResolution/EditShuraAaliResolutionDialog";
 import ShuraAaliResolutionList from "./components/Hifziya/ShuraAaliResolution/ShuraAaliResolutionList";
 import LandingPage from "./components/LandingPage";
-import AddMinotMakatib from "./components/Hifziya/MinotMakatib/AddMinotMakatib";
-import EditMinotMakatibDialog from "./components/Hifziya/MinotMakatib/EditMinotMakatibDialog";
-import MinotMakatibList from "./components/Hifziya/MinotMakatib/MinotMakatibList";
-import NasharatList from "./components/ArchiveManagement/Nasharat/NasharatList";
-import AddNasharat from "./components/ArchiveManagement/Nasharat/AddNasharat";
-import EditNasharatDialog from "./components/ArchiveManagement/Nasharat/EditNasharatDialog";
-
+import MasterDataManagement from "./components/MasterData/MasterDataManagement";
+import NotFound from "./components/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AddMakhzanWaradaSadera from "./components/StorageManagement/MakhzanWaradaSadera/AddMakhzanWaradaSadera";
+import EditMakhzanWaradaSaderaDialog from "./components/StorageManagement/MakhzanWaradaSadera/EditMakhzanWaradaSaderaDialog";
+import MakhzanWaradaSaderaList from "./components/StorageManagement/MakhzanWaradaSadera/MakhzanWaradaSaderaList";
+import AddMakzanAnnualReport from "./components/StorageManagement/MakzanAnnualReport/AddMakzanAnnualReport";
+import EditMakzanAnnualReportDialog from "./components/StorageManagement/MakzanAnnualReport/EditMakzanAnnualReportDialog";
+import MakzanAnnualReportList from "./components/StorageManagement/MakzanAnnualReport/MakzanAnnualReportList";
+import AddMakzanReceipt from "./components/StorageManagement/MakzanReceipt/AddMakzanReceipt";
+import EditReceiptDialog from "./components/StorageManagement/MakzanReceipt/EditReceiptDialog";
+import MakzanReceiptList from "./components/StorageManagement/MakzanReceipt/MakzanReceiptList";
+import AddMakzanSubmissionReport from "./components/StorageManagement/MakzanSubmissionReport/AddMakzanSubmissionReport";
+import EditMakzanSubmissionReportDialog from "./components/StorageManagement/MakzanSubmissionReport/EditMakzanSubmissionReportDialog";
+import MakzanSubmissionReportList from "./components/StorageManagement/MakzanSubmissionReport/MakzanSubmissionReportList";
+import { createAppTheme } from "./theme";
+import {
+  initializeDirection,
+  setDocumentDirection,
+} from "./utils/languageUtils";
+import { MANAGEMENTS } from "./utils/managementUtils";
 
 import SidebarLayout from "./components/SidebarLayout";
 import { useMyContext } from "./store/ContextApi";
@@ -220,22 +216,22 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-         <Route
-  path="/minot-makatib"
-  element={
-    <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-      <MinotMakatibList />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/minot-makatib/add"
-  element={
-    <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
-      <AddMinotMakatib />
-    </ProtectedRoute>
-  }
-/>
+          <Route
+            path="/minot-makatib"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <MinotMakatibList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minot-makatib/add"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <AddMinotMakatib />
+              </ProtectedRoute>
+            }
+          />
           {/* Archive Routes */}
           <Route
             path="/archive"
@@ -428,7 +424,7 @@ const App = () => {
           {/* Other Routes */}
           <Route path="/master-data" element={<MasterDataManagement />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/about" element={<AboutPage />} />
+          {/* <Route path="/about" element={<AboutPage />} /> */}
           <Route
             path="/profile"
             element={

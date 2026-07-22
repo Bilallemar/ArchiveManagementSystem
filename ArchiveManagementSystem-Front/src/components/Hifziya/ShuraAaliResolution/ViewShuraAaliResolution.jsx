@@ -7,23 +7,23 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid,
   IconButton,
   Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom";
 import getShuraAaliResolutionTexts from "../../../helpers/hifziya/ShuraAaliResolutionTexts";
 import { formatHijriDateForDisplay } from "../../../utils/hijriDateUtils";
 
 export default function ViewShuraAaliResolution({ open, onClose, resolution }) {
   const { t } = useTranslation("shuraAali");
   const texts = getShuraAaliResolutionTexts(t);
-const isMosawaba = resolution?.direction === "MOSAWABA";
+  const isMosawaba = resolution?.direction === "MOSAWABA";
 
   const pageTitle = isMosawaba
     ? texts.viewMosawaba || "لیدل مصوبه"
-    : texts.viewYadasht  || "لیدل یاداشت";
+    : texts.viewYadasht || "لیدل یاداشت";
   if (!resolution) return null;
 
   return (
@@ -160,7 +160,80 @@ const isMosawaba = resolution?.direction === "MOSAWABA";
               </Typography>
             </Box>
           </Grid>
+          {resolution.cabinetFile && (
+            <>
+              <Grid item xs={12}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  color="primary.main"
+                >
+                  {texts.cabinetAddress || "پته کابینه (Cabinet Location)"}
+                </Typography>
+                <Divider sx={{ mt: 1 }} />
+              </Grid>
 
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.cabinet || "کابینه (Cabinet)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {resolution.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.floor || "پوړ (Floor)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {resolution.cabinetFile?.shelf?.floor?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.shelf || "ځای (Shelf)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {resolution.cabinetFile?.shelf?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.file || "فایل (File)"}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {resolution.cabinetFile?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+            </>
+          )}
           {/* Files Section */}
         </Grid>
       </DialogContent>

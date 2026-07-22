@@ -90,6 +90,20 @@ const getMakzanReceiptTexts = (t) => {
     // Misc
     filesAvailable: t("filesAvailable"),
     orText: t("orText"),
+      filter: t("filter"),
+search: t("search"),
+  rowsPerPage: t("rowsPerPage"),
+of: t("of"),  
+      // ===== Cabinet =====
+  cabinetAddress: t("cabinetAddress"),
+  cabinet: t("cabinet"),
+  cabinets: t("cabinets"),
+  floor: t("floor"),
+  floors: t("floors"),
+  shelf: t("shelf"),
+  shelves: t("shelves"),
+  file: t("file"),
+  files: t("files"),
   };
 };
 

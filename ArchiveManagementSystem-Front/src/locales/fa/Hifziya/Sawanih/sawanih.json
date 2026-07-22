@@ -56,11 +56,25 @@
   "search": "جستجو",
   "fieldOrg": "اداره",
 
-  "rowsPerPage": "تعداد سطر در هر صفحه",
+  
 
   "loading": "در حال بارگذاری اطلاعات...",
   "loadError": "خطا در بارگذاری اطلاعات",
   "noData": "هیچ اطلاعاتی موجود نیست",
   "notAvailable": "در دسترس نیست",
-  "noArchiveSelected": "هیچ سوانحی انتخاب نشده است"
+  "noArchiveSelected": "هیچ سوانحی انتخاب نشده است",
+
+
+
+    "cabinetAddress": "آدرس آلماری اضافه کنید",
+  "cabinet": "آلماری",
+  "floor": "طبقه",
+  "shelf": "شیلف",
+  "file": "فایل",
+  "files": "فایل‌ها",
+  "shelfs": "شیلف‌ها",
+  "floors": "طبقه‌ها"
+  ,
+  "rowsPerPage": "تعداد سطر در هر صفحه",
+     "of": "از"
 }

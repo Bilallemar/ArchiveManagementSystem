@@ -15,6 +15,7 @@ public class SawanihSummaryDTO {
   private Integer id;
   private String name;
   private String fatherName;
+  private String parsalNumber;
   private LocalDate incommingDate;
   private String orgName;
   private Boolean isSawanih;

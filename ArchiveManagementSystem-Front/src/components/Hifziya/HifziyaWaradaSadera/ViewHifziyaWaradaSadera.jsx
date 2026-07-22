@@ -135,14 +135,23 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                {text.viewOrganization || "اداره"}
+                {text.senderOrganization || "اداره ارسال کننده"}
               </Typography>
               <Typography variant="h6" fontWeight={600}>
-                {report.org?.name || "—"}
+                {report.senderOrg?.name || "—"}
               </Typography>
             </Box>
           </Grid>
-
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {text.receiverOrganization || "اداره دریافت کننده"}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {report.receiverOrg?.name || "—"}
+              </Typography>
+            </Box>
+          </Grid>
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
@@ -181,6 +190,17 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
               </Box>
             </Grid>
           )}
+
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {text.senderOrgDate || "تاریخ وارده"}
+              </Typography>
+              <Typography variant="body1">
+                {formatHijriDateForDisplay(report.senderOrgDate)}
+              </Typography>
+            </Box>
+          </Grid>
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
@@ -220,7 +240,7 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
                   fontWeight="bold"
                   color="primary.main"
                 >
-                  د کابینې پته (Cabinet Address)
+                  {text.cabinetLocation || "د کابینه موقعیت"}
                 </Typography>
                 <Divider sx={{ mt: 1 }} />
               </Grid>
@@ -232,7 +252,7 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    کابینه (Cabinet)
+                    {text.cabinet || "کابینه (Cabinet)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
@@ -247,7 +267,7 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    پوړ (Floor)
+                    {text.floor || "پوړ (Floor)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.shelf?.floor?.name || "—"}
@@ -262,7 +282,7 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    شیلف (Shelf)
+                    {text.shelf || "شیلف (Shelf)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.shelf?.name || "—"}
@@ -277,7 +297,7 @@ export default function ViewHifziyaWaradaSadera({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    فایل (File)
+                    {text.file || "پته (File)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.name || "—"}

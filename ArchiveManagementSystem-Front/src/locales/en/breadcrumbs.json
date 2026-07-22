@@ -30,5 +30,8 @@
   "masterData": "Master Data Management",
   "userManagement": "User Management",
   "admin": "System Management",
-  "profile": "Profile"
+  "profile": "Profile",
+  "nasharat": "Nasharat",
+  "addNasharat": "New Nasharat",
+  "minotMakatib": "Minot Makatib"
 }

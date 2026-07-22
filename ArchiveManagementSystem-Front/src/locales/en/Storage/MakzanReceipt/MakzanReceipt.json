@@ -65,5 +65,17 @@
   "saving": "Saving...",
   "updating": "Updating...",
   "filesAvailable": "file(s) found",
-  "orText": "or"
+  "orText": "or",
+    "cabinetAddress": " Add Cabinet Address",
+  "cabinet": "Cabinet",
+  "floor": "Floor",
+  "shelf": "Shelf",
+  "file": "File",
+  "files": "Files",
+  "shelfs": "Shelfs",
+  "floors": "Floors",
+  "filter": "Filter",
+  "search": "Search",
+   "rowsPerPage": "Rows per page",
+  "of": "Of"
 }

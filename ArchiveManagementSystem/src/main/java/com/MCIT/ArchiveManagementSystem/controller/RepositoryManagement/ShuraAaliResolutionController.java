@@ -61,6 +61,11 @@ public class ShuraAaliResolutionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/test")
+    public String test() {
+        return "POST works!";
+    }
+
     @PostMapping
     public ShuraAaliResolution create(@RequestBody ShuraAaliResolution resolution) {
         managementSecurity.validateManagementAccess(HIFZIYA_MANAGEMENT_ID);

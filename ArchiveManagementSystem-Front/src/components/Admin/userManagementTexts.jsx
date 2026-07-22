@@ -12,6 +12,8 @@ export const getUserManagementTexts = (t) => ({
   currentManagement: t("currentManagement"),
   assignNewManagement: t("assignNewManagement"),
   actions: t("actions"),
+  createdDate: t("createdDate"),
+  newUser: t("newUser"),
   selectManagement: t("selectManagement"),
   assignButton: t("assignButton"),
   adminLabel: t("adminLabel", "Admin"),

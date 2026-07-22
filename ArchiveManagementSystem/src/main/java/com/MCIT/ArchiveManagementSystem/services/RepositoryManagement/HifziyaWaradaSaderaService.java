@@ -85,7 +85,8 @@ public class HifziyaWaradaSaderaService {
                 a.getLetterNumber(),
                 a.getIncommingDate(),
                 a.getSubjectType(),
-                a.getOrg() != null ? a.getOrg().getName() : null, // ← senderOrgName
+                a.getSenderOrg() != null ? a.getSenderOrg().getName() : null, // ← senderOrgName
+                a.getReceiverOrg() != null ? a.getReceiverOrg().getName() : null, // ← receiverOrgName
                 a.getDirection() != null ? a.getDirection().name() : null));
     }
 
@@ -181,8 +182,8 @@ public class HifziyaWaradaSaderaService {
 
         // ── Update fields ──────────────────────────────────────
         existingDoc.setNo(hifziyaWaradaSaderaDetails.getNo());
-        existingDoc.setOrg(hifziyaWaradaSaderaDetails.getOrg());
-
+        existingDoc.setReceiverOrg(hifziyaWaradaSaderaDetails.getReceiverOrg());
+        existingDoc.setSenderOrg(hifziyaWaradaSaderaDetails.getSenderOrg());
         existingDoc.setLetterNumber(hifziyaWaradaSaderaDetails.getLetterNumber());
         existingDoc.setIncommingDate(hifziyaWaradaSaderaDetails.getIncommingDate());
         existingDoc.setOutgoingDate(hifziyaWaradaSaderaDetails.getOutgoingDate());

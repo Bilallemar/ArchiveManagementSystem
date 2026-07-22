@@ -56,6 +56,7 @@ export default function EditSawanihDialog({
   const [formData, setFormData] = useState({
     name: "",
     fatherName: "",
+    parsalNumber: "",
     incommingDate: "",
     outgoingDate: "",
     org: "",
@@ -81,7 +82,9 @@ export default function EditSawanihDialog({
   const [selectedShelf, setSelectedShelf] = useState("");
   const [selectedFile, setSelectedFile] = useState("");
   const [scannerFiles, setScannerFiles] = useState([]);
-
+  useEffect(() => {
+    api.get("/cabinet").then((res) => setCabinets(res.data || []));
+  }, []);
   useEffect(() => {
     if (!open) return;
 
@@ -100,6 +103,7 @@ export default function EditSawanihDialog({
           setFormData({
             name: sawanih.name || "",
             fatherName: sawanih.fatherName || "",
+            parsalNumber: sawanih.parsalNumber || "",
             incommingDate: convertGregorianToHijri(sawanih.incommingDate),
             outgoingDate: convertGregorianToHijri(sawanih.outgoingDate),
             org: sawanih.org?.id || "",
@@ -144,9 +148,6 @@ export default function EditSawanihDialog({
 
     loadInitialData();
   }, [open, sawanih, texts.loadError]);
-  useEffect(() => {
-    api.get("/cabinet").then((res) => setCabinets(res.data || []));
-  }, []);
 
   const handleCabinetChange = async (e) => {
     const cabinetId = e.target.value;
@@ -260,6 +261,7 @@ export default function EditSawanihDialog({
       const payload = {
         name: formData.name.trim(),
         fatherName: formData.fatherName?.trim() || null,
+        parsalNumber: formData.parsalNumber?.trim() || null,
         incommingDate: convertHijriToGregorian(formData.incommingDate),
         outgoingDate: convertHijriToGregorian(formData.outgoingDate),
         org: { id: Number(formData.org) },
@@ -569,7 +571,16 @@ export default function EditSawanihDialog({
                       onChange={handleInputChange}
                     />
                   </Grid>
-
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="parsalNumber"
+                      label={texts.parsalNumber || "پارسل نمبر"}
+                      value={formData.parsalNumber}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                   <Grid item xs={12} sm={6}>
                     <FormControl
                       fullWidth
@@ -637,17 +648,19 @@ export default function EditSawanihDialog({
                       fontWeight="bold"
                       sx={{ mb: 1 }}
                     >
-                      د کابینې پته (Cabinet Address)
+                      {texts.cabinetAddress || "د کابینه موقعیت"}
                     </Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>کابینه (Cabinet)</InputLabel>
+                      <InputLabel>
+                        {texts.cabinet || "کابینه (Cabinet)"}
+                      </InputLabel>
                       <Select
                         value={String(selectedCabinet)}
                         onChange={handleCabinetChange}
-                        label="کابینه (Cabinet)"
+                        label={texts.cabinet || "کابینه (Cabinet)"}
                       >
                         {cabinets.map((c) => (
                           <MenuItem key={c.id} value={String(c.id)}>
@@ -664,11 +677,11 @@ export default function EditSawanihDialog({
                       size="small"
                       disabled={!selectedCabinet}
                     >
-                      <InputLabel>پوړ (Floor)</InputLabel>
+                      <InputLabel>{texts.floor || "پوړ (Floor)"}</InputLabel>
                       <Select
                         value={String(selectedFloor)}
                         onChange={handleFloorChange}
-                        label="پوړ (Floor)"
+                        label={texts.floor || "پوړ (Floor)"}
                       >
                         {floors.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>
@@ -685,11 +698,11 @@ export default function EditSawanihDialog({
                       size="small"
                       disabled={!selectedFloor}
                     >
-                      <InputLabel>شیلف (Shelf)</InputLabel>
+                      <InputLabel>{texts.shelf || "شیلف (Shelf)"}</InputLabel>
                       <Select
                         value={String(selectedShelf)}
                         onChange={handleShelfChange}
-                        label="شیلف (Shelf)"
+                        label={texts.shelf || "شیلف (Shelf)"}
                       >
                         {shelves.map((s) => (
                           <MenuItem key={s.id} value={String(s.id)}>
@@ -706,11 +719,11 @@ export default function EditSawanihDialog({
                       size="small"
                       disabled={!selectedShelf}
                     >
-                      <InputLabel>فایل (File)</InputLabel>
+                      <InputLabel>{texts.file || "فایل (File)"}</InputLabel>
                       <Select
                         value={String(selectedFile)}
                         onChange={(e) => setSelectedFile(e.target.value)}
-                        label="فایل (File)"
+                        label={texts.file || "فایل (File)"}
                       >
                         {cabinetFiles.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>

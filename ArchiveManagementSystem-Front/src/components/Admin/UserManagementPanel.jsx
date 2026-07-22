@@ -5,6 +5,10 @@ import {
   Card,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl, // ← ADD
   InputLabel, // ← ADD
   MenuItem, // ← ADD
@@ -18,6 +22,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -41,6 +46,8 @@ const UserManagementPanel = () => {
   const [loading, setLoading] = useState(true);
   const [selectedManagements, setSelectedManagements] = useState({});
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   // Load data function
   const loadData = async () => {
@@ -77,7 +84,10 @@ const UserManagementPanel = () => {
   useEffect(() => {
     loadData();
   }, []);
-
+  const handleToggleUserStatus = (userId, currentStatus) => {
+    setSelectedUser({ userId, currentStatus });
+    setConfirmOpen(true);
+  };
   const handleManagementChange = (userId, managementId) => {
     setSelectedManagements((prev) => ({ ...prev, [userId]: managementId }));
   };
@@ -98,21 +108,28 @@ const UserManagementPanel = () => {
       toast.error(texts.errorAssign);
     }
   };
-  const handleToggleUserStatus = async (userId, currentStatus) => {
+  const confirmToggleUserStatus = async () => {
+    if (!selectedUser) return;
+
+    const { userId, currentStatus } = selectedUser;
     const action = currentStatus ? "غیر فعال" : "فعال";
-    if (!window.confirm(`ایا تاسو ډاډه یاست چې دا کاربر ${action} کړئ؟`))
-      return;
+
     try {
       const formData = new URLSearchParams();
       formData.append("userId", userId);
       formData.append("enabled", !currentStatus);
+
       await api.put("/admin/update-enabled-status", formData, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
+
       toast.success(`کاربر ${action} شو`);
       loadData();
     } catch (error) {
-      toast.error("ستونزه پیښه شوه");
+      toast.error("ستونزه پېښه شوه");
+    } finally {
+      setConfirmOpen(false);
+      setSelectedUser(null);
     }
   };
   if (loading) {
@@ -146,16 +163,15 @@ const UserManagementPanel = () => {
         <Button
           variant="contained"
           onClick={() => setCreateDialogOpen(true)}
+          startIcon={<AddIcon />}
           sx={{ bgcolor: "#2196F3", "&:hover": { bgcolor: "#1976D2" } }}
         >
-          + نوی کاربر
+          {texts.newUser}
         </Button>
       </Box>
-
       <Alert severity="info" sx={{ mb: 3 }}>
         {texts.assignInfo}
       </Alert>
-
       {/* Statistics Cards */}
       {statistics && (
         <Box sx={{ mb: 3, display: "flex", gap: 2, flexWrap: "wrap" }}>
@@ -191,7 +207,6 @@ const UserManagementPanel = () => {
           </Card>
         </Box>
       )}
-
       {/* Users Table */}
       <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
         <TableContainer component={Paper}>
@@ -208,7 +223,7 @@ const UserManagementPanel = () => {
                   {texts.assignNewManagement}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>
-                  Created Date {/* ✅ ADD THIS */}
+                  {texts.createdDate}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>{texts.actions}</TableCell>
               </TableRow>
@@ -380,6 +395,30 @@ const UserManagementPanel = () => {
           loadData(); // ← refreshes the user list
         }}
       />
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>تایید</DialogTitle>
+
+        <DialogContent>
+          <Typography>
+            {selectedUser &&
+              `ایا تاسو ډاډه یاست چې دا کاربر ${
+                selectedUser.currentStatus ? "غیر فعال" : "فعال"
+              } کړئ؟`}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>لغوه</Button>
+          <Button
+            onClick={confirmToggleUserStatus}
+            color="error"
+            variant="contained"
+          >
+            تایید
+          </Button>
+        </DialogActions>
+      </Dialog>
+      ;
     </Box>
   );
 };

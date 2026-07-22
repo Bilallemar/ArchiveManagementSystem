@@ -4,6 +4,10 @@ const getBreadcrumbNameMap = (t) => ({
   "/archive/add": t("addArchive"),
   "/archive/:id": t("editArchive"),
 
+  // Nasharat
+ "/nasharat": t("nasharat"),
+  "/nasharat/add": t("addNasharat"),
+  "/nasharat/:id": t("editNasharat"),
   // Sawanih
   "/sawanih": t("sawanih"),
   "/sawanih/add-sawanih": t("addSawanih"),
@@ -27,7 +31,10 @@ const getBreadcrumbNameMap = (t) => ({
     "addHifziyaWaradaSadera",
   ),
   "/hifziya-warada-sadera/:id": t("editHifziyaWaradaSadera"),
-
+  // Minot Makatib
+ "/minot-makatib": t("minotMakatib"),
+  "/minot-makatib/add": t("addMinotMakatib"),
+  "/minot-makatib/:id": t("editMinotMakatib"),
   // Annual Reports Info
   "/annual-reports-info": t("annualReportsInfo"),
   "/annual-reports-info/add": t("addAnnualReportInfo"),

@@ -43,9 +43,11 @@ const getArchiveTexts = (t) => ({
   // ===== Table =====
   actions: t("actions"),
   rowsPerPage: t("rowsPerPage"),
+of: t("of"),  
 
   // ===== Filters & Search =====
   search: t("search"),
+  filter: t("filter"),
   fieldDocNo: t("fieldDocNo"),
   fieldOrg: t("fieldOrg"),
   fieldYear: t("fieldYear"),

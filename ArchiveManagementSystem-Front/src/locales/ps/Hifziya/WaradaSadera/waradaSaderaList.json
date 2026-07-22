@@ -10,6 +10,8 @@
     "headers": {
       "no": "د کتاب نمبر",
       "org": "مرسل",
+      "senderOrg": "مرسل علیه",
+      "senderOrgDate": "د مرسل علیه مکتوب نېټه",
       "subjectType": "د موضوع ډول",
       "letterNumber": "د مکتوب شمېره",
       "incommingDate": "د وارده مکتوب نېټه",
@@ -25,6 +27,7 @@
     "all": "ټول",
     "incomming": "وارده",
     "outgoing": " صادره",
+    "senderOrg": "مرسل علیه",
     "bookNumber": "د کتاب شمېره",
     "province": "ولایت",
     "district": "ولسوالي"
@@ -79,6 +82,8 @@
     "makhzan": "مخزن",
     "no": "د کتاب نمبر",
     "org": "مرسل",
+    "senderOrg": "مرسل علیه",
+    "senderOrgDate": "د مرسل علیه مکتوب نېټه",
     "subjectType": "د موضوع ډول",
     "letterNumber": "د مکتوب شمېره",
     "incommingDate": "د وارده نېټه",
@@ -102,6 +107,8 @@
     "title": "د سند تفصیلات",
     "number": "شمېره",
     "organization": "مرسل",
+    "senderOrg": "مرسل علیه",
+    "senderOrgDate": "د مرسل علیه مکتوب نېټه",
     "subjectType": "د موضوع ډول",
     "letterNumber": "د مکتوب شمېره",
     "incommingDate": "د وارده نېټه",
@@ -110,5 +117,16 @@
     "description": "ملاحظات",
     "noData": "هیڅ سند نه دی ټاکل شوی",
     "close": "بندول"
-  }
+  },
+  "cabinetAddress": "د آلماري پته اضافه کړئ",
+  "cabinet": "آلماري",
+  "floor": "پوړ",
+  "shelf": "شیلف",
+  "file": "فایل",
+  "files": "فایلونه",
+  "shelfs": "شیلفونه",
+  "floors": "پوړونه",
+  "subjectRequired": "د موضوع درج کول الزامي دي",
+  "rowsPerPage": "په هر مخ کې قطارونه",
+  "of": "له"
 }

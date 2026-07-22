@@ -2,6 +2,8 @@
   "pageTitle": "Storage Annual Report",
   "newReport": "New Report",
   "addNewReport": "Add Storage Annual Report",
+  "filter": "Filter",
+  "search": "Search",
 
   "province": "Province",
   "district": "District",
@@ -70,5 +72,15 @@
   "saving": "Saving...",
   "updating": "Updating...",
 
-  "saveChanges": "Save Changes"
+  "saveChanges": "Save Changes",
+    "cabinetAddress": " Add Cabinet Address",
+  "cabinet": "Cabinet",
+  "floor": "Floor",
+  "shelf": "Shelf",
+  "file": "File",
+  "files": "Files",
+  "shelfs": "Shelfs",
+  "floors": "Floors",
+   "rowsPerPage": "Rows per page",
+  "of": "Of"
 }

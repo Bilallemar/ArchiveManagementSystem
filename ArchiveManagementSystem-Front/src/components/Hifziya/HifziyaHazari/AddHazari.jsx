@@ -608,17 +608,17 @@ export default function AddHazari() {
                       fontWeight="bold"
                       sx={{ mb: 1 }}
                     >
-                      د کابینې پته (Cabinet Address)
+                      {text.cabinetAddress}
                     </Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>کابینه (Cabinet)</InputLabel>
+                      <InputLabel>{text.cabinet} </InputLabel>
                       <Select
                         value={String(selectedCabinet)}
                         onChange={handleCabinetChange}
-                        label="کابینه (Cabinet)"
+                        label={text.cabinet || "Cabinet"}
                       >
                         {cabinets.map((c) => (
                           <MenuItem key={c.id} value={String(c.id)}>
@@ -635,11 +635,11 @@ export default function AddHazari() {
                       size="small"
                       disabled={!selectedCabinet}
                     >
-                      <InputLabel>پوړ (Floor)</InputLabel>
+                      <InputLabel>{text.floor}</InputLabel>
                       <Select
                         value={String(selectedFloor)}
                         onChange={handleFloorChange}
-                        label="پوړ (Floor)"
+                        label={text.floor}
                       >
                         {floors.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>
@@ -656,11 +656,11 @@ export default function AddHazari() {
                       size="small"
                       disabled={!selectedFloor}
                     >
-                      <InputLabel>شیلف (Shelf)</InputLabel>
+                      <InputLabel>{text.shelf}</InputLabel>
                       <Select
                         value={String(selectedShelf)}
                         onChange={handleShelfChange}
-                        label="شیلف (Shelf)"
+                        label={text.shelf}
                       >
                         {shelves.map((s) => (
                           <MenuItem key={s.id} value={String(s.id)}>
@@ -677,11 +677,11 @@ export default function AddHazari() {
                       size="small"
                       disabled={!selectedShelf}
                     >
-                      <InputLabel>فایل (File)</InputLabel>
+                      <InputLabel>{text.file}</InputLabel>
                       <Select
                         value={String(selectedFile)}
                         onChange={(e) => setSelectedFile(e.target.value)}
-                        label="فایل (File)"
+                        label={text.file}
                       >
                         {cabinetFiles.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>

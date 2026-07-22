@@ -71,5 +71,16 @@
   "saving": "در حال ثبت...",
   "updating": "در حال به‌روزرسانی...",
 
-  "saveChanges": "ثبت تغییرات"
+  "saveChanges": "ثبت تغییرات",
+
+    "cabinetAddress": "آدرس آلماری اضافه کنید",
+  "cabinet": "آلماری",
+  "floor": "طبقه",
+  "shelf": "شیلف",
+  "file": "فایل",
+  "files": "فایل‌ها",
+  "shelfs": "شیلف‌ها",
+  "floors": "طبقه‌ها",
+    "rowsPerPage": "تعداد در هر صفحه",
+     "of": "از"
 }

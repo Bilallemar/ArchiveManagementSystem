@@ -1,16 +1,13 @@
 package com.MCIT.ArchiveManagementSystem.dtos;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.MCIT.ArchiveManagementSystem.models.Role;
 
-import jakarta.persistence.Column;
-
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +16,7 @@ public class UserDTO {
     private Long userId;
     private String userName;
     private String email;
-private String profileImage;
+    private String profileImage;
 
     private boolean accountNonLocked;
     private boolean accountNonExpired;

@@ -240,12 +240,18 @@ export default function MakzanAnnualReportList() {
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100]}
             component="div"
-            count={totalCount} // ← was filteredReports.length (wrong)
+            count={totalCount}
             rowsPerPage={rowsPerPage}
             page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage={texts.rowsPerPage || "په پاڼه کې قطارونه"}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(+e.target.value);
+              setPage(0);
+            }}
+            labelRowsPerPage={texts.rowsPerPage || "Rows per page:"}
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} ${texts.of} ${count !== -1 ? count : `${to}+`}`
+            }
           />
         </Paper>
       </Box>

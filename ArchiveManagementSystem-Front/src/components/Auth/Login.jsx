@@ -1,7 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 import { Visibility, VisibilityOff } from "@mui/icons-material";
@@ -175,6 +175,9 @@ const Login = () => {
           {step === 1 ? (
             <Box component="form" onSubmit={handleSubmit(onLoginHandler)}>
               <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+                {texts.info}
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 400, mb: 2 }}>
                 {texts.signIn}
               </Typography>
               {/* 
@@ -227,14 +230,14 @@ const Login = () => {
                 sx={{ mb: 2 }}
               />
 
-              <Box sx={{ textAlign: "right", mb: 3 }}>
+              {/* <Box sx={{ textAlign: "right", mb: 3 }}>
                 <Link
                   to="/forgot-password"
                   style={{ textDecoration: "none", fontSize: "0.875rem" }}
                 >
                   {texts.forgotPassword}
                 </Link>
-              </Box>
+              </Box> */}
 
               <Button
                 type="submit"

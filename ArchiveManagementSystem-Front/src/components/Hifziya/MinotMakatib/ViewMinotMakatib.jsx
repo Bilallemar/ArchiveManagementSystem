@@ -19,8 +19,12 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
+import getMinotMakatibTexts from "../../../helpers/hifziya/MinotMakatib/MinotMakatibTexts";
 
 export default function ViewMinotMakatib({ open, onClose, report }) {
+  const { t } = useTranslation("minotMakatib");
+  const text = getMinotMakatibTexts(t);
   if (!open || !report) return null;
 
   const handleViewFile = (filePath, fileName) => {
@@ -64,7 +68,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="h5" fontWeight="bold">
-            د مینوټ مکاتب تفصیلات
+            {text.viewTitle || "د مینوټ مکاتب تفصیلات"}
           </Typography>
           <Chip
             label={`ID: ${report.id}`}
@@ -83,7 +87,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                د کارتن شمېره
+                {text.cartonNumber || "د کارتن شمېره"}
               </Typography>
               <Typography variant="h6" fontWeight={600}>
                 {report.cartonNumber || "—"}
@@ -94,7 +98,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                د مکتوب شمېره
+                {text.letterNumber || "د لیټر شمېره"}{" "}
               </Typography>
               <Typography variant="h6" fontWeight={600}>
                 {report.letterNumber || "—"}
@@ -105,7 +109,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                کال
+                {text.year || "د سال"}
               </Typography>
               <Typography variant="body1">{report.year || "—"}</Typography>
             </Box>
@@ -114,7 +118,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                اداره
+                {text.viewOrganization || "اداره"}
               </Typography>
               <Typography variant="body1" fontWeight={500}>
                 {report.org?.name || "—"}
@@ -125,7 +129,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
           <Grid item xs={12}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                موضوع
+                {text.subject || "موضوع"}
               </Typography>
               <Typography variant="body1">{report.subject || "—"}</Typography>
             </Box>
@@ -133,7 +137,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
           <Grid item xs={12}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                ملاحظات
+                {text.description || "ملاحظات"}
               </Typography>
               <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
                 {report.description || "—"}
@@ -150,7 +154,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
                   fontWeight="bold"
                   color="primary.main"
                 >
-                  د کابینې پته (Cabinet Address)
+                  {text.cabinetAddress || "د کابینې پته"}
                 </Typography>
                 <Divider sx={{ mt: 1 }} />
               </Grid>
@@ -161,7 +165,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    کابینه
+                    {text.cabinet || "کابینه"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
@@ -175,7 +179,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    پوړ
+                    {text.floor || "پوړ"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.shelf?.floor?.name || "—"}
@@ -189,7 +193,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    شیلف
+                    {text.shelf || "شیلف"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.shelf?.name || "—"}
@@ -203,7 +207,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    فایل
+                    {text.file || "اسناد"}{" "}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {report.cabinetFile?.name || "—"}
@@ -221,7 +225,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
               color="primary.main"
               gutterBottom
             >
-              ضمیمه شوي اسناد{" "}
+              {text.attachedFiles || "ضمیمه شوي اسناد"}{" "}
               {report.files?.length ? `(${report.files.length})` : ""}
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -286,7 +290,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
                 icon={<FolderOffIcon />}
                 sx={{ bgcolor: "info.lighter" }}
               >
-                هیڅ ضمیمه شوی سند نشته
+                {text.noAttachedFiles || "هیڅ ضمیمه شوی سند نشته"}
               </Alert>
             )}
           </Grid>
@@ -295,7 +299,7 @@ export default function ViewMinotMakatib({ open, onClose, report }) {
 
       <DialogActions sx={{ px: 4, py: 2.5 }}>
         <Button variant="contained" onClick={onClose} sx={{ minWidth: 120 }}>
-          بندول
+          {text.viewClose || "بندول"}
         </Button>
       </DialogActions>
     </Dialog>

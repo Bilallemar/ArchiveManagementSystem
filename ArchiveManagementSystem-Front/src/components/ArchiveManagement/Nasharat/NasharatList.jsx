@@ -62,7 +62,7 @@ export default function NasharatList() {
   const columns = useMemo(
     () => [
       { id: "docNo", label: t("docNo", "نمبر مکتوب / پارسل"), minWidth: 130 },
-      { id: "receiveDate", label: t("receiveDate", "تاریخ دریافت"), minWidth: 120 },
+      { id: "receiveDate", label: t("incomingDate", "تاریخ دریافت"), minWidth: 120 },
       { id: "sendDate", label: t("sendDate", "تاریخ ارسال"), minWidth: 120 },
       { id: "senderOrg", label: t("sender", "مرسل"), minWidth: 180 },
       { id: "receiverOrg", label: t("receiver", "مرسل الیه"), minWidth: 180 },
@@ -255,16 +255,23 @@ export default function NasharatList() {
           </Table>
         </TableContainer>
 
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          component="div"
-          count={totalCount}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          labelRowsPerPage={t("rowsPerPage", "Rows per page:")}
-        />
+
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50, 100]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(+e.target.value);
+              setPage(0);
+            }}
+            labelRowsPerPage={t("rowsPerPage", "په هره پاڼه کې قطارونه")}
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}-${to} ${t("of", "له")} ${count !== -1 ? count : `${to}+`}`
+            }
+          />
       </Paper>
 
       {/* Action Menu */}

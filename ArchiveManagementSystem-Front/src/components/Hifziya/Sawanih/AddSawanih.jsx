@@ -52,6 +52,7 @@ export default function AddSawanih() {
   const [formData, setFormData] = useState({
     name: "",
     fatherName: "",
+    parsalNumber: "",
     incommingDate: "",
     outgoingDate: "",
     org: "",
@@ -181,6 +182,7 @@ export default function AddSawanih() {
       const payload = {
         name: formData.name?.trim() || "",
         fatherName: formData.fatherName?.trim() || null,
+        parsalNumber: formData.parsalNumber?.trim() || null,
         incommingDate: convertHijriToGregorian(formData.incommingDate),
         outgoingDate: convertHijriToGregorian(formData.outgoingDate),
         org: { id: Number(formData.org) },
@@ -473,7 +475,16 @@ export default function AddSawanih() {
                       onChange={handleInputChange}
                     />
                   </Grid>
-
+        <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="parsalNumber"
+                      label={texts.parsalNumber || "پارسل نمبر"}
+                      value={formData.parsalNumber}
+                      onChange={handleInputChange}
+                    />
+                  </Grid>
                   <Grid item xs={12} sm={6}>
                     <FormControl
                       fullWidth
@@ -545,16 +556,16 @@ export default function AddSawanih() {
                       fontWeight="bold"
                       sx={{ mb: 1 }}
                     >
-                      د کابینې پته (Cabinet Address)
+                      {texts.cabinetAddress || "د آلماري پته"}
                     </Typography>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>کابینه (Cabinet)</InputLabel>
+                      <InputLabel>{texts.cabinet || "کابینه"}</InputLabel>
                       <Select
                         value={String(selectedCabinet)} // ✅ String()
                         onChange={handleCabinetChange}
-                        label="کابینه (Cabinet)"
+                        label={texts.cabinet || "کابینه"}
                       >
                         {cabinets.map((c) => (
                           <MenuItem key={c.id} value={String(c.id)}>
@@ -572,11 +583,11 @@ export default function AddSawanih() {
                       size="small"
                       disabled={!selectedCabinet}
                     >
-                      <InputLabel>پوړ (Floor)</InputLabel>
+                      <InputLabel>{texts.floor || "پوړ (Floor)"}</InputLabel>
                       <Select
                         value={String(selectedFloor)} // ✅ String()
                         onChange={handleFloorChange}
-                        label="پوړ (Floor)"
+                        label={texts.floor || "پوړ (Floor)"}
                       >
                         {floors.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>
@@ -594,11 +605,11 @@ export default function AddSawanih() {
                       size="small"
                       disabled={!selectedFloor}
                     >
-                      <InputLabel>شیلف (Shelf)</InputLabel>
+                      <InputLabel>{texts.shelf || "شیلف (Shelf)"}</InputLabel>
                       <Select
                         value={String(selectedShelf)} // ✅ String()
                         onChange={handleShelfChange}
-                        label="شیلف (Shelf)"
+                        label={texts.shelf || "شیلف (Shelf)"}
                       >
                         {shelves.map((s) => (
                           <MenuItem key={s.id} value={String(s.id)}>
@@ -616,11 +627,11 @@ export default function AddSawanih() {
                       size="small"
                       disabled={!selectedShelf}
                     >
-                      <InputLabel>فایل (File)</InputLabel>
+                      <InputLabel>{texts.file || "فایل (File)"}</InputLabel>
                       <Select
                         value={String(selectedFile)} // ✅ String()
                         onChange={(e) => setSelectedFile(e.target.value)}
-                        label="فایل (File)"
+                        label={texts.file || "فایل (File)"}
                       >
                         {cabinetFiles.map((f) => (
                           <MenuItem key={f.id} value={String(f.id)}>

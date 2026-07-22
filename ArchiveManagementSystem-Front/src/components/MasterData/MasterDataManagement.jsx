@@ -1,13 +1,13 @@
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import BusinessIcon from "@mui/icons-material/Business"; // organizations
 import AccountTreeIcon from "@mui/icons-material/AccountTree"; // departments
+import AddIcon from "@mui/icons-material/Add";
+import BusinessIcon from "@mui/icons-material/Business"; // organizations
 import CategoryIcon from "@mui/icons-material/Category"; // types
-import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight"; // subTypes
+import DeleteIcon from "@mui/icons-material/Delete";
 import DescriptionIcon from "@mui/icons-material/Description"; // docTypes
-import LocationOnIcon from "@mui/icons-material/LocationOn"; // locations
+import EditIcon from "@mui/icons-material/Edit";
 import Inventory2Icon from "@mui/icons-material/Inventory2"; // cabinetManagement
+import LocationOnIcon from "@mui/icons-material/LocationOn"; // locations
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight"; // subTypes
 
 import {
   Box,
@@ -59,13 +59,47 @@ export default function MasterDataManagement() {
           onChange={(e, v) => setActiveTab(v)}
           sx={{ borderBottom: 1, borderColor: "divider" }}
         >
-  <Tab icon={<BusinessIcon />} iconPosition="start" label={t("organizations")} />
-  <Tab icon={<AccountTreeIcon />} iconPosition="start" label={t("departments")} />
-  <Tab icon={<CategoryIcon />} iconPosition="start" label={t("types")} />
-  <Tab icon={<SubdirectoryArrowRightIcon />} iconPosition="start" label={t("subTypes")} />
-  <Tab icon={<DescriptionIcon />} iconPosition="start" label={t("docTypes")} />
-  <Tab icon={<LocationOnIcon />} iconPosition="start" label={t("locations")} />
-  <Tab icon={<Inventory2Icon />} iconPosition="start" label={t("cabinetManagement")} />
+          <Tab
+            icon={<BusinessIcon sx={{ color: "#4A90D9" }} />}
+            iconPosition="start"
+            label={t("organizations")}
+          />
+
+          <Tab
+            icon={<AccountTreeIcon sx={{ color: "#6C63FF" }} />}
+            iconPosition="start"
+            label={t("departments")}
+          />
+
+          <Tab
+            icon={<CategoryIcon sx={{ color: "#FFAB00" }} />}
+            iconPosition="start"
+            label={t("types")}
+          />
+
+          <Tab
+            icon={<SubdirectoryArrowRightIcon sx={{ color: "#FF5630" }} />}
+            iconPosition="start"
+            label={t("subTypes")}
+          />
+
+          <Tab
+            icon={<DescriptionIcon sx={{ color: "#10B981" }} />}
+            iconPosition="start"
+            label={t("docTypes")}
+          />
+
+          <Tab
+            icon={<LocationOnIcon sx={{ color: "#00B8D9" }} />}
+            iconPosition="start"
+            label={t("locations")}
+          />
+
+          <Tab
+            icon={<Inventory2Icon sx={{ color: "#6554C0" }} />}
+            iconPosition="start"
+            label={t("cabinetManagement")}
+          />
         </Tabs>
         <CardContent>
           {activeTab === 0 && <OrgManagement t={t} />}
