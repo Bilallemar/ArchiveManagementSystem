@@ -1,5 +1,8 @@
 package com.MCIT.ArchiveManagementSystem.models.RepositoryManagement;
 
+import java.time.LocalDate;
+
+import com.MCIT.ArchiveManagementSystem.models.Auditable;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.CabinetAddress.CabinetFile;
 import com.MCIT.ArchiveManagementSystem.models.enums.ShuraAliDirection;
@@ -15,18 +18,21 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "shura_aali_resolutions")
 @Data
-public class ShuraAaliResolution {
+@EqualsAndHashCode(callSuper = false)
+
+public class ShuraAaliResolution extends Auditable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
   @Column(name = "send_date")
-  private String sendDate;
+  private LocalDate sendDate;
 
   private String subject;
 

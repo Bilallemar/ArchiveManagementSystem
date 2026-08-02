@@ -22,6 +22,8 @@ const getArchiveTexts = (t) => ({
   outgoingDate: t("outgoingDate"),
   sendDate: t("sendDate"),
   submittedDate: t("submittedDate"),
+  archiveSubmitedDate: t("archiveSubmitedDate"),
+  postSubmittedDate: t("postSubmittedDate"),
   org: t("org"),
   organization: t("organization"),
   sender: t("sender"),

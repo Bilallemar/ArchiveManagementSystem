@@ -15,7 +15,10 @@
   "docNo": "د مکتوب / پارسل شمېره",
   "departmentDate": "د شعبې نېټه",
   "incomingDate": "د واردې نېټه",
+  "archiveSubmitedDate": "د آرشیف د تسلیمۍ نېټه",
+  "postSubmittedDate": "د پوسته خانې د تسلیمۍ نېټه",
   "outgoingDate": "د صادرې نېټه",
+
   "sendDate": "د لېږلو نېټه",
   "submittedDate": "د تسلیمي نېټه",
 

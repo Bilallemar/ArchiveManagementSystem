@@ -1,10 +1,5 @@
 package com.MCIT.ArchiveManagementSystem.controller;
 
-import com.MCIT.ArchiveManagementSystem.dtos.DashboardStatsDTO;
-import com.MCIT.ArchiveManagementSystem.dtos.ManagementStatsDTO;
-import com.MCIT.ArchiveManagementSystem.dtos.OrgStatsDTO;
-import com.MCIT.ArchiveManagementSystem.services.DashboardService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -12,7 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.MCIT.ArchiveManagementSystem.dtos.AdminHijriMonthlyStatsDTO;
+import com.MCIT.ArchiveManagementSystem.dtos.DashboardStatsDTO;
+import com.MCIT.ArchiveManagementSystem.dtos.ManagementStatsDTO;
+import com.MCIT.ArchiveManagementSystem.services.DashboardService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -44,6 +44,12 @@ public class DashboardController {
         return ResponseEntity.ok(stats);
     }
 
+    @GetMapping("/hijri-monthly")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminHijriMonthlyStatsDTO> getAdminHijriMonthlyStats() {
+        AdminHijriMonthlyStatsDTO stats = dashboardService.getAdminHijriMonthlyStats();
+        return ResponseEntity.ok(stats);
+    }
     /**
      * Get statistics by organization (Admin only)
      * Shows document counts grouped by organization
@@ -51,7 +57,7 @@ public class DashboardController {
     // @GetMapping("/org-stats")
     // @PreAuthorize("hasRole('ADMIN')")
     // public ResponseEntity<List<OrgStatsDTO>> getOrgStats() {
-    //     List<OrgStatsDTO> stats = dashboardService.getOrgStats();
-    //     return ResponseEntity.ok(stats);
+    // List<OrgStatsDTO> stats = dashboardService.getOrgStats();
+    // return ResponseEntity.ok(stats);
     // }
 }

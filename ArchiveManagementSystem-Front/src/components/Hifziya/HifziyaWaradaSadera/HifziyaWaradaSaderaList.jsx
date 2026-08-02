@@ -68,7 +68,7 @@ export default function HifziyaWaradaSaderaList() {
   const open = Boolean(anchorEl);
 
   const columns = [
-    { id: "org", label: text.org || "اداره", minWidth: 150 },
+    { id: "senderOrg", label: text.org || "اداره", minWidth: 150 },
     {
       id: "letterNumber",
       label: text.letterNumber || "شمېره مکتوب",
@@ -307,7 +307,7 @@ export default function HifziyaWaradaSaderaList() {
             onFieldChange={handleFieldChange}
             fields={[
               { value: "no", label: text.no || "شمېره" },
-              { value: "org", label: text.org || "اداره" },
+              { value: "senderOrg", label: text.org || "اداره" },
               {
                 value: "letterNumber",
                 label: text.letterNumber || "شمېره مکتوب",

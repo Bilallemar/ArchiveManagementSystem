@@ -86,19 +86,25 @@ export default function SidebarLayout({ children }) {
 
     navigationItems.forEach((item) => {
       if (item.path === "/") g.dashboard.push(item);
-      else if (item.path.includes("archive") || item.path.includes("nasharat"))
+      else if (
+        item.path.includes("archive") ||
+        item.path.includes("nasharat") ||
+        item.path.includes("reports/archive")
+      )
         g.archive.push(item);
       else if (
         item.path.includes("sawanih") ||
         item.path === "/shura-aali-resolutions" ||
         item.path.includes("hifziya") ||
-        item.path.includes("minot-makatib")
+        item.path.includes("minot-makatib") ||
+        item.path.includes("reports/hifziya")
       )
         g.hifziya.push(item);
       else if (
         item.path.includes("makzan") ||
         item.path.includes("annual-reports") ||
-        item.path === "/makhzan-warada-sadera"
+        item.path === "/makhzan-warada-sadera" ||
+        item.path.includes("reports/makhzan")
       )
         g.makzan.push(item);
       else if (item.path.includes("master-data")) g.settings.push(item);

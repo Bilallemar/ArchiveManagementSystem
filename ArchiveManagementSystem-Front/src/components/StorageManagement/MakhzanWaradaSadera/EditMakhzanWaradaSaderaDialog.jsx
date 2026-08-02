@@ -46,10 +46,12 @@ export default function EditMakhzanWaradaSaderaDialog({
 }) {
   const [formData, setFormData] = useState({
     no: "",
-    org: "",
+    receiverOrg: "",
+    senderOrg: "",
     letterNumber: "",
     incommingDate: "",
     outgoingDate: "",
+    senderOrgDate: "",
     summary: "",
     description: "",
     newFiles: [],
@@ -105,17 +107,18 @@ export default function EditMakhzanWaradaSaderaDialog({
 
           setFormData({
             no: record.no || "",
-            org: record.org?.id || "",
+            receiverOrg: record.receiverOrg?.id || "",
+            senderOrg: record.senderOrg?.id || "",
             letterNumber: record.letterNumber || "",
             incommingDate: convertGregorianToHijri(record.incommingDate),
             outgoingDate: convertGregorianToHijri(record.outgoingDate),
+            senderOrgDate: convertGregorianToHijri(record.senderOrgDate),
             summary: record.summary || "",
             description: record.description || "",
             subjectType: record.subjectType || "",
             newFiles: [],
           });
 
-  
           setExistingFiles(record.files || []);
           if (record.cabinetFile) {
             const cf = record.cabinetFile;
@@ -277,8 +280,13 @@ export default function EditMakhzanWaradaSaderaDialog({
       setIsSubmitting(false);
       return;
     }
-    if (!formData.org) {
-      toast.error(text.missingFields || "Organization is required");
+    if (!formData.receiverOrg) {
+      toast.error(text.missingFields || "Receiver organization is required");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.senderOrg) {
+      toast.error(text.missingFields || "Sender organization is required");
       setIsSubmitting(false);
       return;
     }
@@ -286,9 +294,16 @@ export default function EditMakhzanWaradaSaderaDialog({
     try {
       const payload = {
         no: formData.no.trim(),
-        org: { id: parseInt(formData.org) },
+        senderOrg: formData.senderOrg
+          ? { id: parseInt(formData.senderOrg) }
+          : null,
+        receiverOrg: formData.receiverOrg
+          ? { id: parseInt(formData.receiverOrg) }
+          : null,
         letterNumber: formData.letterNumber.trim() || null,
         incommingDate: convertHijriToGregorian(formData.incommingDate) || null,
+        senderOrgDate: convertHijriToGregorian(formData.senderOrgDate) || null,
+        
         summary: formData.summary.trim() || null,
         subjectType: formData.subjectType || null,
         cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null,
@@ -599,13 +614,35 @@ export default function EditMakhzanWaradaSaderaDialog({
                       fullWidth
                       size="small"
                       required
-                      error={!formData.org}
+                      error={!formData.receiverOrg}
                     >
                       <InputLabel>{text.org || "اداره"}</InputLabel>
                       <Select
-                        name="org"
-                        value={formData.org}
+                        name="receiverOrg"
+                        value={formData.receiverOrg}
                         label={text.org || "اداره"}
+                        onChange={handleInputChange}
+                      >
+                        {orgs.map((org) => (
+                          <MenuItem key={org.id} value={org.id}>
+                            {org.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      required
+                      error={!formData.senderOrg}
+                    >
+                      <InputLabel>{text.senderOrg || "اداره"}</InputLabel>
+                      <Select
+                        name="senderOrg"
+                        value={formData.senderOrg}
+                        label={text.senderOrg || "اداره"}
                         onChange={handleInputChange}
                       >
                         {orgs.map((org) => (
@@ -638,20 +675,34 @@ export default function EditMakhzanWaradaSaderaDialog({
                       onChange={handleInputChange}
                     />
                   </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <HijriDatePicker
-                      fullWidth
-                      size="small"
-                      type="date"
-                      name="incommingDate"
-                      label={text.incommingDate || "تاریخ وارده"}
-                      InputLabelProps={{ shrink: true }}
-                      value={formData.incommingDate}
-                      onChange={handleHijriDateChange("incommingDate")}
-                    />
-                  </Grid>
-
+                  {direction === "INCOMING" && (
+                    <Grid item xs={12} sm={6}>
+                      <HijriDatePicker
+                        fullWidth
+                        size="small"
+                        type="date"
+                        name="incommingDate"
+                        label={text.incommingDate || "تاریخ وارده"}
+                        InputLabelProps={{ shrink: true }}
+                        value={formData.incommingDate}
+                        onChange={handleHijriDateChange("incommingDate")}
+                      />
+                    </Grid>
+                  )}
+                  {direction === "INCOMING" && (
+                    <Grid item xs={12} sm={6}>
+                      <HijriDatePicker
+                        fullWidth
+                        size="small"
+                        type="date"
+                        name="senderOrgDate"
+                        label={text.senderOrgDate || "تاریخ "}
+                        InputLabelProps={{ shrink: true }}
+                        value={formData.senderOrgDate}
+                        onChange={handleHijriDateChange("senderOrgDate")}
+                      />
+                    </Grid>
+                  )}
                   {direction === "OUTGOING" && (
                     <Grid item xs={12} sm={6}>
                       <HijriDatePicker
@@ -683,13 +734,15 @@ export default function EditMakhzanWaradaSaderaDialog({
                       fontWeight="bold"
                       sx={{ mb: 1 }}
                     >
-                     {text.cabinetAddress|| "پته کابینه (Cabinet Location)"}
+                      {text.cabinetAddress || "پته کابینه (Cabinet Location)"}
                     </Typography>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>{text.cabinet || "کابینه (Cabinet)"}</InputLabel>
+                      <InputLabel>
+                        {text.cabinet || "کابینه (Cabinet)"}
+                      </InputLabel>
                       <Select
                         value={String(selectedCabinet)}
                         onChange={handleCabinetChange}

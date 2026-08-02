@@ -68,6 +68,8 @@ export default function SawanihList() {
     { id: "org", label: text.org, minWidth: 120 },
     { id: "incommingDate", label: text.incommingDate, minWidth: 120 },
     { id: "direction", label: text.direction || "نوع", minWidth: 100 },
+    { id: "parselNumber", label: text.parcelNumber, minWidth: 120 },
+    
 
     { id: "actions", label: text.actions, minWidth: 120 },
   ];
@@ -302,6 +304,7 @@ export default function SawanihList() {
               { value: "name", label: text.name },
               { value: "fatherName", label: text.fatherName },
               { value: "org", label: text.org },
+              { value: "parsalNumber", label: text.parcelNumber },
             ]}
           />
         </Paper>
@@ -357,6 +360,7 @@ export default function SawanihList() {
                         {row.isSawanih ? "سوانح" : "استخدام"}
                       </Box>
                     </TableCell>
+                    <TableCell align="center">{row.parsalNumber || "N/A"}</TableCell>
                     <TableCell align="center">
                       <IconButton onClick={(e) => handleClick(e, row)}>
                         <MoreVertIcon />

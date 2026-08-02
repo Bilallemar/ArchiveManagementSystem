@@ -24,7 +24,8 @@ export default function ViewArchive({ open, onClose, archive }) {
     ? texts.viewIncoming || "لیدل وارده"
     : texts.viewOutgoing || "لیدل صادره";
   if (!archive) return null;
-
+  const direction = archive.direction || "INCOMING";
+  if (!open || !archive) return null;
   const InfoRow = ({ label, value }) => (
     <Grid container spacing={2} sx={{ mb: 2 }}>
       <Grid item xs={4}>
@@ -124,7 +125,7 @@ export default function ViewArchive({ open, onClose, archive }) {
           <Grid item xs={12} sm={6}>
             <Box>
               <Typography variant="caption" color="text.secondary" gutterBottom>
-                {texts.incomingDate || "تاریخ دریافت"}
+                {texts.archiveSubmitedDate || "تاریخ دریافت"}
               </Typography>
               <Typography variant="body1">
                 {formatHijriDateForDisplay(archive.receiveDate)}
@@ -133,17 +134,22 @@ export default function ViewArchive({ open, onClose, archive }) {
           </Grid>
 
           {/* Document Type */}
-          <Grid item xs={12} sm={6}>
-            <Box>
-              <Typography variant="caption" color="text.secondary" gutterBottom>
-                {texts.sendDate || "تاریخ ارسال"}
-              </Typography>
-              <Typography variant="body1">
-                {formatHijriDateForDisplay(archive.sendDate)}
-              </Typography>
-            </Box>
-          </Grid>
-
+          {direction === "OUTGOING" && (
+            <Grid item xs={12} sm={6}>
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  {texts.postSubmittedDate || "تاریخ ارسال"}
+                </Typography>
+                <Typography variant="body1">
+                  {formatHijriDateForDisplay(archive.sendDate)}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
           {/* Summary Waseqa */}
           <Grid item xs={12} sm={6}>
             <Box>

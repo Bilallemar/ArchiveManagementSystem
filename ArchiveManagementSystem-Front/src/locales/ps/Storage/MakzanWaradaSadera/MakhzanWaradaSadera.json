@@ -8,6 +8,7 @@
     "headers": {
       "no": "د کتاب نمبر",
       "org": "مرسل",
+      "senderOrg": "مرسل الیه",
       "subjectType": "د موضوع ډول",
       "letterNumber": "د مکتوب شمېره",
       "incommingDate": "د وارده مکتوب نېټه",
@@ -77,10 +78,12 @@
     "makhzan": "مخزن",
     "no": "د کتاب نمبر",
     "org": "مرسل",
+    "senderOrg": "  مرسل الیه",
     "subjectType": "د موضوع ډول",
     "letterNumber": "د مکتوب شمېره",
     "incommingDate": "د وارده نېټه",
     "outgoingDate": "د صادره نېټه",
+    "senderOrgDate": "نېټه",
     "summary": "د مطلب خلاصه",
     "description": "ملاحظات",
     "loading": "پورته کېدنه روانه ده...",
@@ -100,10 +103,12 @@
     "title": "د سند تفصیلات",
     "number": "شمېره",
     "organization": "مرسل",
+    "senderOrg": "مرسل الیه",
     "subjectType": "د موضوع ډول",
     "letterNumber": "د مکتوب شمېره",
     "incommingDate": "د وارده نېټه",
     "outgoingDate": "د صادره نېټه",
+    "senderOrgDate": "نېټه",
     "summary": "خلاصه",
     "description": "ملاحظات",
     "noData": "هیڅ سند نه دی ټاکل شوی",
@@ -119,6 +124,6 @@
   "files": "فایلونه",
   "shelfs": "شیلفونه",
   "floors": "پوړونه",
-    "rowsPerPage": "په هر مخ کې قطارونه",
-     "of": "له"
+  "rowsPerPage": "په هر مخ کې قطارونه",
+  "of": "له"
 }

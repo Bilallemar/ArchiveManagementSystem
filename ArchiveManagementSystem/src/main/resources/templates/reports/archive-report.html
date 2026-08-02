@@ -1,0 +1,112 @@
+<html xmlns:th="http://www.thymeleaf.org" dir="rtl" lang="ps">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * {
+        font-family: "NotoNaskhArabic";
+      }
+
+      body {
+        font-family: "NotoNaskhArabic", sans-serif;
+        direction: rtl;
+        font-size: 12px;
+        color: #222;
+      }
+      h1 {
+        text-align: center;
+        font-size: 18px;
+        margin-bottom: 4px;
+        unicode-bidi: plaintext;
+      }
+      .meta {
+        text-align: center;
+        margin-bottom: 14px;
+        font-size: 11px;
+        color: #555;
+        direction: rtl;
+        unicode-bidi: plaintext;
+        font-family: "NotoNaskhArabic";
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th,
+      td {
+        border: 1px solid #999;
+        padding: 5px 6px;
+        text-align: right;
+        font-size: 10.5px;
+        unicode-bidi: plaintext;
+      }
+      th {
+        background-color: #eee;
+      }
+      .summary {
+        margin-top: 16px;
+        font-size: 12px;
+      }
+      .summary span {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <p>د آرشیف مدیریت اداره</p>
+
+    <p>ملاحظات</p>
+
+    <p>مرسل الیه</p>
+    <h1>د آرشیف راپور</h1>
+    <div class="meta" dir="rtl">
+      اداره: <span th:text="${managementName}"></span> | د راپور نیټه:
+      <span th:text="${generatedOn}"></span> |
+      <span th:if="${dateFrom != null}">
+        د <span th:text="${dateFrom}"></span> څخه تر
+        <span th:text="${dateTo}"></span> پورې
+      </span>
+    </div>
+
+    <table>
+      <thead>
+        <style>
+          @font-face {
+            font-family: "NotoNaskhArabic";
+            src: url("fonts/NotoNaskhArabic-Regular.ttf");
+          }
+        </style>
+        <tr>
+          <th>#</th>
+          <th>د لیک شمېره</th>
+          <th>مرسل</th>
+          <th>مرسل الیه</th>
+          <th>نوعیت</th>
+          <th>سمت</th>
+          <th>د ارسال نیټه</th>
+          <th>ملاحظات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="row, iter : ${rows}">
+          <td th:text="${iter.count}"></td>
+          <td th:text="${row.docNo}"></td>
+          <td th:text="${row.senderOrgName}"></td>
+          <td th:text="${row.receiverOrgName}"></td>
+          <td th:text="${row.docTypeName}"></td>
+          <td th:text="${row.direction}"></td>
+          <td th:text="${row.sendDate}"></td>
+          <td th:text="${row.description}"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <p>ټول اسناد: <span th:text="${total}"></span></p>
+      <p>
+        واردات: <span th:text="${totalIncoming}"></span> &#160;|&#160; صادرات:
+        <span th:text="${totalOutgoing}"></span>
+      </p>
+    </div>
+  </body>
+</html>

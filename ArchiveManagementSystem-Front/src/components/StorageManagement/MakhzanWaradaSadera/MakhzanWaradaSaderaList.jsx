@@ -66,7 +66,7 @@ export default function MakhzanWaradaSaderaList() {
   const open = Boolean(anchorEl);
 
   const columns = [
-    { id: "org", label: text.org || "اداره", minWidth: 150 },
+    { id: "senderOrg", label: text.org || "اداره", minWidth: 150 },
     {
       id: "letterNumber",
       label: text.letterNumber || "شمېره مکتوب",
@@ -77,11 +77,11 @@ export default function MakhzanWaradaSaderaList() {
       label: text.subjectType || "د لاسند ډول",
       minWidth: 120,
     },
-    {
-      id: "incommingDate",
-      label: text.incommingDate || "تاریخ وارده",
-      minWidth: 130,
-    },
+    // {
+    //   id: "outgoingDate",
+    //   label: text.outgoingDate || "تاریخ صادره",
+    //   minWidth: 130,
+    // },
     { id: "direction", label: text.direction || "نوع", minWidth: 100 },
     { id: "actions", label: text.actions || "عملیات", minWidth: 100 },
   ];
@@ -302,7 +302,7 @@ export default function MakhzanWaradaSaderaList() {
             onFieldChange={handleFieldChange}
             fields={[
               { value: "no", label: text.no || "شمېره" },
-              { value: "org", label: text.org || "اداره" },
+              { value: "senderOrg", label: text.org || "اداره" },
               {
                 value: "letterNumber",
                 label: text.letterNumber || "شمېره مکتوب",
@@ -338,7 +338,9 @@ export default function MakhzanWaradaSaderaList() {
               <TableBody>
                 {makhzanWaradaSadera.map((row) => (
                   <TableRow hover key={row.id}>
-                    <TableCell align="center">{row.orgName || "—"}</TableCell>{" "}
+                    <TableCell align="center">
+                      {row.senderOrgName || "—"}
+                    </TableCell>
                     {/* ← not row.org?.name */}
                     <TableCell align="center">
                       {row.letterNumber || "—"}
@@ -346,9 +348,9 @@ export default function MakhzanWaradaSaderaList() {
                     <TableCell align="center">
                       {row.subjectType || "—"}
                     </TableCell>
-                    <TableCell align="center">
-                      {formatHijriDateForDisplay(row.incommingDate) || "—"}
-                    </TableCell>
+                    {/* <TableCell align="center">
+                      {formatHijriDateForDisplay(row.outgoingDate) || "—"}
+                    </TableCell> */}
                     {/* ✅ Direction badge using isIncoming */}
                     <TableCell align="center">
                       <Box

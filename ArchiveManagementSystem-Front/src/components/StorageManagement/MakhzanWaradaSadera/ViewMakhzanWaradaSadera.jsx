@@ -142,15 +142,21 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
 
           <Grid item xs={12} sm={6}>
             <Box>
-              <Typography
-                variant="caption"
-                color="texts.secondary"
-                gutterBottom
-              >
-                {texts.viewOrganization || "اداره"}
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.senderOrganization || "اداره ارسال کننده"}
               </Typography>
               <Typography variant="h6" fontWeight={600}>
-                {record.org?.name || "—"}
+                {record.senderOrg?.name || "—"}
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                {texts.receiverOrganization || "اداره دریافت کننده"}
+              </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                {record.receiverOrg?.name || "—"}
               </Typography>
             </Box>
           </Grid>
@@ -169,22 +175,38 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
               </Typography>
             </Box>
           </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Box>
-              <Typography
-                variant="caption"
-                color="texts.secondary"
-                gutterBottom
-              >
-                {texts.viewIncommingDate || "تاریخ وارده"}
-              </Typography>
-              <Typography variant="body1">
-                {formatHijriDateForDisplay(record.incommingDate) || "—"}
-              </Typography>
-            </Box>
-          </Grid>
-
+          {direction === "INCOMING" && (
+            <Grid item xs={12} sm={6}>
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="texts.secondary"
+                  gutterBottom
+                >
+                  {texts.viewIncommingDate || "تاریخ وارده"}
+                </Typography>
+                <Typography variant="body1">
+                  {formatHijriDateForDisplay(record.incommingDate) || "—"}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+          {direction === "INCOMING" && (
+            <Grid item xs={12} sm={6}>
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="texts.secondary"
+                  gutterBottom
+                >
+                  {texts.viewSenderOrgDate || "تاریخ "}
+                </Typography>
+                <Typography variant="body1">
+                  {formatHijriDateForDisplay(record.senderOrgDate) || "—"}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
           {direction === "OUTGOING" && (
             <Grid item xs={12} sm={6}>
               <Box>
@@ -244,7 +266,7 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
               </Typography>
             </Box>
           </Grid>
-  {report.cabinetFile && (
+          {record.cabinetFile && (
             <>
               <Grid item xs={12}>
                 <Typography
@@ -252,7 +274,7 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
                   fontWeight="bold"
                   color="primary.main"
                 >
-                {texts.cabinetAddress}
+                  {texts.cabinetAddress}
                 </Typography>
                 <Divider sx={{ mt: 1 }} />
               </Grid>
@@ -267,7 +289,7 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
                     {texts.cabinet || "کابینه (Cabinet)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
+                    {record.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
                   </Typography>
                 </Box>
               </Grid>
@@ -279,24 +301,10 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                  {texts.floor || "ځای (Floor)"} 
+                    {texts.floor || "ځای (Floor)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.shelf?.floor?.name || "—"}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    {texts.shelf || "شف (Shelf)"}                  </Typography>
-                  <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.shelf?.name || "—"}
+                    {record.cabinetFile?.shelf?.floor?.name || "—"}
                   </Typography>
                 </Box>
               </Grid>
@@ -308,9 +316,25 @@ export default function ViewMakhzanWaradaSadera({ open, onClose, record }) {
                     color="text.secondary"
                     gutterBottom
                   >
-                    {texts.file || "اسناد (File)"}                  </Typography>
+                    {texts.shelf || "شف (Shelf)"}{" "}
+                  </Typography>
                   <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.name || "—"}
+                    {record.cabinetFile?.shelf?.name || "—"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    {texts.file || "اسناد (File)"}{" "}
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {record.cabinetFile?.name || "—"}
                   </Typography>
                 </Box>
               </Grid>

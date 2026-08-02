@@ -1,8 +1,10 @@
 package com.MCIT.ArchiveManagementSystem.models.StorageManagement;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.MCIT.ArchiveManagementSystem.models.Auditable;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
@@ -28,7 +30,8 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MakzanReceipt {
+@EqualsAndHashCode(callSuper = false)
+public class MakzanReceipt extends Auditable{
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,7 +48,7 @@ public class MakzanReceipt {
   private Management management;
 
   private String letterNo;
-  private String letterDate;
+  private LocalDate letterDate;
   private String subjectType;
   private String description;
 

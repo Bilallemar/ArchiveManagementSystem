@@ -294,7 +294,7 @@ export default function EditArchiveDialog({
                   size="small"
                   type="date"
                   name="receiveDate"
-                  label={text.incomingDate || "تاریخ وارده"}
+                  label={text.archiveSubmitedDate || "تاریخ وارده"}
                   InputLabelProps={{ shrink: true }}
                   value={formData.receiveDate}
                   onChange={handleHijriDateChange("receiveDate")}
@@ -309,7 +309,7 @@ export default function EditArchiveDialog({
                     size="small"
                     type="date"
                     name="sendDate"
-                    label={text.outgoingDate || "تاریخ صادره"}
+                    label={text.postSubmittedDate || "تاریخ صادره"}
                     InputLabelProps={{ shrink: true }}
                     value={formData.sendDate}
                     onChange={handleHijriDateChange("sendDate")}

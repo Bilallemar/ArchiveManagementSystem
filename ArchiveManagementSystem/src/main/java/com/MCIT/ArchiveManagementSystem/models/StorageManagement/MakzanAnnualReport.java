@@ -3,6 +3,7 @@ package com.MCIT.ArchiveManagementSystem.models.StorageManagement;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.MCIT.ArchiveManagementSystem.models.Auditable;
 import com.MCIT.ArchiveManagementSystem.models.District;
 import com.MCIT.ArchiveManagementSystem.models.DocType;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
@@ -28,9 +29,11 @@ import lombok.ToString;
 @Entity
 @Table(name = "annual_reports")
 @Data
+@EqualsAndHashCode(callSuper = false)
+
 @NoArgsConstructor
 @AllArgsConstructor
-public class MakzanAnnualReport {
+public class MakzanAnnualReport extends Auditable{
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

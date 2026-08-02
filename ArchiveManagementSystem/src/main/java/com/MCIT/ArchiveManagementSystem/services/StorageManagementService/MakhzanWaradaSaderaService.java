@@ -87,7 +87,8 @@ public class MakhzanWaradaSaderaService {
                 a.getLetterNumber(),
                 a.getIncommingDate(),
                 a.getSubjectType(),
-                a.getOrg() != null ? a.getOrg().getName() : null, // ← senderOrgName
+                a.getSenderOrg() != null ? a.getSenderOrg().getName() : null, // ← senderOrgName
+                a.getReceiverOrg() != null ? a.getReceiverOrg().getName() : null, // ← receiverOrgName
                 a.getDirection() != null ? a.getDirection().name() : null));
     }
 
@@ -166,11 +167,13 @@ public class MakhzanWaradaSaderaService {
 
         // Update basic fields existing.setNo(details.getNo());
         existingDoc.setNo(makhzanWaradaSaderaDetails.getNo());
-        existingDoc.setOrg(makhzanWaradaSaderaDetails.getOrg());
+        existingDoc.setSenderOrg(makhzanWaradaSaderaDetails.getSenderOrg());
+        existingDoc.setReceiverOrg(makhzanWaradaSaderaDetails.getReceiverOrg());
 
         existingDoc.setLetterNumber(makhzanWaradaSaderaDetails.getLetterNumber());
         existingDoc.setIncommingDate(makhzanWaradaSaderaDetails.getIncommingDate());
         existingDoc.setOutgoingDate(makhzanWaradaSaderaDetails.getOutgoingDate());
+        existingDoc.setSenderOrgDate(makhzanWaradaSaderaDetails.getSenderOrgDate());
         existingDoc.setSummary(makhzanWaradaSaderaDetails.getSummary());
         existingDoc.setSubjectType(makhzanWaradaSaderaDetails.getSubjectType());
         existingDoc.setDescription(makhzanWaradaSaderaDetails.getDescription());
@@ -195,10 +198,10 @@ public class MakhzanWaradaSaderaService {
         // ── Handle manual uploaded files ──────────────────────
         if (hasNewFiles) {
             List<String> storedPaths = fileService.savefiles(fileURL, existingDoc);
-        for (int i = 0; i < fileURL.length; i++) {
-            MultipartFile file = fileURL[i];
+            for (int i = 0; i < fileURL.length; i++) {
+                MultipartFile file = fileURL[i];
                 if (file == null || file.isEmpty())
-                continue;
+                    continue;
 
                 FileEntity fe = new FileEntity();
                 fe.setFilePath(storedPaths.get(i));

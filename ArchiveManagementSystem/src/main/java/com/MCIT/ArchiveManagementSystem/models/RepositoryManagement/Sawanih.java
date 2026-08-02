@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.MCIT.ArchiveManagementSystem.models.Auditable;
 import com.MCIT.ArchiveManagementSystem.models.FileEntity;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
@@ -20,14 +21,17 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "sawanih")
 @Data
+@EqualsAndHashCode(callSuper = false)
+
 @NoArgsConstructor
 @AllArgsConstructor
-public class Sawanih {
+public class Sawanih extends Auditable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

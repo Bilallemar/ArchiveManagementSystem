@@ -15,7 +15,6 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import getMakzanReceiptTexts from "../../../helpers/Storage/MakzanReceipt/MakzanReceiptText";
 import api from "../../../services/api";
@@ -40,23 +39,23 @@ export default function ViewMakzanReceipt({ open, onClose, receipt }) {
       throw error;
     }
   };
-const handleViewFile = (filePath, fileName) => {
-  const ext = filePath.split(".").pop().toLowerCase();
+  const handleViewFile = (filePath, fileName) => {
+    const ext = filePath.split(".").pop().toLowerCase();
 
-  let token = localStorage.getItem("JWT_TOKEN") || "";
-  if (token.startsWith("Bearer ")) token = token.substring(7);
+    let token = localStorage.getItem("JWT_TOKEN") || "";
+    if (token.startsWith("Bearer ")) token = token.substring(7);
 
-  const url = `http://localhost:8081/api/hifziya-warada-sadera/download/${encodeURIComponent(filePath)}?token=${token}`;
+    const url = `http://localhost:8081/api/hifziya-warada-sadera/download/${encodeURIComponent(filePath)}?token=${token}`;
 
-  if (["pdf", "jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-    window.open(url, "_blank");
-  } else {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName || filePath; // ← show original name on download
-    a.click();
-  }
-};
+    if (["pdf", "jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+      window.open(url, "_blank");
+    } else {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName || filePath; // ← show original name on download
+      a.click();
+    }
+  };
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
@@ -186,7 +185,7 @@ const handleViewFile = (filePath, fileName) => {
               </Typography>
             </Box>
           </Grid>
-  {report.cabinetFile && (
+          {receipt.cabinetFile && (
             <>
               <Grid item xs={12}>
                 <Typography
@@ -194,8 +193,7 @@ const handleViewFile = (filePath, fileName) => {
                   fontWeight="bold"
                   color="primary.main"
                 >
-                                      {text.cabinetAddress|| "پته کابینه (Cabinet Location)"}
-
+                  {texts.cabinetAddress || "پته کابینه (Cabinet Location)"}
                 </Typography>
                 <Divider sx={{ mt: 1 }} />
               </Grid>
@@ -207,10 +205,10 @@ const handleViewFile = (filePath, fileName) => {
                     color="text.secondary"
                     gutterBottom
                   >
-                   {texts.cabinet || "کابینه (Cabinet)"}
+                    {texts.cabinet || "کابینه (Cabinet)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
+                    {receipt.cabinetFile?.shelf?.floor?.cabinet?.name || "—"}
                   </Typography>
                 </Box>
               </Grid>
@@ -225,7 +223,7 @@ const handleViewFile = (filePath, fileName) => {
                     {texts.floor || "پوړ (Floor)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.shelf?.floor?.name || "—"}
+                    {receipt.cabinetFile?.shelf?.floor?.name || "—"}
                   </Typography>
                 </Box>
               </Grid>
@@ -240,7 +238,7 @@ const handleViewFile = (filePath, fileName) => {
                     {texts.shelf || "شف (Shelf)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.shelf?.name || "—"}
+                    {receipt.cabinetFile?.shelf?.name || "—"}
                   </Typography>
                 </Box>
               </Grid>
@@ -255,7 +253,7 @@ const handleViewFile = (filePath, fileName) => {
                     {texts.file || "اسناد (File)"}
                   </Typography>
                   <Typography variant="body1" fontWeight={500}>
-                    {report.cabinetFile?.name || "—"}
+                    {receipt.cabinetFile?.name || "—"}
                   </Typography>
                 </Box>
               </Grid>
@@ -318,7 +316,9 @@ const handleViewFile = (filePath, fileName) => {
                       <IconButton
                         size="small"
                         color="primary"
-                        onClick={() => handleViewFile(file.filePath, file.fileName)}
+                        onClick={() =>
+                          handleViewFile(file.filePath, file.fileName)
+                        }
                         title="فایل وګورئ"
                       >
                         <VisibilityIcon />

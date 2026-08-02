@@ -50,7 +50,7 @@ export default function LandingPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [hijriMonthly, setHijriMonthly] = useState(null);
   // Get management ID from localStorage
   const managementId = useMemo(() => {
     try {
@@ -77,6 +77,11 @@ export default function LandingPage() {
         setError(null);
         const res = await api.get("/dashboard/stats");
         setChartData(res.data);
+
+        if (userIsAdmin) {
+          const hijriRes = await api.get("/dashboard/hijri-monthly");
+          setHijriMonthly(hijriRes.data);
+        }
       } catch (err) {
         console.error("Dashboard load error:", err);
         if (err.response?.status === 401)
@@ -89,20 +94,21 @@ export default function LandingPage() {
       }
     };
     loadData();
-  }, []);
+  }, [userIsAdmin]);
 
-  // Convert YYYY-MM → Hijri month name
-  // ✅ Convert YYYY-MM → Hijri name, but keep plain years as-is
+  // Admin uses the dedicated Hijri-monthly endpoint's 12 fixed month names.
+  // Other roles keep the existing Gregorian→Hijri conversion of chartData.months.
   const hijriMonths = useMemo(() => {
+    if (userIsAdmin) {
+      return hijriMonthly?.months || [];
+    }
     return (chartData.months || []).map((ym) => {
-      // Plain 4-digit year (e.g. "2025") → convert to Hijri year only
       if (/^\d{4}$/.test(ym)) {
         return String(getHijriYear(ym));
       }
-      // YYYY-MM → Hijri month name
       return getHijriMonthName(ym + "-01") || ym;
     });
-  }, [chartData.months]);
+  }, [chartData.months, userIsAdmin, hijriMonthly]);
   // ── Mini Sparkline ──────────────────────────────
   const MiniSparkline = ({ data, color }) => {
     if (!data || data.length < 2) return null;
@@ -272,11 +278,22 @@ export default function LandingPage() {
 
   const getChartBars = () => {
     if (userIsAdmin) {
+      if (!hijriMonthly) return [];
       return [
         {
-          data: displayFile,
-          color: "#00B8D9",
-          label: text.totalFiles || "ټول اسناد",
+          data: hijriMonthly.archiveData,
+          color: "#3B82F6", // blue
+          label: text.totalArchive || "آرشیف",
+        },
+        {
+          data: hijriMonthly.hifziyaData,
+          color: "#10B981", // green
+          label: text.totalHifziya || "حفظیه",
+        },
+        {
+          data: hijriMonthly.makhzanData,
+          color: "#F59E0B", // orange
+          label: text.totalMakhzan || "مخزن",
         },
       ];
     }
@@ -750,7 +767,7 @@ export default function LandingPage() {
                 >
                   {text.documentsByMonth || "د میاشتې اسناد"}
                 </Typography>
-                {managementId !== 2 && (
+                {(managementId !== 2 || userIsAdmin) && (
                   <Box
                     sx={{
                       px: 1.5,
@@ -766,7 +783,9 @@ export default function LandingPage() {
                         color: "#3B82F6",
                       }}
                     >
-                      {currentHijriYear}
+                      {userIsAdmin
+                        ? (hijriMonthly?.hijriYear ?? currentHijriYear)
+                        : currentHijriYear}
                     </Typography>
                   </Box>
                 )}
@@ -823,9 +842,10 @@ export default function LandingPage() {
                     }}
                   >
                     {hijriMonths.map((month, idx) => {
-                      const isCurrentMonth =
-                        chartData.months[idx] ===
-                        `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+                      const isCurrentMonth = userIsAdmin
+                        ? false // admin chart shows the full current Hijri year, no single "current month" bar highlight needed
+                        : chartData.months[idx] ===
+                          `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
 
                       return (
                         <Box

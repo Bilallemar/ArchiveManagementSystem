@@ -145,6 +145,12 @@ export const getNavigationItems = () => {
         management: MANAGEMENTS.HIFZIYA,
         translationKey: "shuraAaliResolutions",
       },
+          {
+        path: "/reports/hifziya",
+        label: i18n.t("managementUtils:reports"),
+        management: MANAGEMENTS.HIFZIYA,
+        translationKey: "reports",
+      },
 
       {
         path: "/archive",
@@ -158,18 +164,26 @@ export const getNavigationItems = () => {
         management: MANAGEMENTS.ARCHIVE,
         translationKey: "nasharat",
       },
+       {
+        path: "/reports/archive",
+        label: i18n.t("managementUtils:reports"),
+        management: MANAGEMENTS.ARCHIVE,
+        translationKey: "reports",
+      },
       {
         path: "/makzan-annual-reports",
         label: i18n.t("managementUtils:annualReports"),
         management: MANAGEMENTS.MAKHZAN,
         translationKey: "annualReports",
       },
+      
       {
         path: "/makzan-receipts",
         label: i18n.t("managementUtils:receipts"),
         management: MANAGEMENTS.MAKHZAN,
         translationKey: "receipts",
       },
+      
       {
         path: "/annual-reports-info",
         label: i18n.t("managementUtils:reportInformation"),
@@ -181,6 +195,12 @@ export const getNavigationItems = () => {
         label: i18n.t("managementUtils:makhzanwaradaSadera"),
         management: MANAGEMENTS.MAKHZAN,
         translationKey: "makhzanwaradaSadera",
+      },
+         {
+        path: "/reports/makhzan",
+        label: i18n.t("managementUtils:reports"),
+        management: MANAGEMENTS.MAKHZAN,
+        translationKey: "reports",
       },
       {
         path: "/master-data",
@@ -220,6 +240,11 @@ export const getNavigationItems = () => {
         label: i18n.t("managementUtils:shuraAaliResolutions"),
         translationKey: "shuraAaliResolutions",
       },
+        {
+        path: "/reports/hifziya",
+        label: i18n.t("managementUtils:reports"),
+        translationKey: "reports",
+      },
     ],
     [MANAGEMENTS.ARCHIVE]: [
       ...baseItems,
@@ -232,6 +257,11 @@ export const getNavigationItems = () => {
         path: "/nasharat",
         label: i18n.t("managementUtils:nasharat"),
         translationKey: "nasharat",
+      },
+      {
+        path: "/reports/archive",
+        label: i18n.t("managementUtils:reports"),
+        translationKey: "reports",
       },
     ],
     [MANAGEMENTS.MAKHZAN]: [
@@ -255,6 +285,11 @@ export const getNavigationItems = () => {
         path: "/makhzan-warada-sadera",
         label: i18n.t("managementUtils:makhzanwaradaSadera"),
         translationKey: "makhzanwaradaSadera",
+      },
+       {
+        path: "/reports/makhzan",
+        label: i18n.t("managementUtils:reports"),
+        translationKey: "reports",
       },
     ],
   };

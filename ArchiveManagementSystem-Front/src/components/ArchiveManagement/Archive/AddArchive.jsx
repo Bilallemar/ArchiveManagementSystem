@@ -299,7 +299,7 @@ export default function AddArchive({ archive }) {
                   size="small"
                   type="date"
                   name="receiveDate"
-                  label={texts.incomingDate || "تاریخ دریافت"}
+                  label={texts.archiveSubmitedDate || "تاریخ دریافت"}
                   InputLabelProps={{ shrink: true }}
                   value={formData.receiveDate}
                   onChange={handleHijriDateChange("receiveDate")}
@@ -314,7 +314,7 @@ export default function AddArchive({ archive }) {
                     size="small"
                     type="date"
                     name="sendDate"
-                    label={texts.outgoingDate || "تاریخ صادره"}
+                    label={texts.postSubmittedDate || "تاریخ صادره"}
                     InputLabelProps={{ shrink: true }}
                     value={formData.sendDate}
                     onChange={handleHijriDateChange("sendDate")}

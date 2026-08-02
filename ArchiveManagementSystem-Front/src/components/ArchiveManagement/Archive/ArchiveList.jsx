@@ -68,7 +68,7 @@ export default function ArchiveList() {
   const columns = useMemo(
     () => [
       { id: "docNo", label: texts.docNo, minWidth: 130 },
-      { id: "receiveDate", label: texts.incomingDate, minWidth: 120 },
+      { id: "receiveDate", label: texts.archiveSubmitedDate, minWidth: 120 },
 
       {
         id: "senderOrg",

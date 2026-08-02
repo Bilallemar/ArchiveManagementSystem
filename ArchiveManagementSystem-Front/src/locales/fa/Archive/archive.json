@@ -19,6 +19,8 @@
   "outgoingDate": "تاریخ صدور",
   "sendDate": "تاریخ ارسال",
   "submittedDate": "تاریخ تسلیمی",
+  "archiveSubmitedDate": "تاریخ تسلیمی آرشیف",
+  "postSubmittedDate": "تاریخ تسلیمی پوسته خانه",
 
   "org": "مرسل",
   "organization": "مرسل الیه",

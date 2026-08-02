@@ -1,14 +1,13 @@
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useEffect, useState } from "react";
+import { Toaster } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   Route,
   BrowserRouter as Router,
   Routes,
   useLocation,
 } from "react-router-dom";
-
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { Toaster } from "react-hot-toast";
-import { useTranslation } from "react-i18next";
 import UserManagementPanel from "./components/Admin/UserManagementPanel";
 import AddArchive from "./components/ArchiveManagement/Archive/AddArchive";
 import ArchiveList from "./components/ArchiveManagement/Archive/ArchiveList";
@@ -43,6 +42,10 @@ import LandingPage from "./components/LandingPage";
 import MasterDataManagement from "./components/MasterData/MasterDataManagement";
 import NotFound from "./components/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ArchiveReportPage from "./components/Reports/ArchiveReportPage";
+import HifziyaReportPage from "./components/Reports/HifziyaReportPage";
+import MakhzanReportPage from "./components/Reports/MakhzanReportPage";
+import SidebarLayout from "./components/SidebarLayout";
 import AddMakhzanWaradaSadera from "./components/StorageManagement/MakhzanWaradaSadera/AddMakhzanWaradaSadera";
 import EditMakhzanWaradaSaderaDialog from "./components/StorageManagement/MakhzanWaradaSadera/EditMakhzanWaradaSaderaDialog";
 import MakhzanWaradaSaderaList from "./components/StorageManagement/MakhzanWaradaSadera/MakhzanWaradaSaderaList";
@@ -55,15 +58,13 @@ import MakzanReceiptList from "./components/StorageManagement/MakzanReceipt/Makz
 import AddMakzanSubmissionReport from "./components/StorageManagement/MakzanSubmissionReport/AddMakzanSubmissionReport";
 import EditMakzanSubmissionReportDialog from "./components/StorageManagement/MakzanSubmissionReport/EditMakzanSubmissionReportDialog";
 import MakzanSubmissionReportList from "./components/StorageManagement/MakzanSubmissionReport/MakzanSubmissionReportList";
+import { useMyContext } from "./store/ContextApi";
 import { createAppTheme } from "./theme";
 import {
   initializeDirection,
   setDocumentDirection,
 } from "./utils/languageUtils";
 import { MANAGEMENTS } from "./utils/managementUtils";
-
-import SidebarLayout from "./components/SidebarLayout";
-import { useMyContext } from "./store/ContextApi";
 
 const App = () => {
   const { i18n } = useTranslation();
@@ -434,6 +435,30 @@ const App = () => {
             }
           />
           <Route path="*" element={<NotFound />} />
+          <Route
+            path="/reports/archive"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.ARCHIVE}>
+                <ArchiveReportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/makhzan"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.MAKHZAN}>
+                <MakhzanReportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/hifziya"
+            element={
+              <ProtectedRoute requiredManagementId={MANAGEMENTS.HIFZIYA}>
+                <HifziyaReportPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </SidebarLayout>
     </ThemeProvider>

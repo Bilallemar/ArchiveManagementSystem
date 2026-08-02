@@ -13,27 +13,30 @@ import com.MCIT.ArchiveManagementSystem.models.StorageManagement.MakhzanWaradaSa
 import com.MCIT.ArchiveManagementSystem.models.enums.MakhzanWaradaSaderaDirection;
 
 public interface MakhzanWaradaSaderaRepository extends JpaRepository<MakhzanWaradaSadera, Integer> {
-    List<MakhzanWaradaSadera> findByManagement(Management management);
+  List<MakhzanWaradaSadera> findByManagement(Management management);
 
-    Long countByManagement(Management management);
-    @Query("""
-                    SELECT h FROM MakhzanWaradaSadera h
-                    LEFT JOIN h.org o
-                    WHERE h.management = :management
-                      AND (:direction IS NULL OR h.direction = :direction)
-                      AND (
-                        :term = ''
-                        OR (:field = 'org'    AND LOWER(o.name) LIKE LOWER(CONCAT('%', :term, '%')))
-            OR (:field = 'letterNumber' AND LOWER(h.letterNumber)  LIKE LOWER(CONCAT('%', :term, '%')))
-            OR (:field = 'no'           AND LOWER(h.no)            LIKE LOWER(CONCAT('%', :term, '%')))
-            OR (:field = 'subjectType'  AND LOWER(h.subjectType)   LIKE LOWER(CONCAT('%', :term, '%')))
-                      )
-                    ORDER BY h.id DESC
-                """)
-    Page<MakhzanWaradaSadera> searchMakhzanWaradaSadera(
-            @Param("management") Management management,
-            @Param("direction") MakhzanWaradaSaderaDirection direction,
-            @Param("field") String field,
-            @Param("term") String term,
-            Pageable pageable);
+  Long countByManagement(Management management);
+
+  @Query("""
+                SELECT h FROM MakhzanWaradaSadera h
+                  LEFT JOIN h.receiverOrg ro
+      LEFT JOIN h.senderOrg so
+      WHERE h.management = :management
+        AND (:direction IS NULL OR h.direction = :direction)
+        AND (
+          :term = ''
+          OR (:field = 'receiverOrg' AND LOWER(ro.name) LIKE LOWER(CONCAT('%', :term, '%')))
+          OR (:field = 'senderOrg' AND LOWER(so.name) LIKE LOWER(CONCAT('%', :term, '%')))
+        OR (:field = 'letterNumber' AND LOWER(h.letterNumber)  LIKE LOWER(CONCAT('%', :term, '%')))
+        OR (:field = 'no'           AND LOWER(h.no)            LIKE LOWER(CONCAT('%', :term, '%')))
+        OR (:field = 'subjectType'  AND LOWER(h.subjectType)   LIKE LOWER(CONCAT('%', :term, '%')))
+                  )
+                ORDER BY h.id DESC
+            """)
+  Page<MakhzanWaradaSadera> searchMakhzanWaradaSadera(
+      @Param("management") Management management,
+      @Param("direction") MakhzanWaradaSaderaDirection direction,
+      @Param("field") String field,
+      @Param("term") String term,
+      Pageable pageable);
 }

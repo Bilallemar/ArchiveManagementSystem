@@ -2,6 +2,7 @@ package com.MCIT.ArchiveManagementSystem.models.ArchiveManagement;
 
 import java.time.LocalDate;
 
+import com.MCIT.ArchiveManagementSystem.models.Auditable;
 import com.MCIT.ArchiveManagementSystem.models.DocType;
 import com.MCIT.ArchiveManagementSystem.models.Management;
 import com.MCIT.ArchiveManagementSystem.models.Org;
@@ -18,14 +19,17 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "nasharat")
 @Data
+@EqualsAndHashCode(callSuper = false)
+
 @NoArgsConstructor
 @AllArgsConstructor
-public class Nasharat {
+public class Nasharat extends Auditable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

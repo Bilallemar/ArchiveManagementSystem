@@ -19,6 +19,8 @@
   "outgoingDate": "Outgoing Date",
   "sendDate": "Send Date",
   "submittedDate": "Submission Date",
+  "archiveSubmittedDate": "Archive Submission Date",
+  "postSubmittedDate": "Post Submission Date",
 
   "org": "Sender",
   "organization": "Receiver",

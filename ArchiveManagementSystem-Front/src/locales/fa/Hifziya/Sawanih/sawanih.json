@@ -30,6 +30,7 @@
   },
   "name": "نام",
   "fatherName": "نام پدر",
+  "parcelNumber": "شماره پارسل",
   "qaidWarida": "قید وارده",
   "incommingDate": "تاریخ وارده",
   "outgoingDate": "تاریخ صادره",

@@ -22,6 +22,7 @@ const getSawanihTexts = (t) => ({
   pageQuantity: t("pageQuantity"),
   description: t("description"),
   recordStatus: t("recordStatus"),
+  parcelNumber: t("parcelNumber"),
   // ===== Actions =====
   actions: t("actions"),
   view: t("view"),

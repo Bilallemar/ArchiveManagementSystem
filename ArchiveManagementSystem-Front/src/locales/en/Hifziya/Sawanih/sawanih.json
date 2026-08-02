@@ -8,6 +8,7 @@
 
   "name": "Name",
   "fatherName": "Father Name",
+  "parcelNumber": "Parcel Number",
   "qaidWarida": "Incoming Reference",
   "incommingDate": "Incoming Date",
   "outgoingDate": "Outgoing Date",

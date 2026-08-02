@@ -8,6 +8,7 @@
     "headers": {
       "no": "نمبر کتاب",
       "org": "مرسل",
+      "senderOrg": "مرسل الیه",
       "subjectType": "موضوع",
       "letterNumber": "نمبر مکتوب",
       "incommingDate": "تاریخ مکتوب وارده",
@@ -77,10 +78,12 @@
     "makhzan": "مخزن",
     "no": "نمبر کتاب",
     "org": "مرسل",
+    "senderOrg": "  مرسل الیه",
     "subjectType": "موضوع",
     "letterNumber": "نمبر مکتوب",
     "incommingDate": "تاریخ وارده",
     "outgoingDate": "تاریخ صادره",
+    "senderOrgDate": "تاریخ ",
     "summary": "خلاصه مطلب",
     "description": "ملاحظات",
     "loading": "در حال بارگذاری...",
@@ -100,10 +103,12 @@
     "title": "جزئیات سند",
     "number": "شماره",
     "organization": "مرسل",
+    "senderOrg": "مرسل الیه",
     "subjectType": "موضوع",
     "letterNumber": "نمبر مکتوب",
     "incommingDate": "تاریخ وارده",
     "outgoingDate": "تاریخ صادره",
+    "senderOrgDate": "تاریخ ",
     "summary": "خلاصه",
     "description": "ملاحظات",
     "noData": "هیچ سندی انتخاب نشده",
@@ -112,7 +117,7 @@
   "viewOutgoing": "نمایش ریکارد صادره",
   "viewIncoming": "نمایش ریکار وارده",
 
-    "cabinetAddress": "آدرس آلماری اضافه کنید",
+  "cabinetAddress": "آدرس آلماری اضافه کنید",
   "cabinet": "آلماری",
   "floor": "طبقه",
   "shelf": "شیلف",
@@ -120,6 +125,6 @@
   "files": "فایل‌ها",
   "shelfs": "شیلف‌ها",
   "floors": "طبقه‌ها",
-    "rowsPerPage": "تعداد در هر صفحه",
-     "of": "از"
+  "rowsPerPage": "تعداد در هر صفحه",
+  "of": "از"
 }

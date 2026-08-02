@@ -49,10 +49,12 @@ export default function AddMakhzanWaradaSadera() {
   // ✅ Updated formData based on isIncoming
   const [formData, setFormData] = useState({
     no: "",
-    org: "",
+    receiverOrg: "",
+    senderOrg: "",
     letterNumber: "",
     incommingDate: "",
     outgoingDate: "", // Will be used only for صادره (outgoing)
+    senderOrgDate: "",
     summary: "",
     subjectType: "",
     description: "",
@@ -212,8 +214,14 @@ export default function AddMakhzanWaradaSadera() {
       setIsSubmitting(false);
       return;
     }
-    if (!formData.org) {
-      toast.error(text.missingFields || "Organization is required");
+    if (!formData.receiverOrg) {
+      toast.error("Receiver organization is required");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.senderOrg) {
+      toast.error("Sender organization is required");
       setIsSubmitting(false);
       return;
     }
@@ -224,10 +232,13 @@ export default function AddMakhzanWaradaSadera() {
       // ✅ Build payload - matching the working structure from yesterday
       const payload = {
         no: formData.no.trim(),
-        org: { id: parseInt(formData.org) },
+        receiverOrg: { id: parseInt(formData.receiverOrg) },
+        senderOrg: { id: parseInt(formData.senderOrg) },
+
         letterNumber: formData.letterNumber.trim() || null,
         incommingDate: convertHijriToGregorian(formData.incommingDate) || null,
-        // outgoingDate: convertHijriToGregorian(formData.outgoingDate) || null, // Will be sent only for outgoing, but can be null for incoming
+        senderOrgDate: convertHijriToGregorian(formData.senderOrgDate) || null,
+        outgoingDate: convertHijriToGregorian(formData.outgoingDate) || null, // Will be sent only for outgoing, but can be null for incoming
         summary: formData.summary.trim() || null,
         cabinetFile: selectedFile ? { id: parseInt(selectedFile) } : null,
 
@@ -569,14 +580,42 @@ export default function AddMakhzanWaradaSadera() {
                       fullWidth
                       size="small"
                       required
-                      error={!formData.org}
+                      error={!formData.receiverOrg}
                     >
                       <InputLabel>{text.org || "اداره"}</InputLabel>
                       <Select
-                        name="org"
-                        value={formData.org}
+                        name="receiverOrg"
+                        value={formData.receiverOrg}
                         onChange={handleInputChange}
                         label={text.org || "اداره"}
+                      >
+                        {orgs.length === 0 ? (
+                          <MenuItem disabled>
+                            {text.loading || "Loading..."}
+                          </MenuItem>
+                        ) : (
+                          orgs.map((org) => (
+                            <MenuItem key={org.id} value={org.id}>
+                              {org.name}
+                            </MenuItem>
+                          ))
+                        )}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      required
+                      error={!formData.senderOrg}
+                    >
+                      <InputLabel>{text.senderOrg || "اداره"}</InputLabel>
+                      <Select
+                        name="senderOrg"
+                        value={formData.senderOrg}
+                        onChange={handleInputChange}
+                        label={text.senderOrg || "اداره"}
                       >
                         {orgs.length === 0 ? (
                           <MenuItem disabled>
@@ -617,19 +656,34 @@ export default function AddMakhzanWaradaSadera() {
                   </Grid>
 
                   {/* ✅ Incoming Date - Always shown */}
-                  <Grid item xs={12} md={6}>
-                    <HijriDatePicker
-                      fullWidth
-                      size="small"
-                      type="date"
-                      name="incommingDate"
-                      label={text.incommingDate || "تاریخ وارده"}
-                      InputLabelProps={{ shrink: true }}
-                      value={formData.incommingDate}
-                      onChange={handleHijriDateChange("incommingDate")}
-                    />
-                  </Grid>
-
+                  {direction === "INCOMING" && (
+                    <Grid item xs={12} md={6}>
+                      <HijriDatePicker
+                        fullWidth
+                        size="small"
+                        type="date"
+                        name="incommingDate"
+                        label={text.incommingDate || "تاریخ وارده"}
+                        InputLabelProps={{ shrink: true }}
+                        value={formData.incommingDate}
+                        onChange={handleHijriDateChange("incommingDate")}
+                      />
+                    </Grid>
+                  )}
+                  {direction === "INCOMING" && (
+                    <Grid item xs={12} md={6}>
+                      <HijriDatePicker
+                        fullWidth
+                        size="small"
+                        type="date"
+                        name="senderOrgDate"
+                        label={text.senderOrgDate || "تاریخ "}
+                        InputLabelProps={{ shrink: true }}
+                        value={formData.senderOrgDate}
+                        onChange={handleHijriDateChange("senderOrgDate")}
+                      />
+                    </Grid>
+                  )}
                   {/* ✅ Outgoing Date - Only for صادره (outgoing) */}
                   {direction === "OUTGOING" && (
                     <Grid item xs={12} md={6}>
@@ -667,7 +721,9 @@ export default function AddMakhzanWaradaSadera() {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>{text.cabinet || "کابینه (Cabinet)"}</InputLabel>
+                      <InputLabel>
+                        {text.cabinet || "کابینه (Cabinet)"}
+                      </InputLabel>
                       <Select
                         value={String(selectedCabinet)} // ✅ String()
                         onChange={handleCabinetChange}
